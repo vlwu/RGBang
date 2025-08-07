@@ -1,31 +1,44 @@
 import { PositionComponent } from '../components/PositionComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
+import { CooldownIndicatorComponent } from '../components/CooldownIndicatorComponent.js';
 
 export class RenderSystem {
     constructor(entityManager, stage) {
         this.entityManager = entityManager;
         this.stage = stage;
-        this.renderedEntities = new Set();
+        this.renderedPixiObjects = new Map();
     }
 
     update() {
-        const entities = this.entityManager.query([PositionComponent, RenderableComponent]);
+        const seenEntities = new Set();
+        const queries = [
+            { class: RenderableComponent, getDisplayObject: c => c.sprite },
+            { class: CooldownIndicatorComponent, getDisplayObject: c => c.graphics },
+        ];
 
-        // Add new sprites to the stage
-        for (const entity of entities) {
-            if (!this.renderedEntities.has(entity)) {
-                const renderable = this.entityManager.getComponent(entity, RenderableComponent);
-                this.stage.addChild(renderable.sprite);
-                this.renderedEntities.add(entity);
+        for (const queryDef of queries) {
+            const entities = this.entityManager.query([PositionComponent, queryDef.class]);
+            for (const entityId of entities) {
+                seenEntities.add(entityId);
+                const pos = this.entityManager.getComponent(entityId, PositionComponent);
+                const component = this.entityManager.getComponent(entityId, queryDef.class);
+                const displayObject = queryDef.getDisplayObject(component);
+
+                if (!this.renderedPixiObjects.has(entityId)) {
+                    this.stage.addChild(displayObject);
+                    this.renderedPixiObjects.set(entityId, displayObject);
+                }
+
+                displayObject.x = pos.x;
+                displayObject.y = pos.y;
             }
         }
 
-        // Update sprite positions
-        for (const entity of entities) {
-            const pos = this.entityManager.getComponent(entity, PositionComponent);
-            const renderable = this.entityManager.getComponent(entity, RenderableComponent);
-            renderable.sprite.x = pos.x;
-            renderable.sprite.y = pos.y;
+        for (const [entityId, displayObject] of this.renderedPixiObjects.entries()) {
+            if (!seenEntities.has(entityId)) {
+                this.stage.removeChild(displayObject);
+                this.renderedPixiObjects.delete(entityId);
+            }
         }
     }
 }

@@ -4,6 +4,7 @@ import { createPlayer } from '../entities/entity-factory.js';
 import { InputSystem } from '../systems/InputSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
 import { RenderSystem } from '../systems/RenderSystem.js';
+import { CooldownSystem } from '../systems/CooldownSystem.js';
 import { GameState } from '../managers/GameState.js';
 import { SoundManager } from '../managers/SoundManager.js';
 import { UISystem } from '../systems/UISystem.js';
@@ -39,11 +40,13 @@ export class Engine {
 
         this.inputSystem = new InputSystem(this.entityManager, this.gameState);
         this.movementSystem = new MovementSystem(this.entityManager);
+        this.cooldownSystem = new CooldownSystem(this.entityManager);
         this.renderSystem = new RenderSystem(this.entityManager, this.pixiApp.stage);
 
         this.systems = [
             this.inputSystem,
             this.movementSystem,
+            this.cooldownSystem,
             this.renderSystem,
             this.uiSystem,
         ];

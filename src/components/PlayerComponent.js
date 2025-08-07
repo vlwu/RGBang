@@ -5,5 +5,8 @@ export class PlayerComponent {
         this.isTurning = false;
         this.isRolling = false;
         this.characterId = characterId;
+        this.rollCooldown = 0;
+        this.rollDirectionX = 0;
+        this.rollDirectionY = 0;
     }
 }

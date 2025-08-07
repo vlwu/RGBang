@@ -4,6 +4,7 @@ import { VelocityComponent } from '../components/VelocityComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { PlayerComponent } from '../components/PlayerComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
+import { CooldownIndicatorComponent } from '../components/CooldownIndicatorComponent.js';
 
 export function createPlayer(entityManager, x, y, characterId, playerSpritesheet) {
     const player = entityManager.createEntity();
@@ -23,6 +24,10 @@ export function createPlayer(entityManager, x, y, characterId, playerSpritesheet
     entityManager.addComponent(player, new InputComponent());
     entityManager.addComponent(player, new PlayerComponent(characterId));
     entityManager.addComponent(player, new RenderableComponent(playerSprite, playerSpritesheet));
+
+    const cooldownBar = entityManager.createEntity();
+    entityManager.addComponent(cooldownBar, new PositionComponent(x, y + 45));
+    entityManager.addComponent(cooldownBar, new CooldownIndicatorComponent(player));
 
     return player;
 }

@@ -21,9 +21,32 @@ export class MovementSystem {
             const sprite = renderable.sprite;
             const spritesheet = renderable.spritesheet;
 
-            if (input.roll && !player.isRolling && !player.isTurning) {
+            if (player.rollCooldown > 0) {
+                player.rollCooldown = Math.max(0, player.rollCooldown - dt);
+            }
+
+            if (input.roll && !player.isRolling && !player.isTurning && player.rollCooldown === 0) {
                 player.isRolling = true;
                 player.state = 'roll';
+                player.rollCooldown = 3.0;
+
+                let dx = 0;
+                let dy = 0;
+                if (input.up) dy = -1;
+                if (input.down) dy = 1;
+                if (input.left) dx = -1;
+                if (input.right) dx = 1;
+
+                if (dx === 0 && dy === 0) {
+                    dx = player.facingDirection === 'right' ? 1 : -1;
+                }
+
+                const len = Math.sqrt(dx * dx + dy * dy);
+                if (len > 0) {
+                    player.rollDirectionX = dx / len;
+                    player.rollDirectionY = dy / len;
+                }
+
 
                 sprite.textures = spritesheet.animations.roll;
                 sprite.animationSpeed = 0.25;
@@ -39,8 +62,8 @@ export class MovementSystem {
             vel.vx = 0;
             vel.vy = 0;
             if (player.isRolling) {
-                const rollDirection = player.facingDirection === 'right' ? 1 : -1;
-                vel.vx = rollDirection * PLAYER_CONSTANTS.ROLL_SPEED;
+                vel.vx = player.rollDirectionX * PLAYER_CONSTANTS.ROLL_SPEED;
+                vel.vy = player.rollDirectionY * PLAYER_CONSTANTS.ROLL_SPEED;
             } else if (!player.isTurning) {
                 if (input.left) vel.vx -= PLAYER_CONSTANTS.SPEED;
                 if (input.right) vel.vx += PLAYER_CONSTANTS.SPEED;
