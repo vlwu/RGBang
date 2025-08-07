@@ -23,7 +23,7 @@ export class Engine {
         this.container.appendChild(this.pixiApp.canvas);
 
         // Load assets (loading the JSON file automatically loads the associated PNG)
-        await PIXI.Assets.load('images/player/player.json');
+        await PIXI.Assets.load('images/player/mPlayer Human.json');
 
         // Create player
         this.player = createPlayer(this.entityManager, this.pixiApp.screen.width / 2, this.pixiApp.screen.height / 2);
