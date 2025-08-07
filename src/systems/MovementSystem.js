@@ -43,7 +43,7 @@ export class MovementSystem {
                 player.state = 'turning';
 
                 sprite.textures = spritesheet.animations.turn;
-                sprite.animationSpeed = 0.5;
+                sprite.animationSpeed = 0.7;
                 sprite.loop = false;
                 sprite.play();
 
@@ -62,13 +62,13 @@ export class MovementSystem {
                 if (isMoving && player.state !== 'run') {
                     player.state = 'run';
                     sprite.textures = spritesheet.animations.run;
-                    sprite.animationSpeed = 0.25;
+                    sprite.animationSpeed = 0.2;
                     sprite.loop = true;
                     sprite.play();
                 } else if (!isMoving && player.state !== 'idle') {
                     player.state = 'idle';
                     sprite.textures = spritesheet.animations.idle;
-                    sprite.animationSpeed = 0.15;
+                    sprite.animationSpeed = 0.1;
                     sprite.loop = true;
                     sprite.play();
                 }
