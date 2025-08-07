@@ -18,7 +18,8 @@ export class RgbangUI extends LitElement {
     .main-menu-overlay {
       position: absolute;
       inset: 0;
-      background-image: url('images/ui/Main Background.png');
+      background-image: url('images/ui/Menu Background.png');
+      background-color: #2c3e50;
       background-size: cover; background-position: center; z-index: 500;
       display: flex; justify-content: center; align-items: center;
       flex-direction: column;
