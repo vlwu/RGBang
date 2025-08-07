@@ -119,6 +119,13 @@ export class InfoModal extends LitElement {
                   </div>
 
                   <div class="keybind-item">
+                    <label>Roll:</label>
+                    <div class="key-display">
+                      <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.roll)} scale="1.5"></bitmap-text>
+                    </div>
+                  </div>
+
+                  <div class="keybind-item">
                     <label>Pause Game:</label>
                     <div class="key-display">
                       <bitmap-text .fontRenderer=${this.fontRenderer} text="ESC" scale="1.5"></bitmap-text>

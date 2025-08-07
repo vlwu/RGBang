@@ -3,6 +3,7 @@ export class PlayerComponent {
         this.state = 'idle';
         this.facingDirection = 'right';
         this.isTurning = false;
+        this.isRolling = false;
         this.characterId = characterId;
     }
 }

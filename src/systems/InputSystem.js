@@ -47,7 +47,7 @@ export class InputSystem {
 
     update() {
         const entities = this.entityManager.query([PlayerComponent, InputComponent]);
-        const keybinds = this.gameState.keybinds || { up: 'w', down: 's', left: 'a', right: 'd'};
+        const keybinds = this.gameState.keybinds || { up: 'w', down: 's', left: 'a', right: 'd', roll: 'shift' };
 
         for (const entity of entities) {
             const input = this.entityManager.getComponent(entity, InputComponent);
@@ -55,6 +55,7 @@ export class InputSystem {
             input.down = this.keys.has(keybinds.down);
             input.left = this.keys.has(keybinds.left);
             input.right = this.keys.has(keybinds.right);
+            input.roll = this.keys.has(keybinds.roll);
         }
     }
 }

@@ -18,7 +18,7 @@ export class RgbangUI extends LitElement {
     .main-menu-overlay {
       position: absolute;
       inset: 0;
-      background-image: url('images/ui/Menu Background.png');
+      background-image: url('images/ui/Main Background.png');
       background-size: cover; background-position: center; z-index: 500;
       display: flex; justify-content: center; align-items: center;
       flex-direction: column;
@@ -84,7 +84,7 @@ export class RgbangUI extends LitElement {
     super();
     this.activeModal = 'main-menu';
     this.gameHasStarted = false;
-    this.keybinds = { up: 'w', down: 's', left: 'a', right: 'd' };
+    this.keybinds = { up: 'w', down: 's', left: 'a', right: 'd', roll: 'shift' };
     this.soundSettings = { soundEnabled: true, soundVolume: 0.5 };
     this.gameState = new GameState();
     this.assets = null;

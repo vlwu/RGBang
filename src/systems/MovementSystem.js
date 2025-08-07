@@ -19,26 +19,43 @@ export class MovementSystem {
             const player = this.entityManager.getComponent(entity, PlayerComponent);
             const renderable = this.entityManager.getComponent(entity, RenderableComponent);
             const sprite = renderable.sprite;
-            const spritesheet = renderable.spritesheet; // Get the spritesheet data from the component
+            const spritesheet = renderable.spritesheet;
 
-            // 1. Calculate Velocity from Input
+            if (input.roll && !player.isRolling && !player.isTurning) {
+                player.isRolling = true;
+                player.state = 'roll';
+
+                sprite.textures = spritesheet.animations.roll;
+                sprite.animationSpeed = 0.25;
+                sprite.loop = false;
+                sprite.play();
+
+                sprite.onComplete = () => {
+                    player.isRolling = false;
+                    sprite.onComplete = null;
+                };
+            }
+
             vel.vx = 0;
             vel.vy = 0;
-            if (!player.isTurning) { // Prevent movement while turning
+            if (player.isRolling) {
+                const rollDirection = player.facingDirection === 'right' ? 1 : -1;
+                vel.vx = rollDirection * PLAYER_CONSTANTS.ROLL_SPEED;
+            } else if (!player.isTurning) {
                 if (input.left) vel.vx -= PLAYER_CONSTANTS.SPEED;
                 if (input.right) vel.vx += PLAYER_CONSTANTS.SPEED;
                 if (input.up) vel.vy -= PLAYER_CONSTANTS.SPEED;
                 if (input.down) vel.vy += PLAYER_CONSTANTS.SPEED;
 
                 if (vel.vx !== 0 && vel.vy !== 0) {
-                    vel.vx *= 0.7071; // Normalize diagonal movement
+                    vel.vx *= 0.7071;
                     vel.vy *= 0.7071;
                 }
             }
 
-            // 2. Handle Turning Animation
+
             const intendedDirection = input.right ? 'right' : (input.left ? 'left' : player.facingDirection);
-            if (!player.isTurning && intendedDirection !== player.facingDirection) {
+            if (!player.isTurning && !player.isRolling && intendedDirection !== player.facingDirection) {
                 player.isTurning = true;
                 player.state = 'turning';
 
@@ -55,8 +72,8 @@ export class MovementSystem {
                 };
             }
 
-            // 3. Handle Idle/Run Animation (only if not turning)
-            if (!player.isTurning) {
+
+            if (!player.isTurning && !player.isRolling) {
                 const isMoving = vel.vx !== 0 || vel.vy !== 0;
 
                 if (isMoving && player.state !== 'run') {
@@ -73,8 +90,8 @@ export class MovementSystem {
                     sprite.play();
                 }
             }
-            
-            // 4. Update Position
+
+
             pos.x += vel.vx * dt;
             pos.y += vel.vy * dt;
         }
