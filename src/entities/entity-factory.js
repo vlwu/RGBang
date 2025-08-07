@@ -16,19 +16,20 @@ export function createPlayer(entityManager, x, y) {
 
     // Configure the sprite
     playerSprite.anchor.set(0.5); // Set the origin to the center
-    playerSprite.scale.set(3);   // Restore the scale to make the player larger
+    playerSprite.scale.set(3);   // Make the player 3x larger
     playerSprite.x = x;
     playerSprite.y = y;
 
     // Configure and start the animation
-    playerSprite.animationSpeed = 0.15; // Adjusted for a 4-frame animation
+    playerSprite.animationSpeed = 0.15; // Initial speed for idle animation
     playerSprite.play();
 
     entityManager.addComponent(player, new PositionComponent(x, y));
     entityManager.addComponent(player, new VelocityComponent());
     entityManager.addComponent(player, new InputComponent());
     entityManager.addComponent(player, new PlayerComponent());
-    entityManager.addComponent(player, new RenderableComponent(playerSprite));
+    // Pass both the sprite instance AND the spritesheet data to the component
+    entityManager.addComponent(player, new RenderableComponent(playerSprite, playerSpritesheet));
 
     return player;
 }
