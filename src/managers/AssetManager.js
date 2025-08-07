@@ -39,16 +39,16 @@ function loadImage(src, key = 'unknown') {
 }
 
 const coreImagePaths = {
-    font_spritesheet: 'images/ui/Text (White).png', 
-    settings_icon: 'images/ui/buttons/Settings.png', 
-    pause_icon: 'images/ui/buttons/Pause.png', 
-    play_icon: 'images/ui/buttons/Play.png', 
-    character_icon: 'images/ui/buttons/Character.png', 
-    info_icon: 'images/ui/buttons/Info.png', 
-    close_button: 'images/ui/buttons/Close.png', 
-    restart_button: 'images/ui/buttons/Restart.png', 
-    previous_button: 'images/ui/buttons/Previous.png', 
-    next_button: 'images/ui/buttons/Next.png',
+    font_spritesheet: '/images/ui/text/Text (White).png', 
+    settings_icon: '/images/ui/buttons/Settings.png', 
+    pause_icon: '/images/ui/buttons/Pause.png', 
+    play_icon: '/images/ui/buttons/Play.png', 
+    character_icon: '/images/ui/buttons/Character.png', 
+    info_icon: '/images/ui/buttons/Info.png', 
+    close_button: '/images/ui/buttons/Close.png', 
+    restart_button: '/images/ui/buttons/Restart.png', 
+    previous_button: '/images/ui/buttons/Previous.png', 
+    next_button: '/images/ui/buttons/Next.png',
 };
 
 const characterData = {
