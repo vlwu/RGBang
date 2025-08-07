@@ -82,7 +82,7 @@ export class CharacterMenu extends LitElement {
                     <bitmap-text .fontRenderer=${this.fontRenderer} text="Character Selection" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
                 </div>
                 <div class="subtitle-container">
-                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Choose Your Hero!" scale="2"></bitmap-text>
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Who would you like to be?" scale="2"></bitmap-text>
                 </div>
                 <div id="character-selection-container">
                     ${map(races, (raceId) => html`
