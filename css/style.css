@@ -8,6 +8,7 @@ body, html {
 }
 
 #game-container {
+    position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -20,4 +21,157 @@ canvas {
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
+    position: absolute;
+}
+
+#ui-root {
+    position: absolute;
+    z-index: 100;
+    pointer-events: none; /* Allow clicks to pass through to the game canvas */
+}
+
+#ui-root > * {
+    pointer-events: auto; /* Re-enable pointer events for UI components */
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal-content {
+  background-color: #333;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  color: #eee;
+  text-align: center;
+  position: relative;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+}
+
+.close-button {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 32px;
+  height: 32px;
+  background-image: url('../images/ui/Close.png');
+  background-size: cover;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform 0.2s ease-in-out;
+}
+
+.close-button:hover {
+  transform: scale(1.1);
+}
+
+.settings-section {
+  margin-bottom: 30px;
+  padding: 20px;
+  background-color: #444;
+  border-radius: 8px;
+  border: 1px solid #555;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #555;
+  border-radius: 6px;
+}
+
+.setting-item .label-container {
+  flex-grow: 1;
+  text-align: left;
+}
+
+.toggle-button {
+    border: 2px solid #777; padding: 8px 16px; border-radius: 6px; cursor: pointer;
+    min-width: 70px; transition: all 0.2s ease-in-out;
+    display: flex; justify-content: center; align-items: center;
+}
+.toggle-button.sound-enabled { background-color: #4CAF50; border-color: #45a049; }
+.toggle-button.sound-disabled { background-color: #f44336; border-color: #d32f2f; }
+
+.volume-control { display: flex; align-items: center; gap: 10px; }
+
+.action-button {
+    background-color: #007bff; color: #fff; border: none; padding: 10px 20px;
+    border-radius: 6px; cursor: pointer;
+    display: flex; justify-content: center; align-items: center;
+}
+.action-button:hover:not(:disabled) { background-color: #0056b3; }
+.action-button:disabled { background-color: #666; cursor: not-allowed; opacity: 0.7; }
+
+.keybind-list { display: flex; flex-direction: column; gap: 15px; }
+.keybind-item { display: flex; justify-content: space-between; align-items: center; background-color: #555; padding: 12px 15px; border-radius: 8px; }
+.keybind-item .label-container { margin-right: 15px; flex-grow: 1; text-align: left; }
+
+.modal-image-button {
+    background: transparent; border: none; padding: 0;
+    cursor: pointer; width: 48px; height: 48px;
+    transition: transform 0.2s ease-in-out;
+}
+.modal-image-button:hover { transform: scale(1.1); }
+.modal-image-button img { width: 100%; height: 100%; }
+.exit-button-container {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #555;
+}
+.exit-button {
+  background-color: #e74c3c;
+  color: #fff;
+  border: 2px solid #c0392b;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease-in-out;
+  width: 100%;
+  box-sizing: border-box;
+}
+.exit-button:hover {
+  background-color: #c0392b;
+}
+
+.key-display {
+  background-color: #666; color: #fff; border: 1px solid #777;
+  border-radius: 6px; text-align: center;
+  min-width: 20px; display: inline-flex; justify-content: center;
+  align-items: center; padding: 5px 8px;
 }

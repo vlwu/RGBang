@@ -4,56 +4,83 @@ import { createPlayer } from '../entities/entity-factory.js';
 import { InputSystem } from '../systems/InputSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
 import { RenderSystem } from '../systems/RenderSystem.js';
+import { GameState } from '../managers/GameState.js';
+import { SoundManager } from '../managers/SoundManager.js';
+import { UISystem } from '../systems/UISystem.js';
+import { eventBus } from '../utils/event-bus.js';
 
 export class Engine {
-    constructor(container) {
+    constructor(container, assets) {
         this.container = container;
+        this.assets = assets;
         this.pixiApp = new PIXI.Application();
         this.entityManager = new EntityManager();
         this.systems = [];
+        this.isRunning = false;
     }
 
     async init() {
-        // New: Initialize PixiJS Assets with texture preferences for pixel art
-        await PIXI.Assets.init({
-            texturePreference: {
-                scaleMode: 'nearest',
-            },
-        });
-
-        // Initialize PixiJS Application
         await this.pixiApp.init({
             width: 1920,
             height: 1080,
-            backgroundColor: 0xFFFFFF, // White background
+            backgroundColor: 0xFFFFFF,
         });
         this.container.appendChild(this.pixiApp.canvas);
 
-        // Load assets (the JSON file automatically loads the associated PNG)
-        await PIXI.Assets.load('images/player/mPlayer Human.json');
+        this.gameState = new GameState();
+        this.soundManager = new SoundManager();
+        this.uiSystem = new UISystem();
 
-        // Create player
         this.player = createPlayer(this.entityManager, this.pixiApp.screen.width / 2, this.pixiApp.screen.height / 2);
 
-        // Initialize systems
-        this.inputSystem = new InputSystem(this.entityManager);
+        this.inputSystem = new InputSystem(this.entityManager, this.gameState);
         this.movementSystem = new MovementSystem(this.entityManager);
         this.renderSystem = new RenderSystem(this.entityManager, this.pixiApp.stage);
 
         this.systems = [
             this.inputSystem,
             this.movementSystem,
-            this.renderSystem
+            this.renderSystem,
+            this.uiSystem,
         ];
 
-        // Start the game loop
+        eventBus.subscribe('requestStartGame', () => this.start());
+        eventBus.subscribe('menuOpened', () => this.pause());
+        eventBus.subscribe('allMenusClosed', () => this.resume());
+        eventBus.subscribe('exitToMenu', () => this.stop());
+
         this.pixiApp.ticker.add((ticker) => {
-            this.update(ticker.deltaMS / 1000); // Convert delta to seconds
+            if (this.isRunning) {
+                this.update(ticker.deltaMS / 1000);
+            }
         });
     }
 
+    start() {
+        if (this.isRunning) return;
+        this.isRunning = true;
+        this.uiSystem.setGameStarted(true);
+        this.pixiApp.ticker.start();
+    }
+
+    stop() {
+        if (!this.isRunning) return;
+        this.isRunning = false;
+        this.uiSystem.setGameStarted(false);
+        this.pixiApp.ticker.stop();
+    }
+
+    pause() {
+        if (!this.isRunning) return;
+        this.pixiApp.ticker.stop();
+    }
+    
+    resume() {
+        if (!this.isRunning) return;
+        this.pixiApp.ticker.start();
+    }
+
     update(dt) {
-        // Update all systems
         for (const system of this.systems) {
             system.update(dt);
         }

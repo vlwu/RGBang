@@ -1,0 +1,49 @@
+import { characterConfig, levelSections } from '../entities/level-definitions.js';
+import { eventBus } from '../utils/event-bus.js';
+import { StorageManager } from './StorageManager.js';
+
+export class GameState {
+  constructor(initialState = null) {
+      if (initialState) {
+          this.currentSection = initialState.currentSection;
+          this.currentLevelIndex = initialState.currentLevelIndex;
+          this.showingLevelComplete = initialState.showingLevelComplete;
+          this.levelProgress = initialState.levelProgress;
+          this.selectedCharacter = initialState.selectedCharacter;
+          this.levelStats = initialState.levelStats;
+          this.tutorialShown = initialState.tutorialShown;
+      } else {
+          this.showingLevelComplete = false;
+          const savedState = StorageManager.loadProgress();
+          this.levelProgress = savedState.levelProgress;
+          this.selectedCharacter = savedState.selectedCharacter;
+          this.levelStats = savedState.levelStats;
+          this.tutorialShown = savedState.tutorialShown;
+          this.currentSection = 0;
+          this.currentLevelIndex = 0;
+      }
+  }
+
+  _clone() {
+      const clonedState = JSON.parse(JSON.stringify(this));
+      return new GameState(clonedState);
+  }
+
+  setSelectedCharacter(characterId) {
+    if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
+      const newState = this._clone();
+      newState.selectedCharacter = characterId;
+      return newState;
+    }
+    return this;
+  }
+
+  isCharacterUnlocked(characterId) {
+    const config = characterConfig[characterId];
+    if (!config) return false;
+    // For now, let's assume all characters are unlocked for simplicity
+    // const completedCount = this.levelProgress.completedLevels.length;
+    // return completedCount >= config.unlockRequirement;
+    return true;
+  }
+}

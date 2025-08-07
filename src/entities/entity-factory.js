@@ -8,27 +8,22 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 export function createPlayer(entityManager, x, y) {
     const player = entityManager.createEntity();
 
-    // Get the spritesheet data we loaded
     const playerSpritesheet = PIXI.Assets.get('images/player/mPlayer Human.json');
 
-    // Create an AnimatedSprite using the frames from the "idle" animation
     const playerSprite = new PIXI.AnimatedSprite(playerSpritesheet.animations.idle);
 
-    // Configure the sprite
-    playerSprite.anchor.set(0.5); // Set the origin to the center
-    playerSprite.scale.set(3);   // Make the player 3x larger
+    playerSprite.anchor.set(0.5);
+    playerSprite.scale.set(3);
     playerSprite.x = x;
     playerSprite.y = y;
 
-    // Configure and start the animation
-    playerSprite.animationSpeed = 0.15; // Initial speed for idle animation
+    playerSprite.animationSpeed = 0.15;
     playerSprite.play();
 
     entityManager.addComponent(player, new PositionComponent(x, y));
     entityManager.addComponent(player, new VelocityComponent());
     entityManager.addComponent(player, new InputComponent());
-    entityManager.addComponent(player, new PlayerComponent());
-    // Pass both the sprite instance AND the spritesheet data to the component
+    entityManager.addComponent(player, new PlayerComponent('PinkMan')); 
     entityManager.addComponent(player, new RenderableComponent(playerSprite, playerSpritesheet));
 
     return player;
