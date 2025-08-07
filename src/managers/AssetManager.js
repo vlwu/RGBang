@@ -52,12 +52,12 @@ const coreImagePaths = {
 };
 
 const characterData = {
-    m_human: { json: 'images/player/mPlayer Human.json' },
-    f_human: { json: 'images/player/fPlayer Human.json' },
-    m_elf:   { json: 'images/player/mPlayer Elf.json' },
-    f_elf:   { json: 'images/player/fPlayer Elf.json' },
-    m_dwarf: { json: 'images/player/mPlayer Dwarf.json' },
-    f_dwarf: { json: 'images/player/fPlayer Dwarf.json' },
+    m_human: { image: 'images/player/mPlayer Human.png' },
+    f_human: { image: 'images/player/fPlayer Human.png' },
+    m_elf:   { image: 'images/player/mPlayer Elf.png' },
+    f_elf:   { image: 'images/player/fPlayer Elf.png' },
+    m_dwarf: { image: 'images/player/mPlayer Dwarf.png' },
+    f_dwarf: { image: 'images/player/fPlayer Dwarf.png' },
 };
 
 class AssetManager {
@@ -76,29 +76,46 @@ class AssetManager {
             loadImage(src, key).then(img => ({ [key]: img }))
         );
 
-        const characterPromises = [];
+        // Fetch the single JSON manifest for all characters manually
+        const manifestPath = 'images/player/mPlayer Human.json';
+        const manifestPromise = fetch(manifestPath).then(res => res.json());
+
+        const loadedParts = await Promise.all([...imagePromises]);
+        
+        for (const part of loadedParts) {
+            Object.assign(this.assets, part);
+        }
+
+        const manifestData = await manifestPromise;
+
+        // Load all character textures and create spritesheets
+        const characterSpritesheetPromises = [];
         for (const charKey in characterData) {
-            const jsonPath = characterData[charKey].json;
-            const promise = PIXI.Assets.load(jsonPath)
-                .then(spritesheet => ({ type: 'character', charKey, spritesheet }))
+            const imagePath = characterData[charKey].image;
+            const promise = PIXI.Assets.load(imagePath)
+                .then(texture => {
+                    // Create a new spritesheet instance using the shared manifest and the unique texture
+                    const spritesheet = new PIXI.Spritesheet({
+                        texture: texture,
+                        data: manifestData
+                    });
+                    return spritesheet.parse().then(() => ({ type: 'character', charKey, spritesheet }));
+                })
                 .catch(error => {
-                    console.warn(`Could not load character spritesheet for ${charKey} from ${jsonPath}:`, error);
+                    console.warn(`Could not load character texture for ${charKey} from ${imagePath}:`, error);
                     return { type: 'character', charKey, spritesheet: null };
                 });
-            characterPromises.push(promise);
+            characterSpritesheetPromises.push(promise);
         }
 
-        const loadedParts = await Promise.all([...imagePromises, ...characterPromises]);
+        const loadedCharacters = await Promise.all(characterSpritesheetPromises);
 
-        for (const part of loadedParts) {
-            if (part.type === 'character') {
-                if(part.spritesheet) {
-                    this.assets.characters[part.charKey] = part.spritesheet;
-                }
-            } else {
-                Object.assign(this.assets, part);
+        for (const part of loadedCharacters) {
+            if (part.type === 'character' && part.spritesheet) {
+                this.assets.characters[part.charKey] = part.spritesheet;
             }
         }
+        
         return this.assets;
     }
 }

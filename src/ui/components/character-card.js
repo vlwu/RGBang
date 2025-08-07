@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { characterConfig } from '../../entities/level-definitions.js';
+import { eventBus } from '../../utils/event-bus.js';
 import './bitmap-text.js';
 
 export class CharacterCard extends LitElement {
@@ -27,12 +28,19 @@ export class CharacterCard extends LitElement {
     .char-name-container {
       margin-top: 5px;
     }
+    .char-unlock-container {
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      flex-grow: 1;
+      min-height: 50px;
+    }
     .gender-select-container {
       display: flex;
       gap: 10px;
       margin: 10px 0;
       flex-grow: 1;
       align-items: center;
+      justify-content: center;
     }
     .gender-button {
       background-color: #666;
@@ -41,6 +49,16 @@ export class CharacterCard extends LitElement {
       padding: 5px 15px;
       border-radius: 5px;
       cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 50px;
+      height: 40px;
+      box-sizing: border-box;
+      transition: all 0.2s ease-in-out;
+    }
+    .gender-button:hover {
+      border-color: #aaa;
     }
     .gender-button.selected {
       background-color: #007bff;
@@ -69,6 +87,7 @@ export class CharacterCard extends LitElement {
     isSelected: { type: Boolean },
     selectedGenderInState: { type: String },
     fontRenderer: { type: Object },
+    selectedGender: { type: String, state: true }
   };
 
   constructor() {
@@ -77,9 +96,11 @@ export class CharacterCard extends LitElement {
     this.animationFrameId = null;
     this.animState = { frame: 0, timer: 0, lastTime: 0 };
   }
-  
-  firstUpdated() {
-    this.selectedGender = this.isSelected ? (this.selectedGenderInState || 'm') : 'm';
+
+  willUpdate(changedProperties) {
+    if (changedProperties.has('isSelected') || (changedProperties.has('selectedGenderInState') && this.isSelected)) {
+      this.selectedGender = this.isSelected ? (this.selectedGenderInState || 'm') : 'm';
+    }
   }
 
   connectedCallback() {
@@ -130,11 +151,13 @@ export class CharacterCard extends LitElement {
     }
     this.animationFrameId = requestAnimationFrame(this._animatePreview);
   }
-  
+
   _setGender(gender) {
-      this.selectedGender = gender;
-      this.animState.frame = 0;
-      this.requestUpdate();
+      if(this.selectedGender !== gender) {
+        this.selectedGender = gender;
+        this.animState.frame = 0;
+        eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+      }
   }
 
   _handleSelect() {
@@ -157,9 +180,23 @@ export class CharacterCard extends LitElement {
         <div class="char-name-container">
             <bitmap-text .fontRenderer=${this.fontRenderer} .text=${config.name} scale="2"></bitmap-text>
         </div>
-        <div class="gender-select-container">
-          <button class="gender-button ${this.selectedGender === 'm' ? 'selected' : ''}" @click=${() => this._setGender('m')}>Male</button>
-          <button class="gender-button ${this.selectedGender === 'f' ? 'selected' : ''}" @click=${() => this._setGender('f')}>Female</button>
+        <div class="char-unlock-container">
+          ${this.isLocked
+            ? html`
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="Complete ${config.unlockRequirement} levels" scale="1.5" color="#ccc"></bitmap-text>
+                <bitmap-text .fontRenderer=${this.fontRenderer} text="to unlock" scale="1.5" color="#ccc"></bitmap-text>
+              `
+            : html`
+                <div class="gender-select-container">
+                  <button class="gender-button ${this.selectedGender === 'm' ? 'selected' : ''}" @click=${() => this._setGender('m')}>
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="M" scale="1.8"></bitmap-text>
+                  </button>
+                  <button class="gender-button ${this.selectedGender === 'f' ? 'selected' : ''}" @click=${() => this._setGender('f')}>
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="F" scale="1.8"></bitmap-text>
+                  </button>
+                </div>
+              `
+          }
         </div>
         <button class="select-button" @click=${this._handleSelect} ?disabled=${this.isLocked || (this.isSelected && this.selectedGender === this.selectedGenderInState)}>
           <bitmap-text .fontRenderer=${this.fontRenderer} .text=${buttonText} scale="1.8"></bitmap-text>

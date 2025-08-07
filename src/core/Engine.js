@@ -33,7 +33,9 @@ export class Engine {
         this.soundManager = new SoundManager();
         this.uiSystem = new UISystem();
 
-        this.player = createPlayer(this.entityManager, this.pixiApp.screen.width / 2, this.pixiApp.screen.height / 2);
+        const initialCharacterId = this.gameState.selectedCharacter;
+        const initialSpritesheet = this.assets.characters[initialCharacterId];
+        this.player = createPlayer(this.entityManager, this.pixiApp.screen.width / 2, this.pixiApp.screen.height / 2, initialCharacterId, initialSpritesheet);
 
         this.inputSystem = new InputSystem(this.entityManager, this.gameState);
         this.movementSystem = new MovementSystem(this.entityManager);

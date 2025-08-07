@@ -5,10 +5,8 @@ import { InputComponent } from '../components/InputComponent.js';
 import { PlayerComponent } from '../components/PlayerComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 
-export function createPlayer(entityManager, x, y) {
+export function createPlayer(entityManager, x, y, characterId, playerSpritesheet) {
     const player = entityManager.createEntity();
-
-    const playerSpritesheet = PIXI.Assets.get('images/player/mPlayer Human.json');
 
     const playerSprite = new PIXI.AnimatedSprite(playerSpritesheet.animations.idle);
 
@@ -23,7 +21,7 @@ export function createPlayer(entityManager, x, y) {
     entityManager.addComponent(player, new PositionComponent(x, y));
     entityManager.addComponent(player, new VelocityComponent());
     entityManager.addComponent(player, new InputComponent());
-    entityManager.addComponent(player, new PlayerComponent('PinkMan')); 
+    entityManager.addComponent(player, new PlayerComponent(characterId));
     entityManager.addComponent(player, new RenderableComponent(playerSprite, playerSpritesheet));
 
     return player;
