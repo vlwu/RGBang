@@ -1,23 +1,19 @@
 export const characterConfig = {
-  PinkMan: {
-    name: "Pink Man",
+  human: {
+    name: "Human",
     unlockRequirement: 0,
   },
-  NinjaFrog: {
-    name: "Ninja Frog",
-    unlockRequirement: 10,
+  elf: {
+    name: "Elf",
+    unlockRequirement: 0,
   },
-  MaskDude: {
-    name: "Mask Dude",
-    unlockRequirement: 20,
-  },
-  VirtualGuy: {
-    name: "Virtual Guy",
-    unlockRequirement: 30,
+  dwarf: {
+    name: "Dwarf",
+    unlockRequirement: 0,
   },
 };
 
-// Simplified for now, can be expanded later
+
 export const levelSections = [
     { name: "Default", levels: [] }
 ];

@@ -8,6 +8,8 @@ import { GameState } from '../managers/GameState.js';
 import { SoundManager } from '../managers/SoundManager.js';
 import { UISystem } from '../systems/UISystem.js';
 import { eventBus } from '../utils/event-bus.js';
+import { PlayerComponent } from '../components/PlayerComponent.js';
+import { RenderableComponent } from '../components/RenderableComponent.js';
 
 export class Engine {
     constructor(container, assets) {
@@ -48,6 +50,7 @@ export class Engine {
         eventBus.subscribe('menuOpened', () => this.pause());
         eventBus.subscribe('allMenusClosed', () => this.resume());
         eventBus.subscribe('exitToMenu', () => this.stop());
+        eventBus.subscribe('characterUpdated', (charId) => this.updatePlayerCharacter(charId));
 
         this.pixiApp.ticker.add((ticker) => {
             if (this.isRunning) {
@@ -85,6 +88,23 @@ export class Engine {
     update(dt) {
         for (const system of this.systems) {
             system.update(dt);
+        }
+    }
+
+    updatePlayerCharacter(characterId) {
+        if (this.player === null) return;
+        const playerComp = this.entityManager.getComponent(this.player, PlayerComponent);
+        if (playerComp && playerComp.characterId !== characterId) {
+            playerComp.characterId = characterId;
+            const renderable = this.entityManager.getComponent(this.player, RenderableComponent);
+            const newSpritesheet = this.assets.characters[characterId];
+            if (renderable && newSpritesheet) {
+                renderable.spritesheet = newSpritesheet;
+                const sprite = renderable.sprite;
+                const currentAnimation = playerComp.state === 'turning' ? 'turn' : playerComp.state;
+                sprite.textures = newSpritesheet.animations[currentAnimation] || newSpritesheet.animations.idle;
+                sprite.play();
+            }
         }
     }
 }

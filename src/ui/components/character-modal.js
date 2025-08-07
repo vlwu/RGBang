@@ -65,7 +65,8 @@ export class CharacterMenu extends LitElement {
         return html`<div class="modal-overlay">Loading...</div>`;
     }
 
-    const characterIds = Object.keys(characterConfig);
+    const races = Object.keys(characterConfig);
+    const [selectedGender, selectedRace] = this.gameState.selectedCharacter.split('_');
 
     return html`
         <div class="modal-overlay" @click=${this._dispatchClose}>
@@ -75,14 +76,17 @@ export class CharacterMenu extends LitElement {
                     <bitmap-text .fontRenderer=${this.fontRenderer} text="Character Selection" scale="3" outlineColor="black" outlineWidth="2"></bitmap-text>
                 </div>
                 <div class="subtitle-container">
-                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Choose Your Character" scale="2"></bitmap-text>
+                    <bitmap-text .fontRenderer=${this.fontRenderer} text="Choose Your Hero!" scale="2"></bitmap-text>
                 </div>
                 <div id="character-selection-container">
-                    ${map(characterIds, (id) => html`
+                    ${map(races, (raceId) => html`
                         <character-card
-                            .characterId=${id}
-                            .isLocked=${!this.gameState.isCharacterUnlocked(id)}
-                            .isSelected=${this.gameState.selectedCharacter === id}
+                            .raceId=${raceId}
+                            .mSpritesheet=${this.assets.characters[`m_${raceId}`]}
+                            .fSpritesheet=${this.assets.characters[`f_${raceId}`]}
+                            .isLocked=${!this.gameState.isCharacterUnlocked(raceId)}
+                            .isSelected=${selectedRace === raceId}
+                            .selectedGenderInState=${selectedGender}
                             .fontRenderer=${this.fontRenderer}
                         ></character-card>
                     `)}

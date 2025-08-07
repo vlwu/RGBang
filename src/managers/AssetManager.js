@@ -39,23 +39,25 @@ function loadImage(src, key = 'unknown') {
 }
 
 const coreImagePaths = {
-    font_spritesheet: '/images/ui/text/Text (White).png', 
-    settings_icon: '/images/ui/buttons/Settings.png', 
-    pause_icon: '/images/ui/buttons/Pause.png', 
-    play_icon: '/images/ui/buttons/Play.png', 
-    character_icon: '/images/ui/buttons/Character.png', 
-    info_icon: '/images/ui/buttons/Info.png', 
-    close_button: '/images/ui/buttons/Close.png', 
-    restart_button: '/images/ui/buttons/Restart.png', 
-    previous_button: '/images/ui/buttons/Previous.png', 
+    font_spritesheet: '/images/ui/text/Text (White).png',
+    settings_icon: '/images/ui/buttons/Settings.png',
+    pause_icon: '/images/ui/buttons/Pause.png',
+    play_icon: '/images/ui/buttons/Play.png',
+    character_icon: '/images/ui/buttons/Character.png',
+    info_icon: '/images/ui/buttons/Info.png',
+    close_button: '/images/ui/buttons/Close.png',
+    restart_button: '/images/ui/buttons/Restart.png',
+    previous_button: '/images/ui/buttons/Previous.png',
     next_button: '/images/ui/buttons/Next.png',
 };
 
 const characterData = {
-    PinkMan: { path: 'images/player/' },
-    NinjaFrog: { path: 'images/player/' },
-    MaskDude: { path: 'images/player/' },
-    VirtualGuy: { path: 'images/player/' },
+    m_human: { json: 'images/player/mPlayer Human.json' },
+    f_human: { json: 'images/player/fPlayer Human.json' },
+    m_elf:   { json: 'images/player/mPlayer Elf.json' },
+    f_elf:   { json: 'images/player/fPlayer Elf.json' },
+    m_dwarf: { json: 'images/player/mPlayer Dwarf.json' },
+    f_dwarf: { json: 'images/player/fPlayer Dwarf.json' },
 };
 
 class AssetManager {
@@ -76,7 +78,7 @@ class AssetManager {
 
         const characterPromises = [];
         for (const charKey in characterData) {
-            const jsonPath = `${characterData[charKey].path}mPlayer Human.json`;
+            const jsonPath = characterData[charKey].json;
             const promise = PIXI.Assets.load(jsonPath)
                 .then(spritesheet => ({ type: 'character', charKey, spritesheet }))
                 .catch(error => {

@@ -4,7 +4,7 @@ export class StorageManager {
     static _getDefaultState() {
         return {
             levelProgress: { unlockedLevels: [1], completedLevels: [] },
-            selectedCharacter: 'PinkMan',
+            selectedCharacter: 'm_human',
             levelStats: {},
             tutorialShown: false,
         };
@@ -23,8 +23,8 @@ export class StorageManager {
                  return this._getDefaultState();
             }
 
-            if (typeof state.selectedCharacter !== 'string' || !characterConfig[state.selectedCharacter]) {
-                state.selectedCharacter = 'PinkMan';
+            if (typeof state.selectedCharacter !== 'string' || !characterConfig[state.selectedCharacter.split('_')[1]]) {
+                state.selectedCharacter = 'm_human';
             }
 
             if (!state.levelStats || typeof state.levelStats !== 'object') {
