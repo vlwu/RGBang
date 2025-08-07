@@ -7,8 +7,8 @@ import { eventBus } from './src/utils/event-bus.js';
 const gameContainer = document.getElementById('game-container');
 let engine;
 
-const BASE_WIDTH = 1280;
-const BASE_HEIGHT = 720;
+const BASE_WIDTH = 1920;
+const BASE_HEIGHT = 1080;
 
 function resizeCanvas() {
     if (!engine || !engine.pixiApp.canvas) return;
@@ -37,25 +37,30 @@ function resizeCanvas() {
 }
 
 async function main() {
-    await assetManager.loadCoreAssets();
+    try {
+        await assetManager.loadCoreAssets();
 
-    engine = new Engine(gameContainer, assetManager.assets);
-    await engine.init();
+        engine = new Engine(gameContainer, assetManager.assets);
+        await engine.init();
 
-    const fontRenderer = new FontRenderer(assetManager.assets.font_spritesheet);
-    const uiRootEl = document.querySelector('rgbang-ui');
-    if (uiRootEl) {
-        uiRootEl.fontRenderer = fontRenderer;
-        uiRootEl.assets = assetManager.assets;
-        uiRootEl.gameState = engine.gameState;
+        const fontRenderer = new FontRenderer(assetManager.assets.font_spritesheet);
+        const uiRootEl = document.querySelector('rgbang-ui');
+        if (uiRootEl) {
+            uiRootEl.fontRenderer = fontRenderer;
+            uiRootEl.assets = assetManager.assets;
+            uiRootEl.gameState = engine.gameState;
 
-        eventBus.subscribe('gameStateUpdated', (gameState) => {
-            uiRootEl.gameState = gameState;
-        });
+            eventBus.subscribe('gameStateUpdated', (gameState) => {
+                uiRootEl.gameState = gameState;
+            });
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+    } catch (error) {
+        console.error("Failed to initialize the game:", error);
+        gameContainer.innerHTML = '<h1>An error occurred while loading the game. Please check the console for details.</h1>';
     }
-
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
 }
 
 main();

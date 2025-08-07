@@ -9,6 +9,12 @@ import './bitmap-text.js';
 
 export class RgbangUI extends LitElement {
   static styles = css`
+    :host {
+      display: block;
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
     .main-menu-overlay {
       position: absolute;
       inset: 0;

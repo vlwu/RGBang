@@ -23,7 +23,7 @@ export class Engine {
         await this.pixiApp.init({
             width: 1920,
             height: 1080,
-            backgroundColor: 0xFFFFFF,
+            backgroundAlpha: 0,
         });
         this.container.appendChild(this.pixiApp.canvas);
 
@@ -74,7 +74,7 @@ export class Engine {
         if (!this.isRunning) return;
         this.pixiApp.ticker.stop();
     }
-    
+
     resume() {
         if (!this.isRunning) return;
         this.pixiApp.ticker.start();
