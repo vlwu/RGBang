@@ -18,7 +18,7 @@ export class RgbangUI extends LitElement {
     .main-menu-overlay {
       position: absolute;
       inset: 0;
-      background-color: #2c3e50;
+      background-image: url('images/ui/Menu Background.png');
       background-size: cover; background-position: center; z-index: 500;
       display: flex; justify-content: center; align-items: center;
       flex-direction: column;
@@ -159,7 +159,7 @@ export class RgbangUI extends LitElement {
         </div>
       `;
     }
-    
+
     return html`
         ${this.gameHasStarted && !this.activeModal ? this.renderHUD() : ''}
         ${this.renderActiveModal()}
@@ -192,7 +192,7 @@ export class RgbangUI extends LitElement {
       </div>
     `;
   }
-  
+
   renderHUD() {
       const iconButtons = [
         { id: 'settings', title: 'Settings' },
