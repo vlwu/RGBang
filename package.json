@@ -1,0 +1,23 @@
+{
+  "name": "rgbang",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "preview": "vite preview",
+    "build": "rimraf dist release && vite build",
+    "version": "npm run build"
+  },
+  "dependencies": {
+    "gsap": "^3.12.5",
+    "howler": "^2.2.4",
+    "lit": "^3.1.3",
+    "pixi.js": "^8.1.5"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.7",
+    "vite": "^5.2.11",
+    "vite-plugin-zip-pack": "^1.2.4"
+  }
+}
