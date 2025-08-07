@@ -8,12 +8,21 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 export function createPlayer(entityManager, x, y) {
     const player = entityManager.createEntity();
 
-    // Create a sprite from the loaded texture
-    const playerTexture = PIXI.Assets.get('images/player/player.png');
-    const playerSprite = new PIXI.Sprite(playerTexture);
+    // Get the spritesheet data we loaded
+    const playerSpritesheet = PIXI.Assets.get('images/player/player.json');
+
+    // Create an AnimatedSprite using the frames from the "idle" animation
+    const playerSprite = new PIXI.AnimatedSprite(playerSpritesheet.animations.idle);
+
+    // Configure the sprite
     playerSprite.anchor.set(0.5); // Set the origin to the center
+    playerSprite.scale.set(3);   // Make the player 3x larger
     playerSprite.x = x;
     playerSprite.y = y;
+
+    // Configure and start the animation
+    playerSprite.animationSpeed = 0.15; // Adjust as needed
+    playerSprite.play();
 
     entityManager.addComponent(player, new PositionComponent(x, y));
     entityManager.addComponent(player, new VelocityComponent());

@@ -18,12 +18,12 @@ export class Engine {
         await this.pixiApp.init({
             width: 1280,
             height: 720,
-            backgroundColor: 0x1a1a1a,
+            backgroundColor: 0xFFFFFF, // Changed to white
         });
         this.container.appendChild(this.pixiApp.canvas);
 
-        // Load assets
-        await PIXI.Assets.load('images/player/player.png');
+        // Load assets (loading the JSON file automatically loads the associated PNG)
+        await PIXI.Assets.load('images/player/player.json');
 
         // Create player
         this.player = createPlayer(this.entityManager, this.pixiApp.screen.width / 2, this.pixiApp.screen.height / 2);
