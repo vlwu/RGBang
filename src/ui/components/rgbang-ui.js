@@ -140,6 +140,7 @@ export class RgbangUI extends LitElement {
     if (newGameState !== this.gameState) {
         this.gameState = newGameState;
         eventBus.publish('gameStateUpdated', this.gameState);
+        this.requestUpdate('gameState');
     }
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     eventBus.publish('characterUpdated', characterId);

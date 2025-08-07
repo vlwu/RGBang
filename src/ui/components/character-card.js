@@ -98,8 +98,14 @@ export class CharacterCard extends LitElement {
   }
 
   willUpdate(changedProperties) {
-    if (changedProperties.has('isSelected') || (changedProperties.has('selectedGenderInState') && this.isSelected)) {
-      this.selectedGender = this.isSelected ? (this.selectedGenderInState || 'm') : 'm';
+    // Update selectedGender when the component becomes selected or when the state gender changes
+    if (changedProperties.has('isSelected') || changedProperties.has('selectedGenderInState')) {
+      if (this.isSelected && this.selectedGenderInState) {
+        this.selectedGender = this.selectedGenderInState;
+      } else if (!this.isSelected) {
+        // Reset to default when not selected
+        this.selectedGender = 'm';
+      }
     }
   }
 

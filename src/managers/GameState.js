@@ -33,6 +33,12 @@ export class GameState {
     if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
       const newState = this._clone();
       newState.selectedCharacter = characterId;
+      StorageManager.saveProgress({
+        levelProgress: newState.levelProgress,
+        selectedCharacter: newState.selectedCharacter,
+        levelStats: newState.levelStats,
+        tutorialShown: newState.tutorialShown
+      });
       return newState;
     }
     return this;
@@ -41,9 +47,7 @@ export class GameState {
   isCharacterUnlocked(characterId) {
     const config = characterConfig[characterId];
     if (!config) return false;
-    // For now, let's assume all characters are unlocked for simplicity
-    // const completedCount = this.levelProgress.completedLevels.length;
-    // return completedCount >= config.unlockRequirement;
+    // For now, assume all characters are unlocked for simplicity
     return true;
   }
 }
