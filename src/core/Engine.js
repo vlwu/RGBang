@@ -14,15 +14,22 @@ export class Engine {
     }
 
     async init() {
-        // Initialize PixiJS
+        // New: Initialize PixiJS Assets with texture preferences for pixel art
+        await PIXI.Assets.init({
+            texturePreference: {
+                scaleMode: 'nearest',
+            },
+        });
+
+        // Initialize PixiJS Application
         await this.pixiApp.init({
-            width: 1280,
-            height: 720,
-            backgroundColor: 0xFFFFFF, // Changed to white
+            width: 1920,
+            height: 1080,
+            backgroundColor: 0xFFFFFF, // White background
         });
         this.container.appendChild(this.pixiApp.canvas);
 
-        // Load assets (loading the JSON file automatically loads the associated PNG)
+        // Load assets (the JSON file automatically loads the associated PNG)
         await PIXI.Assets.load('images/player/mPlayer Human.json');
 
         // Create player

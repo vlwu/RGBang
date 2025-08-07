@@ -16,12 +16,12 @@ export function createPlayer(entityManager, x, y) {
 
     // Configure the sprite
     playerSprite.anchor.set(0.5); // Set the origin to the center
-    playerSprite.scale.set(1);   // Make the player 3x larger
+    playerSprite.scale.set(3);   // Restore the scale to make the player larger
     playerSprite.x = x;
     playerSprite.y = y;
 
     // Configure and start the animation
-    playerSprite.animationSpeed = 0.1; 
+    playerSprite.animationSpeed = 0.15; // Adjusted for a 4-frame animation
     playerSprite.play();
 
     entityManager.addComponent(player, new PositionComponent(x, y));
