@@ -38,6 +38,16 @@ export class RgbangUI extends LitElement {
     .main-menu-buttons button:hover { background-color: #0056b3; transform: translateY(-2px); box-shadow: 0 8px #004a99; }
     .main-menu-buttons button:active { transform: translateY(2px); box-shadow: 0 2px #004a99; }
 
+    .hud-buttons {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 100;
+    }
+
     .main-menu-icon-buttons {
       display: flex;
       gap: 20px;
@@ -112,6 +122,12 @@ export class RgbangUI extends LitElement {
       this.activeModal = modalName;
   }
 
+  _handlePauseClick() {
+    eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+    this.activeModal = 'pause';
+    eventBus.publish('menuOpened');
+  }
+
   _handleExitToMenu = () => {
     this.gameHasStarted = false;
     this.activeModal = 'main-menu';
@@ -142,7 +158,11 @@ export class RgbangUI extends LitElement {
         </div>
       `;
     }
-    return this.renderActiveModal();
+    
+    return html`
+        ${this.gameHasStarted && !this.activeModal ? this.renderHUD() : ''}
+        ${this.renderActiveModal()}
+    `;
   }
 
   renderMainMenuContent() {
@@ -170,6 +190,28 @@ export class RgbangUI extends LitElement {
         </div>
       </div>
     `;
+  }
+  
+  renderHUD() {
+      const iconButtons = [
+        { id: 'settings', title: 'Settings' },
+        { id: 'character', title: 'Character' },
+        { id: 'info', title: 'How to Play' }
+      ];
+      const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+      return html`
+          <div class="hud-buttons">
+              <button class="icon-button" title="Pause" @click=${this._handlePauseClick}>
+                  <img src="images/ui/buttons/Pause.png" alt="Pause">
+              </button>
+              ${iconButtons.map(btn => html`
+                  <button class="icon-button" title=${btn.title} @click=${() => this._openModalFromMenu(btn.id)}>
+                      <img src="images/ui/buttons/${capitalize(btn.id)}.png" alt=${btn.title}>
+                  </button>
+              `)}
+          </div>
+      `;
   }
 
   renderActiveModal() {

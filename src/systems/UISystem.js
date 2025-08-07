@@ -15,11 +15,15 @@ export class UISystem {
     setGameStarted(hasStarted) {
         if (this.uiRoot) {
             this.uiRoot.gameHasStarted = hasStarted;
-            if(!hasStarted) this.uiRoot.activeModal = 'main-menu';
+            if (hasStarted) {
+                this.uiRoot.activeModal = null;
+            } else {
+                this.uiRoot.activeModal = 'main-menu';
+            }
         }
     }
-    
+
     update(dt) {
-        // The UI is event-driven and self-updates via Lit, so this can be minimal
+
     }
 }

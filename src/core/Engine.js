@@ -73,11 +73,13 @@ export class Engine {
     pause() {
         if (!this.isRunning) return;
         this.pixiApp.ticker.stop();
+        eventBus.publish('gamePaused');
     }
 
     resume() {
         if (!this.isRunning) return;
         this.pixiApp.ticker.start();
+        eventBus.publish('gameResumed');
     }
 
     update(dt) {
