@@ -104,10 +104,10 @@ export class InfoModal extends LitElement {
                     <label>Move:</label>
                     <div class="key-display-container">
                       <div class="key-display">
-                          <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.moveLeft)} scale="1.5"></bitmap-text>
+                          <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.left)} scale="1.5"></bitmap-text>
                       </div>
                       <div class="key-display">
-                          <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.moveRight)} scale="1.5"></bitmap-text>
+                          <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.right)} scale="1.5"></bitmap-text>
                       </div>
                        <div class="key-display">
                           <bitmap-text .fontRenderer=${this.fontRenderer} text=${formatKeyForDisplay(this.keybinds.up)} scale="1.5"></bitmap-text>
