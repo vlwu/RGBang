@@ -231,7 +231,6 @@ export class RgbangUI extends LitElement {
       case 'character':
         return html`<character-menu
                       .gameState=${this.gameState} .assets=${this.assets} .fontRenderer=${this.fontRenderer}
-                      key=${this.gameState.selectedCharacter}
                       @close-modal=${this._closeModal} @character-selected=${this._handleCharacterSelected}
                     ></character-menu>`;
       case 'info':

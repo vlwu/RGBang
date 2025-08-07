@@ -58,13 +58,22 @@ export class CharacterMenu extends LitElement {
 
   constructor() {
     super();
-    this.selectedCharacter = 'm_human'; // Default
+    this.selectedCharacter = null;
+    this._isInitialized = false;
   }
 
   willUpdate(changedProperties) {
-    if (changedProperties.has('gameState') && this.gameState) {
+    // Sync with gameState when component is first initialized or when explicitly reset
+    if (changedProperties.has('gameState') && this.gameState && !this._isInitialized) {
       this.selectedCharacter = this.gameState.selectedCharacter;
+      this._isInitialized = true;
     }
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    // Reset initialization flag when component reconnects (modal reopens)
+    this._isInitialized = false;
   }
 
   _dispatchClose() {
@@ -83,7 +92,7 @@ export class CharacterMenu extends LitElement {
   }
 
   render() {
-    if (!this.gameState || !this.assets) {
+    if (!this.gameState || !this.assets || !this.selectedCharacter) {
         return html`<div class="modal-overlay">Loading...</div>`;
     }
 
