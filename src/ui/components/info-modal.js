@@ -31,7 +31,7 @@ export class InfoModal extends LitElement {
     }
     .close-button {
       position: absolute; top: 15px; right: 15px; width: 32px; height: 32px;
-      background-image: url('images/ui/Close.png');
+      background-image: url('images/ui/buttons/Close.png');
       background-size: cover; background-color: transparent;
       border: none; cursor: pointer; border-radius: 50%;
       transition: transform 0.2s ease-in-out;

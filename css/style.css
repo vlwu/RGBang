@@ -81,7 +81,7 @@ canvas {
   right: 15px;
   width: 32px;
   height: 32px;
-  background-image: url('../images/ui/Close.png');
+  background-image: url('../public/images/ui/buttons/Close.png');
   background-size: cover;
   background-color: transparent;
   border: none;

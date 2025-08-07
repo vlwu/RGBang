@@ -164,7 +164,7 @@ export class RgbangUI extends LitElement {
         <div class="main-menu-icon-buttons">
             ${iconButtons.map(btn => html`
                 <button class="icon-button" title=${btn.title} @click=${() => this._openModalFromMenu(btn.id)}>
-                    <img src="images/ui/${capitalize(btn.id)}.png" alt=${btn.title}>
+                    <img src="images/ui/buttons/${capitalize(btn.id)}.png" alt=${btn.title}>
                 </button>
             `)}
         </div>
