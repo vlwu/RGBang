@@ -18,7 +18,6 @@ export class CharacterMenu extends LitElement {
       background-color: #333; padding: 30px; border-radius: 12px;
       box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5); color: #eee;
       text-align: center; position: relative; width: 90%;
-
       max-width: 800px;
       max-height: 80vh; overflow-y: auto;
       box-sizing: border-box;
@@ -39,7 +38,6 @@ export class CharacterMenu extends LitElement {
     .subtitle-container {
         margin-bottom: 25px;
     }
-
     #character-selection-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -53,28 +51,7 @@ export class CharacterMenu extends LitElement {
       gameState: { type: Object },
       assets: { type: Object },
       fontRenderer: { type: Object },
-      selectedCharacter: { type: String, state: true },
   };
-
-  constructor() {
-    super();
-    this.selectedCharacter = null;
-    this._isInitialized = false;
-  }
-
-  willUpdate(changedProperties) {
-    // Sync with gameState when component is first initialized or when explicitly reset
-    if (changedProperties.has('gameState') && this.gameState && !this._isInitialized) {
-      this.selectedCharacter = this.gameState.selectedCharacter;
-      this._isInitialized = true;
-    }
-  }
-
-  connectedCallback() {
-    super.connectedCallback();
-    // Reset initialization flag when component reconnects (modal reopens)
-    this._isInitialized = false;
-  }
 
   _dispatchClose() {
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
@@ -82,22 +59,20 @@ export class CharacterMenu extends LitElement {
   }
 
   _handleCharacterSelected(e) {
-    const { characterId } = e.detail;
-    this.selectedCharacter = characterId;
     this.dispatchEvent(new CustomEvent('character-selected', {
-      detail: { characterId },
+      detail: { characterId: e.detail.characterId },
       bubbles: true,
       composed: true
     }));
   }
 
   render() {
-    if (!this.gameState || !this.assets || !this.selectedCharacter) {
+    if (!this.gameState || !this.assets) {
         return html`<div class="modal-overlay">Loading...</div>`;
     }
 
     const races = Object.keys(characterConfig);
-    const [selectedGender, selectedRace] = this.selectedCharacter.split('_');
+    const [selectedGender, selectedRace] = this.gameState.selectedCharacter.split('_');
 
     return html`
         <div class="modal-overlay" @click=${this._dispatchClose}>

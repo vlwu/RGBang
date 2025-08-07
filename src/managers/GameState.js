@@ -30,7 +30,11 @@ export class GameState {
   }
 
   setSelectedCharacter(characterId) {
-    if (characterConfig[characterId] && this.selectedCharacter !== characterId) {
+    // Correctly extract the raceId (e.g., 'human') from the full characterId (e.g., 'm_human')
+    const raceId = characterId.split('_')[1];
+    
+    // Use the extracted raceId to validate against characterConfig.
+    if (characterConfig[raceId] && this.selectedCharacter !== characterId) {
       const newState = this._clone();
       newState.selectedCharacter = characterId;
       StorageManager.saveProgress({
@@ -47,7 +51,7 @@ export class GameState {
   isCharacterUnlocked(characterId) {
     const config = characterConfig[characterId];
     if (!config) return false;
-    // For now, assume all characters are unlocked for simplicity
+
     return true;
   }
 }
