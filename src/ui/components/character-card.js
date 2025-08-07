@@ -85,28 +85,14 @@ export class CharacterCard extends LitElement {
     fSpritesheet: { type: Object },
     isLocked: { type: Boolean },
     isSelected: { type: Boolean },
-    selectedGenderInState: { type: String },
+    selectedGender: { type: String },
     fontRenderer: { type: Object },
-    selectedGender: { type: String, state: true }
   };
 
   constructor() {
     super();
-    this.selectedGender = 'm';
     this.animationFrameId = null;
     this.animState = { frame: 0, timer: 0, lastTime: 0 };
-  }
-
-  willUpdate(changedProperties) {
-    // Update selectedGender when the component becomes selected or when the state gender changes
-    if (changedProperties.has('isSelected') || changedProperties.has('selectedGenderInState')) {
-      if (this.isSelected && this.selectedGenderInState) {
-        this.selectedGender = this.selectedGenderInState;
-      } else if (!this.isSelected) {
-        // Reset to default when not selected
-        this.selectedGender = 'm';
-      }
-    }
   }
 
   connectedCallback() {
@@ -160,14 +146,17 @@ export class CharacterCard extends LitElement {
 
   _setGender(gender) {
       if(this.selectedGender !== gender) {
-        this.selectedGender = gender;
-        this.animState.frame = 0;
         eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
+        this.dispatchEvent(new CustomEvent('character-selected', {
+            detail: { characterId: `${gender}_${this.raceId}` },
+            bubbles: true,
+            composed: true
+        }));
       }
   }
 
   _handleSelect() {
-      if (this.isLocked || (this.isSelected && this.selectedGender === this.selectedGenderInState)) return;
+      if (this.isLocked || this.isSelected) return;
       this.dispatchEvent(new CustomEvent('character-selected', {
           detail: { characterId: `${this.selectedGender}_${this.raceId}` },
           bubbles: true,
@@ -178,7 +167,7 @@ export class CharacterCard extends LitElement {
   render() {
     const config = characterConfig[this.raceId];
     const classes = `character-card ${this.isLocked ? 'locked' : ''} ${this.isSelected ? 'selected' : ''}`;
-    const buttonText = this.isLocked ? 'Locked' : ((this.isSelected && this.selectedGender === this.selectedGenderInState) ? 'Selected' : 'Select');
+    const buttonText = this.isLocked ? 'Locked' : (this.isSelected ? 'Selected' : 'Select');
 
     return html`
       <div class=${classes}>
@@ -204,7 +193,7 @@ export class CharacterCard extends LitElement {
               `
           }
         </div>
-        <button class="select-button" @click=${this._handleSelect} ?disabled=${this.isLocked || (this.isSelected && this.selectedGender === this.selectedGenderInState)}>
+        <button class="select-button" @click=${this._handleSelect} ?disabled=${this.isLocked || this.isSelected}>
           <bitmap-text .fontRenderer=${this.fontRenderer} .text=${buttonText} scale="1.8"></bitmap-text>
         </button>
       </div>

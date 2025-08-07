@@ -53,11 +53,33 @@ export class CharacterMenu extends LitElement {
       gameState: { type: Object },
       assets: { type: Object },
       fontRenderer: { type: Object },
+      selectedCharacter: { type: String, state: true },
   };
+
+  constructor() {
+    super();
+    this.selectedCharacter = 'm_human'; // Default
+  }
+
+  willUpdate(changedProperties) {
+    if (changedProperties.has('gameState') && this.gameState) {
+      this.selectedCharacter = this.gameState.selectedCharacter;
+    }
+  }
 
   _dispatchClose() {
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.dispatchEvent(new CustomEvent('close-modal', { bubbles: true, composed: true }));
+  }
+
+  _handleCharacterSelected(e) {
+    const { characterId } = e.detail;
+    this.selectedCharacter = characterId;
+    this.dispatchEvent(new CustomEvent('character-selected', {
+      detail: { characterId },
+      bubbles: true,
+      composed: true
+    }));
   }
 
   render() {
@@ -66,7 +88,7 @@ export class CharacterMenu extends LitElement {
     }
 
     const races = Object.keys(characterConfig);
-    const [selectedGender, selectedRace] = this.gameState.selectedCharacter.split('_');
+    const [selectedGender, selectedRace] = this.selectedCharacter.split('_');
 
     return html`
         <div class="modal-overlay" @click=${this._dispatchClose}>
@@ -86,8 +108,9 @@ export class CharacterMenu extends LitElement {
                             .fSpritesheet=${this.assets.characters[`f_${raceId}`]}
                             .isLocked=${!this.gameState.isCharacterUnlocked(raceId)}
                             .isSelected=${selectedRace === raceId}
-                            .selectedGenderInState=${selectedGender}
+                            .selectedGender=${selectedGender}
                             .fontRenderer=${this.fontRenderer}
+                            @character-selected=${this._handleCharacterSelected}
                         ></character-card>
                     `)}
                 </div>
