@@ -107,41 +107,53 @@ export class CharacterCard extends LitElement {
     }
   }
 
+  updated(changedProperties) {
+    super.updated(changedProperties);
+    if (changedProperties.has('selectedGender') && !changedProperties.get('selectedGender')) {
+        this.animState = { frame: 0, timer: 0, lastTime: 0 };
+    }
+  }
+
   _animatePreview = (timestamp) => {
+    this.animationFrameId = requestAnimationFrame(this._animatePreview);
+
     const canvas = this.shadowRoot.querySelector('.char-canvas');
     const currentSpritesheet = this.selectedGender === 'm' ? this.mSpritesheet : this.fSpritesheet;
-    if (!canvas || !currentSpritesheet) {
-      this.animationFrameId = requestAnimationFrame(this._animatePreview);
+
+    if (!canvas || !currentSpritesheet || !currentSpritesheet.animations.idle || currentSpritesheet.animations.idle.length === 0) {
       return;
     }
 
     const idleAnim = currentSpritesheet.animations.idle;
-    if (!idleAnim) {
-        this.animationFrameId = requestAnimationFrame(this._animatePreview);
-        return;
-    }
 
     if (this.animState.lastTime === 0) this.animState.lastTime = timestamp;
-
-    const deltaTime = (timestamp - this.animState.lastTime) / 1000;
+    const deltaTime = (timestamp - this.animState.lastTime);
     this.animState.lastTime = timestamp;
     this.animState.timer += deltaTime;
 
-    const animationSpeed = 0.15;
-    const frameCount = idleAnim.length;
-
+    const animationSpeed = 150; // in milliseconds
     if (this.animState.timer >= animationSpeed) {
-      this.animState.timer = 0;
-      this.animState.frame = (this.animState.frame + 1) % frameCount;
-
-      const ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const texture = idleAnim[this.animState.frame];
-      if (texture && texture.source) {
-          ctx.drawImage(texture.source.resource, texture.frame.x, texture.frame.y, texture.frame.w, texture.frame.h, 0, 0, canvas.width, canvas.height);
-      }
+      this.animState.timer %= animationSpeed;
+      this.animState.frame = (this.animState.frame + 1) % idleAnim.length;
     }
-    this.animationFrameId = requestAnimationFrame(this._animatePreview);
+
+    const texture = idleAnim[this.animState.frame];
+    if (texture && texture.source && texture.source.resource) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(
+            texture.source.resource,
+            texture.frame.x,
+            texture.frame.y,
+            texture.frame.width,
+            texture.frame.height,
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+    }
   }
 
   _setGender(gender) {
