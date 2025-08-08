@@ -12,7 +12,7 @@ export class MovementSystem {
     }
 
     update(dt) {
-        // --- Generic Movement for ALL entities with Velocity ---
+
         const movingEntities = this.entityManager.query([PositionComponent, VelocityComponent]);
         for (const entity of movingEntities) {
             const pos = this.entityManager.getComponent(entity, PositionComponent);
@@ -21,7 +21,7 @@ export class MovementSystem {
             pos.y += vel.vy * dt;
         }
 
-        // --- Player-Specific Logic ---
+
         const playerEntities = this.entityManager.query([PlayerComponent, PositionComponent, VelocityComponent, InputComponent, RenderableComponent, WeaponComponent]);
         for (const entity of playerEntities) {
             const pos = this.entityManager.getComponent(entity, PositionComponent);
@@ -71,15 +71,15 @@ export class MovementSystem {
                     sprite.onComplete = null;
                 };
             }
-            
-            // Reset player velocity before processing input
+
+
             vel.vx = 0;
             vel.vy = 0;
 
             if (player.isRolling) {
                 vel.vx = player.rollDirectionX * PLAYER_CONSTANTS.ROLL_SPEED;
                 vel.vy = player.rollDirectionY * PLAYER_CONSTANTS.ROLL_SPEED;
-            } else if (!player.isTurning) {
+            } else {
                 if (input.left) vel.vx -= PLAYER_CONSTANTS.SPEED;
                 if (input.right) vel.vx += PLAYER_CONSTANTS.SPEED;
                 if (input.up) vel.vy -= PLAYER_CONSTANTS.SPEED;
@@ -94,6 +94,7 @@ export class MovementSystem {
 
             const intendedDirection = input.right ? 'right' : (input.left ? 'left' : player.facingDirection);
             if (!player.isTurning && !player.isRolling && intendedDirection !== player.facingDirection) {
+                player.facingDirection = intendedDirection;
                 player.isTurning = true;
                 player.state = 'turning';
                 if (gunSprite) gunSprite.visible = false;
@@ -104,13 +105,12 @@ export class MovementSystem {
                 sprite.play();
 
                 sprite.onComplete = () => {
-                    player.facingDirection = intendedDirection;
                     sprite.scale.x = (player.facingDirection === 'right' ? 1 : -1) * Math.abs(sprite.scale.x);
-                    
+
                     if (gunSprite) {
                         gunSprite.visible = true;
                     }
-                    
+
                     player.isTurning = false;
                     sprite.onComplete = null;
                 };
