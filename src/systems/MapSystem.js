@@ -11,6 +11,7 @@ export class MapSystem {
         this.stage.addChild(this.mapContainer);
         this.mapContainer.zIndex = -100;
         this.stage.sortableChildren = true;
+        this.textureCache = new Map();
     }
 
     async loadMap(mapData) {
@@ -31,6 +32,9 @@ export class MapSystem {
                 });
 
                 if (!baseTexture) return null;
+
+                // Explicitly set scaling mode on the source texture to prevent bleeding
+                baseTexture.source.scaleMode = 'nearest';
 
                 return {
                     firstgid: tilesetInfo.firstgid,
@@ -87,21 +91,37 @@ export class MapSystem {
             const gid = data[i];
             if (gid === 0) continue;
 
-            const tileset = this.findTilesetForGid(gid);
-            if (!tileset) {
-                console.warn(`No tileset found for GID: ${gid}`);
-                continue;
-            }
+            let tileTexture = this.textureCache.get(gid);
 
-            if (typeof tileset.data.columns !== 'number' || tileset.data.columns === 0) {
-                console.warn(`Tileset for GID ${gid} has invalid 'columns' property.`, tileset.data);
-                continue;
-            }
+            if (!tileTexture) {
+                const tileset = this.findTilesetForGid(gid);
+                if (!tileset) {
+                    console.warn(`No tileset found for GID: ${gid}`);
+                    continue;
+                }
 
-            const localId = gid - tileset.firstgid;
-            const columns = tileset.data.columns;
-            const sx = (localId % columns) * tileWidth;
-            const sy = Math.floor(localId / columns) * tileHeight;
+                if (typeof tileset.data.columns !== 'number' || tileset.data.columns === 0) {
+                    console.warn(`Tileset for GID ${gid} has invalid 'columns' property.`, tileset.data);
+                    continue;
+                }
+
+                const localId = gid - tileset.firstgid;
+                const columns = tileset.data.columns;
+                const sx = (localId % columns) * tileWidth;
+                const sy = Math.floor(localId / columns) * tileHeight;
+
+                try {
+                    const frame = new PIXI.Rectangle(sx, sy, tileWidth, tileHeight);
+                    tileTexture = new PIXI.Texture({
+                        source: tileset.texture.source,
+                        frame
+                    });
+                    this.textureCache.set(gid, tileTexture);
+                } catch (error) {
+                    console.error(`Error creating texture for GID ${gid}`, error);
+                    continue;
+                }
+            }
 
             const tileX = i % width;
             const tileY = Math.floor(i / width);
@@ -109,17 +129,9 @@ export class MapSystem {
             const realX = (tileX + layerX) * tileWidth;
             const realY = (tileY + layerY) * tileHeight;
 
-            try {
-                const tileTexture = new PIXI.Texture({
-                    source: tileset.texture,
-                    frame: new PIXI.Rectangle(sx, sy, tileWidth, tileHeight)
-                });
-                const tileSprite = new PIXI.Sprite(tileTexture);
-                tileSprite.position.set(realX, realY);
-                layerContainer.addChild(tileSprite);
-            } catch (error) {
-                console.error(`Error creating texture for GID ${gid}`, error);
-            }
+            const tileSprite = new PIXI.Sprite(tileTexture);
+            tileSprite.position.set(realX, realY);
+            layerContainer.addChild(tileSprite);
         }
         this.mapContainer.addChild(layerContainer);
     }
