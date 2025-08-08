@@ -33,7 +33,7 @@ export class MapSystem {
         this.CHUNK_SIZE_IN_TILES = 16;
         this.TILE_PIXEL_SIZE = 48;
         this.CHUNK_PIXEL_SIZE = this.CHUNK_SIZE_IN_TILES * this.TILE_PIXEL_SIZE;
-        this.ACTIVE_RADIUS = 1;
+        this.ACTIVE_RADIUS = 2;
 
         this.activeChunks = new Map();
         this.generator = new ProceduralGenerator('rgbang-is-cool', 'forest');
@@ -124,7 +124,7 @@ export class MapSystem {
             const worldY = chunkWorldY + tile.y * this.TILE_PIXEL_SIZE;
 
             tileSprite.scale.set(this.TILE_PIXEL_SIZE / (tileTexture.width || 16));
-            tileSprite.zIndex = -1000; // Render ground tiles in the background.
+            tileSprite.zIndex = -1000;
 
             this.entityManager.addComponent(entityId, new PositionComponent(worldX, worldY));
             this.entityManager.addComponent(entityId, new RenderableComponent(tileSprite));
