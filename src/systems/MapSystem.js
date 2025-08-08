@@ -6,6 +6,7 @@ export class MapSystem {
         this.stage = stage;
         this.tilesets = [];
         this.mapContainer = new PIXI.Container();
+        this.mapContainer.scale.set(2.8);
         this.stage.addChild(this.mapContainer);
         this.mapContainer.zIndex = -100;
         this.stage.sortableChildren = true;

@@ -16,7 +16,7 @@ export function createPlayer(entityManager, x, y, characterId, playerSpritesheet
 
     const playerSprite = new PIXI.AnimatedSprite(playerSpritesheet.animations.idle);
     playerSprite.anchor.set(0.5);
-    playerSprite.scale.set(3);
+    playerSprite.scale.set(2.4);
     playerSprite.x = x;
     playerSprite.y = y;
     playerSprite.animationSpeed = 0.15;
