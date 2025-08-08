@@ -4,12 +4,14 @@ import { PositionComponent } from '../components/PositionComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { WEAPON_CONFIG } from '../entities/weapon-definitions.js';
 import { createBullet } from '../entities/entity-factory.js';
+import * as PIXI from 'pixi.js';
 
 export class WeaponSystem {
     constructor(entityManager, stage, assets) {
         this.entityManager = entityManager;
         this.mousePosition = { x: 0, y: 0 };
         this.assets = assets;
+        this.stage = stage;
 
         stage.interactive = true;
         stage.on('pointermove', this.onPointerMove, this);
@@ -37,13 +39,13 @@ export class WeaponSystem {
                 this.mousePosition.x - gunGlobalPos.x
             );
 
-            const rotationLimit = (80 * Math.PI) / 180; // 80 degrees in radians
+            const rotationLimit = (80 * Math.PI) / 180;
             let clampedWorldAngle = worldAngle;
 
             if (player.facingDirection === 'right') {
                 clampedWorldAngle = Math.max(-rotationLimit, Math.min(worldAngle, rotationLimit));
                 gunSprite.rotation = clampedWorldAngle;
-            } else { // facing 'left'
+            } else {
                 const forbiddenZoneLimit = Math.PI - rotationLimit;
                 if (Math.abs(worldAngle) < forbiddenZoneLimit) {
                     clampedWorldAngle = worldAngle >= 0 ? forbiddenZoneLimit : -forbiddenZoneLimit;
@@ -51,7 +53,7 @@ export class WeaponSystem {
                 gunSprite.rotation = Math.PI - clampedWorldAngle;
             }
 
-            // Firing Logic
+
             if (weapon.fireCooldown > 0) {
                 weapon.fireCooldown -= dt;
             }
@@ -60,15 +62,17 @@ export class WeaponSystem {
                 const weaponConfig = WEAPON_CONFIG[weapon.currentWeaponId];
                 weapon.fireCooldown = weaponConfig.fireRate;
 
-                // Calculate spawn position at the gun's muzzle
-                const muzzleOffset = 25; // Distance from gun pivot to muzzle
-                const spawnX = gunGlobalPos.x + muzzleOffset * Math.cos(clampedWorldAngle);
-                const spawnY = gunGlobalPos.y + muzzleOffset * Math.sin(clampedWorldAngle);
 
-                createBullet(this.entityManager, this.assets, spawnX, spawnY, clampedWorldAngle, weaponConfig.bulletType);
+                const muzzleOffset = 25;
+                const spawnScreenX = gunGlobalPos.x + muzzleOffset * Math.cos(clampedWorldAngle);
+                const spawnScreenY = gunGlobalPos.y + muzzleOffset * Math.sin(clampedWorldAngle);
+
+                const worldSpawnPoint = this.stage.toLocal(new PIXI.Point(spawnScreenX, spawnScreenY));
+
+                createBullet(this.entityManager, this.assets, worldSpawnPoint.x, worldSpawnPoint.y, clampedWorldAngle, weaponConfig.bulletType);
             }
 
-            // Weapon Switching Logic
+
             const switchMap = {
                 switchWeapon1: 0,
                 switchWeapon2: 1,
@@ -83,7 +87,7 @@ export class WeaponSystem {
 
                     weapon.currentWeaponId = newWeaponId;
                     gunSprite.texture = this.assets.weapons[newWeaponConfig.assetKey];
-                    break; 
+                    break;
                 }
             }
         }

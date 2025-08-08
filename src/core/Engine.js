@@ -15,6 +15,7 @@ import { PlayerComponent } from '../components/PlayerComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
 import { MapSystem } from '../systems/MapSystem.js';
+import { CameraSystem } from '../systems/CameraSystem.js';
 
 export class Engine {
     constructor(container, assets) {
@@ -34,11 +35,17 @@ export class Engine {
         });
         this.container.appendChild(this.pixiApp.canvas);
 
+        this.worldContainer = new PIXI.Container();
+        this.pixiApp.stage.addChild(this.worldContainer);
+        this.pixiApp.stage.interactive = true;
+        this.pixiApp.stage.hitArea = this.pixiApp.screen;
+
+
         this.gameState = new GameState();
         this.soundManager = new SoundManager();
         this.uiSystem = new UISystem();
-        
-        this.mapSystem = new MapSystem(this.entityManager, this.pixiApp.stage);
+
+        this.mapSystem = new MapSystem(this.entityManager, this.worldContainer);
         await this.mapSystem.loadMap(this.assets.maps.testMap);
 
         const initialCharacterId = this.gameState.selectedCharacter;
@@ -48,9 +55,10 @@ export class Engine {
         this.inputSystem = new InputSystem(this.entityManager, this.gameState);
         this.movementSystem = new MovementSystem(this.entityManager);
         this.cooldownSystem = new CooldownSystem(this.entityManager);
-        this.weaponSystem = new WeaponSystem(this.entityManager, this.pixiApp.stage, this.assets);
+        this.weaponSystem = new WeaponSystem(this.entityManager, this.worldContainer, this.assets);
         this.bulletSystem = new BulletSystem(this.entityManager);
-        this.renderSystem = new RenderSystem(this.entityManager, this.pixiApp.stage);
+        this.renderSystem = new RenderSystem(this.entityManager, this.worldContainer);
+        this.cameraSystem = new CameraSystem(this.entityManager, this.worldContainer, this.pixiApp.screen, this.player);
 
         this.systems = [
             this.inputSystem,
@@ -59,6 +67,7 @@ export class Engine {
             this.bulletSystem,
             this.cooldownSystem,
             this.mapSystem,
+            this.cameraSystem,
             this.renderSystem,
             this.uiSystem,
         ];
