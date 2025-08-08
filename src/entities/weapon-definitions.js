@@ -20,4 +20,29 @@ export const WEAPON_CONFIG = {
     bulletType: "lightning_bullet",
     assetKey: "gun_3",
   },
+  // --- Secondary Weapons (initially locked) ---
+  gun_purple: {
+    name: "Void Ray",
+    color: "purple",
+    fireRate: 0.3,
+    bulletType: "void_bullet",
+    assetKey: "gun_6",
+    combination: ['gun_red', 'gun_blue']
+  },
+  gun_green: {
+    name: "Acid Spewer",
+    color: "green",
+    fireRate: 0.4,
+    bulletType: "acid_bullet",
+    assetKey: "gun_10",
+    combination: ['gun_blue', 'gun_yellow']
+  },
+  gun_orange: {
+    name: "Magma Cannon",
+    color: "orange",
+    fireRate: 0.25,
+    bulletType: "magma_bullet",
+    assetKey: "gun_12",
+    combination: ['gun_red', 'gun_yellow']
+  }
 };

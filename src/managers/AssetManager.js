@@ -56,6 +56,9 @@ const weaponImagePaths = {
     gun_1: 'images/guns/1.png',
     gun_2: 'images/guns/2.png',
     gun_3: 'images/guns/3.png',
+    gun_4: 'images/guns/6.png', //purple
+    gun_5: 'images/guns/10.png', //green
+    gun_6: 'images/guns/12.png', //orange
 };
 
 const bulletSpritesheetPaths = {
@@ -110,8 +113,8 @@ class AssetManager {
                  Object.assign(this.assets, part);
             }
         }
-        
-        // Load Bullet Spritesheets
+
+
         const bulletAnimationData = generateBulletAnimations();
         const bulletPromises = Object.entries(bulletSpritesheetPaths).map(([key, src]) =>
             PIXI.Assets.load(src)

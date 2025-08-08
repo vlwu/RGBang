@@ -7,6 +7,14 @@ export class StorageManager {
             selectedCharacter: 'm_human',
             levelStats: {},
             tutorialShown: false,
+            upgrades: {
+                unlocked_weapons: ['gun_red', 'gun_blue', 'gun_yellow'],
+                weapon_levels: {
+                    'gun_red': 1,
+                    'gun_blue': 1,
+                    'gun_yellow': 1,
+                },
+            },
         };
     }
 
@@ -33,6 +41,10 @@ export class StorageManager {
              if (typeof state.tutorialShown !== 'boolean') {
                 state.tutorialShown = false;
             }
+            
+            if (!state.upgrades || typeof state.upgrades !== 'object') {
+                state.upgrades = this._getDefaultState().upgrades;
+            }
 
             return state;
         } catch (e) {
@@ -48,6 +60,7 @@ export class StorageManager {
                 selectedCharacter: gameState.selectedCharacter,
                 levelStats: gameState.levelStats,
                 tutorialShown: gameState.tutorialShown,
+                upgrades: gameState.upgrades,
             };
             localStorage.setItem('rgbangGameState', JSON.stringify(stateToSave));
             console.log("Progress saved:", stateToSave);

@@ -10,7 +10,7 @@ import { WEAPON_CONFIG } from './weapon-definitions.js';
 import { BulletComponent } from '../components/BulletComponent.js';
 import { BULLET_CONFIG } from './bullet-definitions.js';
 
-export function createPlayer(entityManager, x, y, characterId, playerSpritesheet, assets) {
+export function createPlayer(entityManager, x, y, characterId, playerSpritesheet, assets, gameState) {
     const player = entityManager.createEntity();
 
     const playerSprite = new PIXI.AnimatedSprite(playerSpritesheet.animations.idle);
@@ -21,14 +21,14 @@ export function createPlayer(entityManager, x, y, characterId, playerSpritesheet
     playerSprite.animationSpeed = 0.15;
     playerSprite.play();
 
-    // Create and attach the weapon
-    const playerComp = new PlayerComponent(characterId);
+
+    const playerComp = new PlayerComponent(characterId, gameState.upgrades.unlocked_weapons);
     const initialWeaponId = playerComp.availableWeapons[playerComp.equippedWeaponIndex];
     const weaponConfig = WEAPON_CONFIG[initialWeaponId];
     const gunTexture = assets.weapons[weaponConfig.assetKey];
     const gunSprite = new PIXI.Sprite(gunTexture);
 
-    gunSprite.anchor.set(0.25, 0.5); 
+    gunSprite.anchor.set(0.25, 0.5);
     gunSprite.scale.set(0.5);
     gunSprite.position.set(8, 6);
 
@@ -59,7 +59,7 @@ export function createBullet(entityManager, assets, x, y, angle, bulletId) {
     bulletSprite.scale.set(2);
     bulletSprite.animationSpeed = 0.2;
     bulletSprite.play();
-    
+
     if (Math.abs(angle) > Math.PI / 2) {
         bulletSprite.scale.y *= -1;
     }

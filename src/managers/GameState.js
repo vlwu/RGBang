@@ -1,6 +1,7 @@
-import { characterConfig, levelSections } from '../entities/level-definitions.js';
+import { characterConfig } from '../entities/level-definitions.js';
 import { eventBus } from '../utils/event-bus.js';
 import { StorageManager } from './StorageManager.js';
+import { WEAPON_CONFIG } from '../entities/weapon-definitions.js';
 
 export class GameState {
   constructor(initialState = null) {
@@ -12,6 +13,7 @@ export class GameState {
           this.selectedCharacter = initialState.selectedCharacter;
           this.levelStats = initialState.levelStats;
           this.tutorialShown = initialState.tutorialShown;
+          this.upgrades = initialState.upgrades;
       } else {
           this.showingLevelComplete = false;
           const savedState = StorageManager.loadProgress();
@@ -19,6 +21,7 @@ export class GameState {
           this.selectedCharacter = savedState.selectedCharacter;
           this.levelStats = savedState.levelStats;
           this.tutorialShown = savedState.tutorialShown;
+          this.upgrades = savedState.upgrades;
           this.currentSection = 0;
           this.currentLevelIndex = 0;
       }
@@ -30,10 +33,10 @@ export class GameState {
   }
 
   setSelectedCharacter(characterId) {
-    // Correctly extract the raceId (e.g., 'human') from the full characterId (e.g., 'm_human')
+
     const raceId = characterId.split('_')[1];
-    
-    // Use the extracted raceId to validate against characterConfig.
+
+
     if (characterConfig[raceId] && this.selectedCharacter !== characterId) {
       const newState = this._clone();
       newState.selectedCharacter = characterId;
@@ -41,7 +44,8 @@ export class GameState {
         levelProgress: newState.levelProgress,
         selectedCharacter: newState.selectedCharacter,
         levelStats: newState.levelStats,
-        tutorialShown: newState.tutorialShown
+        tutorialShown: newState.tutorialShown,
+        upgrades: newState.upgrades,
       });
       return newState;
     }
@@ -53,5 +57,29 @@ export class GameState {
     if (!config) return false;
 
     return true;
+  }
+
+  unlockWeapon(weaponId) {
+    if (WEAPON_CONFIG[weaponId] && !this.upgrades.unlocked_weapons.includes(weaponId)) {
+        const newState = this._clone();
+        newState.upgrades.unlocked_weapons.push(weaponId);
+        newState.upgrades.weapon_levels[weaponId] = 1;
+
+        StorageManager.saveProgress({
+            levelProgress: newState.levelProgress,
+            selectedCharacter: newState.selectedCharacter,
+            levelStats: newState.levelStats,
+            tutorialShown: newState.tutorialShown,
+            upgrades: newState.upgrades,
+        });
+        return newState;
+    }
+    return this;
+  }
+
+  canForgeWeapon(weaponId) {
+      const recipe = WEAPON_CONFIG[weaponId]?.combination;
+      if (!recipe) return false;
+      return recipe.every(ingredient => this.upgrades.unlocked_weapons.includes(ingredient));
   }
 }
