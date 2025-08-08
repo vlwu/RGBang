@@ -96,7 +96,8 @@ export class MovementSystem {
                     sprite.scale.x = (player.facingDirection === 'right' ? 1 : -1) * Math.abs(sprite.scale.x);
                     
                     if (gunSprite) {
-                        gunSprite.scale.y = player.facingDirection === 'right' ? 1 : -1;
+                        // REMOVED: gunSprite.scale.y = player.facingDirection === 'right' ? 1 : -1;
+                        // The gun's flip is now correctly handled by the parent player sprite's scale change.
                         gunSprite.visible = true;
                     }
                     
@@ -123,6 +124,7 @@ export class MovementSystem {
                     sprite.play();
                 }
             }
+
 
             pos.x += vel.vx * dt;
             pos.y += vel.vy * dt;

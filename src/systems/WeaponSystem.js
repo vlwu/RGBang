@@ -30,12 +30,32 @@ export class WeaponSystem {
 
             if (!gunSprite || !gunSprite.visible) continue;
 
-            // Aiming Logic
-            const angle = Math.atan2(
-                this.mousePosition.y - (pos.y + gunSprite.y),
-                this.mousePosition.x - (pos.x + gunSprite.x)
+            const gunGlobalPos = gunSprite.getGlobalPosition();
+            let worldAngle = Math.atan2(
+                this.mousePosition.y - gunGlobalPos.y,
+                this.mousePosition.x - gunGlobalPos.x
             );
-            gunSprite.rotation = angle;
+
+            const rotationLimit = (80 * Math.PI) / 180; // 80 degrees in radians
+            let finalRotation = 0;
+
+            if (player.facingDirection === 'right') {
+                const clampedAngle = Math.max(-rotationLimit, Math.min(worldAngle, rotationLimit));
+                finalRotation = clampedAngle;
+            } else { // facing 'left'
+                const forbiddenZoneLimit = Math.PI - rotationLimit; // 100 degrees
+                let clampedAngle = worldAngle;
+
+                if (Math.abs(worldAngle) < forbiddenZoneLimit) {
+                    clampedAngle = worldAngle >= 0 ? forbiddenZoneLimit : -forbiddenZoneLimit;
+                }
+                
+                // This transform corrects the rotation for the flipped parent sprite
+                finalRotation = Math.PI - clampedAngle;
+            }
+            
+            gunSprite.rotation = finalRotation;
+
 
             // Weapon Switching Logic
             const switchMap = {
