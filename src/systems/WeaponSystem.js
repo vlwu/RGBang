@@ -32,28 +32,24 @@ export class WeaponSystem {
             if (!gunSprite || !gunSprite.visible) continue;
 
             const gunGlobalPos = gunSprite.getGlobalPosition();
-            let worldAngle = Math.atan2(
+            const worldAngle = Math.atan2(
                 this.mousePosition.y - gunGlobalPos.y,
                 this.mousePosition.x - gunGlobalPos.x
             );
 
-            const rotationLimit = (80 * Math.PI) / 180;
-            let finalRotation = 0;
+            const rotationLimit = (80 * Math.PI) / 180; // 80 degrees in radians
+            let clampedWorldAngle = worldAngle;
 
             if (player.facingDirection === 'right') {
-                const clampedAngle = Math.max(-rotationLimit, Math.min(worldAngle, rotationLimit));
-                finalRotation = clampedAngle;
-            } else {
+                clampedWorldAngle = Math.max(-rotationLimit, Math.min(worldAngle, rotationLimit));
+                gunSprite.rotation = clampedWorldAngle;
+            } else { // facing 'left'
                 const forbiddenZoneLimit = Math.PI - rotationLimit;
-                let clampedAngle = worldAngle;
-
                 if (Math.abs(worldAngle) < forbiddenZoneLimit) {
-                    clampedAngle = worldAngle >= 0 ? forbiddenZoneLimit : -forbiddenZoneLimit;
+                    clampedWorldAngle = worldAngle >= 0 ? forbiddenZoneLimit : -forbiddenZoneLimit;
                 }
-                finalRotation = Math.PI - clampedAngle;
+                gunSprite.rotation = Math.PI - clampedWorldAngle;
             }
-            
-            gunSprite.rotation = finalRotation;
 
             // Firing Logic
             if (weapon.fireCooldown > 0) {
@@ -63,13 +59,13 @@ export class WeaponSystem {
             if (input.shoot && weapon.fireCooldown <= 0) {
                 const weaponConfig = WEAPON_CONFIG[weapon.currentWeaponId];
                 weapon.fireCooldown = weaponConfig.fireRate;
-                
-                // Use the REAL world angle for the bullet's trajectory
-                const bulletAngle = (player.facingDirection === 'right')
-                    ? finalRotation
-                    : Math.PI - finalRotation;
 
-                createBullet(this.entityManager, this.assets, gunGlobalPos.x, gunGlobalPos.y, bulletAngle, weaponConfig.bulletType);
+                // Calculate spawn position at the gun's muzzle
+                const muzzleOffset = 25; // Distance from gun pivot to muzzle
+                const spawnX = gunGlobalPos.x + muzzleOffset * Math.cos(clampedWorldAngle);
+                const spawnY = gunGlobalPos.y + muzzleOffset * Math.sin(clampedWorldAngle);
+
+                createBullet(this.entityManager, this.assets, spawnX, spawnY, clampedWorldAngle, weaponConfig.bulletType);
             }
 
             // Weapon Switching Logic

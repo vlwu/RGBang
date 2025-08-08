@@ -12,8 +12,18 @@ export class MovementSystem {
     }
 
     update(dt) {
-        const entities = this.entityManager.query([PlayerComponent, PositionComponent, VelocityComponent, InputComponent, RenderableComponent, WeaponComponent]);
-        for (const entity of entities) {
+        // --- Generic Movement for ALL entities with Velocity ---
+        const movingEntities = this.entityManager.query([PositionComponent, VelocityComponent]);
+        for (const entity of movingEntities) {
+            const pos = this.entityManager.getComponent(entity, PositionComponent);
+            const vel = this.entityManager.getComponent(entity, VelocityComponent);
+            pos.x += vel.vx * dt;
+            pos.y += vel.vy * dt;
+        }
+
+        // --- Player-Specific Logic ---
+        const playerEntities = this.entityManager.query([PlayerComponent, PositionComponent, VelocityComponent, InputComponent, RenderableComponent, WeaponComponent]);
+        for (const entity of playerEntities) {
             const pos = this.entityManager.getComponent(entity, PositionComponent);
             const vel = this.entityManager.getComponent(entity, VelocityComponent);
             const input = this.entityManager.getComponent(entity, InputComponent);
@@ -61,9 +71,11 @@ export class MovementSystem {
                     sprite.onComplete = null;
                 };
             }
-
+            
+            // Reset player velocity before processing input
             vel.vx = 0;
             vel.vy = 0;
+
             if (player.isRolling) {
                 vel.vx = player.rollDirectionX * PLAYER_CONSTANTS.ROLL_SPEED;
                 vel.vy = player.rollDirectionY * PLAYER_CONSTANTS.ROLL_SPEED;
@@ -96,8 +108,6 @@ export class MovementSystem {
                     sprite.scale.x = (player.facingDirection === 'right' ? 1 : -1) * Math.abs(sprite.scale.x);
                     
                     if (gunSprite) {
-                        // REMOVED: gunSprite.scale.y = player.facingDirection === 'right' ? 1 : -1;
-                        // The gun's flip is now correctly handled by the parent player sprite's scale change.
                         gunSprite.visible = true;
                     }
                     
@@ -124,10 +134,6 @@ export class MovementSystem {
                     sprite.play();
                 }
             }
-
-
-            pos.x += vel.vx * dt;
-            pos.y += vel.vy * dt;
         }
     }
 }
