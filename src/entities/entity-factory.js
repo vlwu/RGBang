@@ -28,7 +28,7 @@ export function createPlayer(entityManager, x, y, characterId, playerSpritesheet
     const gunTexture = assets.weapons[weaponConfig.assetKey];
     const gunSprite = new PIXI.Sprite(gunTexture);
 
-    gunSprite.anchor.set(0.25, 0.5);
+    gunSprite.anchor.set(0.25, 0.5); 
     gunSprite.scale.set(0.5);
     gunSprite.position.set(8, 6);
 
@@ -59,6 +59,10 @@ export function createBullet(entityManager, assets, x, y, angle, bulletId) {
     bulletSprite.scale.set(2);
     bulletSprite.animationSpeed = 0.2;
     bulletSprite.play();
+    
+    if (Math.abs(angle) > Math.PI / 2) {
+        bulletSprite.scale.y *= -1;
+    }
 
     const vx = Math.cos(angle) * bulletConfig.speed;
     const vy = Math.sin(angle) * bulletConfig.speed;
