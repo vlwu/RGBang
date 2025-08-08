@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import pako from 'pako';
 
 export class MapSystem {
     constructor(entityManager, stage) {
@@ -52,6 +53,31 @@ export class MapSystem {
     }
 
     renderTileLayer(layer, tileWidth, tileHeight) {
+        if (typeof layer.data === 'string') {
+            // Data is compressed and base64 encoded
+            if (layer.encoding === 'base64' && (layer.compression === 'zlib' || layer.compression === 'gzip')) {
+                try {
+                    // Step 1: Decode from base64
+                    const decodedString = atob(layer.data);
+                    const charData = decodedString.split('').map((x) => x.charCodeAt(0));
+                    const byteData = new Uint8Array(charData);
+
+                    // Step 2: Decompress using pako
+                    const decompressedData = pako.inflate(byteData);
+                    
+                    // Step 3: Create a DataView to read 32-bit GIDs
+                    const gids = new Uint32Array(decompressedData.buffer);
+                    layer.data = Array.from(gids);
+                } catch (e) {
+                    console.error(`Failed to decompress layer data for layer "${layer.name}":`, e);
+                    return;
+                }
+            } else {
+                 console.error(`Unsupported layer data format for layer "${layer.name}"`);
+                 return;
+            }
+        }
+        
         const { data, width, name, opacity, x: layerX, y: layerY } = layer;
         const layerContainer = new PIXI.Container();
         layerContainer.label = name;
@@ -99,7 +125,6 @@ export class MapSystem {
     }
 
     findTilesetForGid(gid) {
-
         for (let i = this.tilesets.length - 1; i >= 0; i--) {
             if (gid >= this.tilesets[i].firstgid) {
                 return this.tilesets[i];
