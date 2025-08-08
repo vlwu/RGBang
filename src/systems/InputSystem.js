@@ -14,6 +14,7 @@ export class InputSystem {
         this._boundMouseDown = this.handleMouseDown.bind(this);
         this._boundMouseUp = this.handleMouseUp.bind(this);
         this._boundBlur = this.handleBlur.bind(this);
+        this._boundContextMenu = this.handleContextMenu.bind(this);
 
         this.initEventListeners();
     }
@@ -24,6 +25,7 @@ export class InputSystem {
         window.addEventListener('mousedown', this._boundMouseDown);
         window.addEventListener('mouseup', this._boundMouseUp);
         window.addEventListener('blur', this._boundBlur);
+        window.addEventListener('contextmenu', this._boundContextMenu);
     }
 
     destroy() {
@@ -32,19 +34,24 @@ export class InputSystem {
         window.removeEventListener('mousedown', this._boundMouseDown);
         window.removeEventListener('mouseup', this._boundMouseUp);
         window.removeEventListener('blur', this._boundBlur);
+        window.removeEventListener('contextmenu', this._boundContextMenu);
+    }
+
+    handleContextMenu(e) {
+        e.preventDefault();
     }
 
     handleBlur() {
         this.keys.clear();
         this.isShooting = false;
     }
-    
+
     handleMouseDown(e) {
-        if (e.button === 0) { // Left mouse button
+        if (e.button === 0) {
             this.isShooting = true;
         }
     }
-    
+
     handleMouseUp(e) {
         if (e.button === 0) {
             this.isShooting = false;
@@ -76,7 +83,7 @@ export class InputSystem {
             input.left = this.keys.has(keybinds.left);
             input.right = this.keys.has(keybinds.right);
             input.roll = this.keys.has(keybinds.roll);
-            
+
             input.shoot = this.isShooting;
 
             input.switchWeapon1 = this.keys.has('1');
