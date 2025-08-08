@@ -9,6 +9,7 @@ import { WeaponComponent } from '../components/WeaponComponent.js';
 import { WEAPON_CONFIG } from './weapon-definitions.js';
 import { BulletComponent } from '../components/BulletComponent.js';
 import { BULLET_CONFIG } from './bullet-definitions.js';
+import { HealthComponent } from '../components/HealthComponent.js';
 
 export function createPlayer(entityManager, x, y, characterId, playerSpritesheet, assets, gameState) {
     const player = entityManager.createEntity();
@@ -40,6 +41,7 @@ export function createPlayer(entityManager, x, y, characterId, playerSpritesheet
     entityManager.addComponent(player, playerComp);
     entityManager.addComponent(player, new RenderableComponent(playerSprite, playerSpritesheet));
     entityManager.addComponent(player, new WeaponComponent(initialWeaponId, gunSprite));
+    entityManager.addComponent(player, new HealthComponent(100));
 
     const cooldownBar = entityManager.createEntity();
     entityManager.addComponent(cooldownBar, new PositionComponent(x, y + 45));

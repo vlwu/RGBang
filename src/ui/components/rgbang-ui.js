@@ -6,6 +6,8 @@ import './pause-modal.js';
 import './character-modal.js';
 import './info-modal.js';
 import './bitmap-text.js';
+import './HUDStats.js';
+import './HUDInventoryBar.js';
 
 export class RgbangUI extends LitElement {
   static styles = css`
@@ -41,12 +43,22 @@ export class RgbangUI extends LitElement {
 
     .hud-buttons {
       position: absolute;
-      top: 20px;
+      top: 100px; /* Adjusted to make space for health bar */
       right: 20px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       z-index: 100;
+    }
+
+    .hud-top-right {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
     }
 
     .main-menu-icon-buttons {
@@ -79,6 +91,7 @@ export class RgbangUI extends LitElement {
     gameState: { type: Object, state: true },
     assets: { type: Object, state: true },
     fontRenderer: { type: Object },
+    hudData: { type: Object, state: true },
   };
 
   constructor() {
@@ -90,6 +103,11 @@ export class RgbangUI extends LitElement {
     this.gameState = new GameState();
     this.assets = null;
     this.fontRenderer = null;
+    this.hudData = {
+        health: { current: 100, max: 100 },
+        weapons: { available: [], activeIndex: 0 },
+        fps: 0,
+    };
   }
 
   connectedCallback() {
@@ -103,6 +121,7 @@ export class RgbangUI extends LitElement {
         this.activeModal = null;
     });
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
+    eventBus.subscribe('hudUpdate', (data) => this.hudData = data);
   }
 
   _handleEscapePress = () => {
@@ -162,7 +181,7 @@ export class RgbangUI extends LitElement {
     }
 
     return html`
-        ${this.gameHasStarted && !this.activeModal ? this.renderHUD() : ''}
+        ${this.gameHasStarted && !this.activeModal ? this.renderInGameUI() : ''}
         ${this.renderActiveModal()}
     `;
   }
@@ -194,7 +213,7 @@ export class RgbangUI extends LitElement {
     `;
   }
 
-  renderHUD() {
+  renderInGameUI() {
       const iconButtons = [
         { id: 'settings', title: 'Settings' },
         { id: 'character', title: 'Character' },
@@ -203,7 +222,12 @@ export class RgbangUI extends LitElement {
       const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
       return html`
-          <div class="hud-buttons">
+          <div class="hud-top-right">
+              <hud-stats
+                .health=${this.hudData.health}
+                .fps=${this.hudData.fps}
+                .fontRenderer=${this.fontRenderer}
+              ></hud-stats>
               <button class="icon-button" title="Pause" @click=${this._handlePauseClick}>
                   <img src="images/ui/buttons/Pause.png" alt="Pause">
               </button>
@@ -213,6 +237,10 @@ export class RgbangUI extends LitElement {
                   </button>
               `)}
           </div>
+          <hud-inventory-bar
+            .weapons=${this.hudData.weapons.available}
+            .activeIndex=${this.hudData.weapons.activeIndex}
+          ></hud-inventory-bar>
       `;
   }
 

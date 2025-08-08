@@ -13,6 +13,7 @@ import { UISystem } from '../systems/UISystem.js';
 import { eventBus } from '../utils/event-bus.js';
 import { PlayerComponent } from '../components/PlayerComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
+import { HealthComponent } from '../components/HealthComponent.js';
 
 export class Engine {
     constructor(container, assets) {
@@ -66,6 +67,7 @@ export class Engine {
         this.pixiApp.ticker.add((ticker) => {
             if (this.isRunning) {
                 this.update(ticker.deltaMS / 1000);
+                this.publishHudData(Math.round(ticker.FPS));
             }
         });
     }
@@ -99,6 +101,26 @@ export class Engine {
     update(dt) {
         for (const system of this.systems) {
             system.update(dt);
+        }
+    }
+
+    publishHudData(fps) {
+        if (this.player === null) return;
+        const playerComp = this.entityManager.getComponent(this.player, PlayerComponent);
+        const healthComp = this.entityManager.getComponent(this.player, HealthComponent);
+
+        if (playerComp && healthComp) {
+            eventBus.publish('hudUpdate', {
+                health: {
+                    current: healthComp.currentHealth,
+                    max: healthComp.maxHealth,
+                },
+                weapons: {
+                    available: playerComp.availableWeapons,
+                    activeIndex: playerComp.equippedWeaponIndex,
+                },
+                fps,
+            });
         }
     }
 
