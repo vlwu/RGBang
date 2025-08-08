@@ -10,20 +10,20 @@ export class HudInventoryBar extends LitElement {
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 15px;
+            gap: 8px;
             background-color: rgba(0, 0, 0, 0.6);
-            padding: 10px;
-            border-radius: 12px;
+            padding: 5px;
+            border-radius: 6px;
             border: 2px solid #444;
             z-index: 100;
             pointer-events: auto;
         }
         .weapon-slot {
-            width: 64px;
-            height: 64px;
+            width: 32px;
+            height: 32px;
             background-color: #333;
-            border: 3px solid #666;
-            border-radius: 8px;
+            border: 2px solid #666;
+            border-radius: 4px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -41,13 +41,13 @@ export class HudInventoryBar extends LitElement {
         }
         .key-hint {
             position: absolute;
-            top: -10px;
-            right: -5px;
+            top: -5px;
+            right: -3px;
             background-color: #222;
             color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 14px;
+            padding: 1px 3px;
+            border-radius: 2px;
+            font-size: 10px;
             font-weight: bold;
             border: 1px solid #555;
         }
@@ -70,7 +70,7 @@ export class HudInventoryBar extends LitElement {
 
         const assetKey = weaponConfig.assetKey;
         const number = assetKey.split('_')[1];
-        
+
         const placeholderMap = { 'gun_4': '1', 'gun_5': '2', 'gun_6': '3' };
         const imageNumber = placeholderMap[assetKey] || number;
 

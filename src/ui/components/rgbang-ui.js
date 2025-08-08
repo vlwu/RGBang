@@ -43,11 +43,18 @@ export class RgbangUI extends LitElement {
 
     .hud-buttons {
       position: absolute;
-      top: 100px; /* Adjusted to make space for health bar */
+      top: 100px;
       right: 20px;
       display: flex;
       flex-direction: column;
       gap: 10px;
+      z-index: 100;
+    }
+
+    .hud-top-left {
+      position: absolute;
+      top: 20px;
+      left: 20px;
       z-index: 100;
     }
 
@@ -222,12 +229,14 @@ export class RgbangUI extends LitElement {
       const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
       return html`
-          <div class="hud-top-right">
+          <div class="hud-top-left">
               <hud-stats
                 .health=${this.hudData.health}
                 .fps=${this.hudData.fps}
                 .fontRenderer=${this.fontRenderer}
               ></hud-stats>
+          </div>
+          <div class="hud-top-right">
               <button class="icon-button" title="Pause" @click=${this._handlePauseClick}>
                   <img src="images/ui/buttons/Pause.png" alt="Pause">
               </button>

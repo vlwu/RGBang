@@ -6,7 +6,7 @@ export class HudStats extends LitElement {
         :host {
             display: flex;
             flex-direction: column;
-            align-items: flex-end;
+            align-items: flex-start;
             gap: 10px;
         }
         .health-bar-container {
@@ -19,8 +19,7 @@ export class HudStats extends LitElement {
         }
         .health-bar-fill {
             height: 100%;
-            background-color: #e74c3c;
-            transition: width 0.2s ease-in-out;
+            transition: width 0.2s ease-in-out, background-color 0.5s ease;
         }
         .fps-container {
             background-color: rgba(0,0,0,0.5);
@@ -42,10 +41,16 @@ export class HudStats extends LitElement {
     }
 
     render() {
-        const healthPercentage = (this.health.max > 0 ? (this.health.current / this.health.max) : 0) * 100;
+        const healthRatio = (this.health.max > 0 ? (this.health.current / this.health.max) : 0);
+        const healthPercentage = healthRatio * 100;
+
+        const r = Math.floor(255 * (1 - healthRatio));
+        const g = Math.floor(255 * healthRatio);
+        const healthColor = `rgb(${r}, ${g}, 0)`;
+
         return html`
             <div class="health-bar-container">
-                <div class="health-bar-fill" style="width: ${healthPercentage}%;"></div>
+                <div class="health-bar-fill" style="width: ${healthPercentage}%; background-color: ${healthColor};"></div>
             </div>
             <div class="fps-container">
                 <bitmap-text
