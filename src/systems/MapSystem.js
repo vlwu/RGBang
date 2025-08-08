@@ -54,7 +54,7 @@ export class MapSystem {
     renderTileLayer(layer, tileWidth, tileHeight) {
         const { data, width, name, opacity, x: layerX, y: layerY } = layer;
         const layerContainer = new PIXI.Container();
-        layerContainer.name = name;
+        layerContainer.label = name;
         layerContainer.alpha = opacity;
 
         for (let i = 0; i < data.length; i++) {
@@ -79,7 +79,7 @@ export class MapSystem {
 
             const tileX = i % width;
             const tileY = Math.floor(i / width);
-            
+
             const realX = (tileX + layerX) * tileWidth;
             const realY = (tileY + layerY) * tileHeight;
 
@@ -99,7 +99,7 @@ export class MapSystem {
     }
 
     findTilesetForGid(gid) {
-        // Iterate backwards because tilesets are ordered by firstgid ascending
+
         for (let i = this.tilesets.length - 1; i >= 0; i--) {
             if (gid >= this.tilesets[i].firstgid) {
                 return this.tilesets[i];
@@ -109,6 +109,6 @@ export class MapSystem {
     }
 
     update() {
-        // The map is static, no updates needed per frame for now.
+
     }
 }

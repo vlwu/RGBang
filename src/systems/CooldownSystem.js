@@ -36,14 +36,12 @@ export class CooldownSystem {
             g.clear();
 
             if (cooldownProgress > 0) {
-                g.beginFill(0x333333, 0.8);
-                g.drawRect(-barWidth / 2, -barHeight / 2, barWidth, barHeight);
-                g.endFill();
+                g.rect(-barWidth / 2, -barHeight / 2, barWidth, barHeight)
+                 .fill({ color: 0x333333, alpha: 0.8 });
 
                 if (filledWidth > 0) {
-                    g.beginFill(0xCCCCCC, 0.9);
-                    g.drawRect(-barWidth / 2, -barHeight / 2, filledWidth, barHeight);
-                    g.endFill();
+                    g.rect(-barWidth / 2, -barHeight / 2, filledWidth, barHeight)
+                     .fill({ color: 0xCCCCCC, alpha: 0.9 });
                 }
             }
         }
