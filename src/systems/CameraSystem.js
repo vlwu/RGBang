@@ -19,8 +19,8 @@ export class CameraSystem {
             const screenCenterX = this.screen.width / 2;
             const screenCenterY = this.screen.height / 2;
 
-            this.worldContainer.x = screenCenterX - playerPos.x;
-            this.worldContainer.y = screenCenterY - playerPos.y;
+            this.worldContainer.x = Math.round(screenCenterX - playerPos.x);
+            this.worldContainer.y = Math.round(screenCenterY - playerPos.y);
         }
     }
 }

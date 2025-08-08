@@ -7,7 +7,7 @@ export class MapSystem {
         this.stage = stage;
         this.tilesets = [];
         this.mapContainer = new PIXI.Container();
-        this.mapContainer.scale.set(2.8);
+        this.mapContainer.scale.set(3);
         this.stage.addChild(this.mapContainer);
         this.mapContainer.zIndex = -100;
         this.stage.sortableChildren = true;
@@ -54,17 +54,17 @@ export class MapSystem {
 
     renderTileLayer(layer, tileWidth, tileHeight) {
         if (typeof layer.data === 'string') {
-            // Data is compressed and base64 encoded
+
             if (layer.encoding === 'base64' && (layer.compression === 'zlib' || layer.compression === 'gzip')) {
                 try {
-                    // Step 1: Decode from base64
+
                     const decodedString = atob(layer.data);
                     const charData = decodedString.split('').map((x) => x.charCodeAt(0));
                     const byteData = new Uint8Array(charData);
 
                     // Step 2: Decompress using pako
                     const decompressedData = pako.inflate(byteData);
-                    
+
                     // Step 3: Create a DataView to read 32-bit GIDs
                     const gids = new Uint32Array(decompressedData.buffer);
                     layer.data = Array.from(gids);
@@ -77,7 +77,7 @@ export class MapSystem {
                  return;
             }
         }
-        
+
         const { data, width, name, opacity, x: layerX, y: layerY } = layer;
         const layerContainer = new PIXI.Container();
         layerContainer.label = name;
