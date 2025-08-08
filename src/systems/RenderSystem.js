@@ -17,10 +17,13 @@ export class RenderSystem {
         ];
 
         for (const queryDef of queries) {
-            const entities = this.entityManager.query([PositionComponent, queryDef.class]);
+            const componentsToQuery = queryDef.class === CooldownIndicatorComponent
+                ? [queryDef.class]
+                : [PositionComponent, queryDef.class];
+                
+            const entities = this.entityManager.query(componentsToQuery);
             for (const entityId of entities) {
                 seenEntities.add(entityId);
-                const pos = this.entityManager.getComponent(entityId, PositionComponent);
                 const component = this.entityManager.getComponent(entityId, queryDef.class);
                 const displayObject = queryDef.getDisplayObject(component);
 
@@ -29,13 +32,22 @@ export class RenderSystem {
                     this.renderedPixiObjects.set(entityId, displayObject);
                 }
 
-                displayObject.x = Math.round(pos.x);
-                displayObject.y = Math.round(pos.y);
-
                 if (queryDef.class === CooldownIndicatorComponent) {
-                    displayObject.zIndex = pos.y + 10000;
-                } else if (displayObject.zIndex !== -1000) {
-                    displayObject.zIndex = pos.y;
+                    const targetId = component.targetEntityId;
+                    if (this.entityManager.hasComponent(targetId, PositionComponent)) {
+                        const targetPos = this.entityManager.getComponent(targetId, PositionComponent);
+                        displayObject.x = Math.round(targetPos.x);
+                        displayObject.y = Math.round(targetPos.y + component.yOffset);
+                        displayObject.zIndex = targetPos.y + 20000;
+                    }
+                } else {
+                    const pos = this.entityManager.getComponent(entityId, PositionComponent);
+                    displayObject.x = Math.round(pos.x);
+                    displayObject.y = Math.round(pos.y);
+
+                    if (displayObject.zIndex !== -1000) {
+                        displayObject.zIndex = pos.y + 10000;
+                    }
                 }
             }
         }

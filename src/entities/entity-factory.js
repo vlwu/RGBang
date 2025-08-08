@@ -14,10 +14,10 @@ import { HealthComponent } from '../components/HealthComponent.js';
 export function createPlayer(entityManager, x, y, characterId, playerSpritesheet, assets, gameState) {
     const player = entityManager.createEntity();
 
-    // Add a check to prevent crash if spritesheet is missing
+
     if (!playerSpritesheet || !playerSpritesheet.animations) {
         console.error(`Cannot create player: Spritesheet for characterId "${characterId}" is missing or invalid.`);
-        // Create a placeholder entity so the game doesn't fully crash
+
         entityManager.addComponent(player, new PositionComponent(x, y));
         return player;
     }
@@ -52,7 +52,6 @@ export function createPlayer(entityManager, x, y, characterId, playerSpritesheet
     entityManager.addComponent(player, new HealthComponent(100));
 
     const cooldownBar = entityManager.createEntity();
-    entityManager.addComponent(cooldownBar, new PositionComponent(x, y + 45));
     entityManager.addComponent(cooldownBar, new CooldownIndicatorComponent(player));
 
     return player;
@@ -95,7 +94,7 @@ function getSpecificTileTexture(tileset, tileX, tileY) {
 
 export function createTree(entityManager, x, y, assets) {
     const treeEntity = entityManager.createEntity();
-    
+
     const treeTileset = assets.tilesets.trees;
     const treeTexture = getSpecificTileTexture(treeTileset, 1, 2);
 
@@ -105,7 +104,7 @@ export function createTree(entityManager, x, y, assets) {
 
     entityManager.addComponent(treeEntity, new PositionComponent(x, y));
     entityManager.addComponent(treeEntity, new RenderableComponent(sprite));
-    
+
     return treeEntity;
 }
 
@@ -120,8 +119,8 @@ export function createCrystal(entityManager, x, y, assets) {
     sprite.scale.set(3);
 
     entityManager.addComponent(crystalEntity, new PositionComponent(x, y));
-    // --- MODIFICATION: Corrected treeEntity to crystalEntity ---
+
     entityManager.addComponent(crystalEntity, new RenderableComponent(sprite));
-    
+
     return crystalEntity;
 }

@@ -8,11 +8,10 @@ export class CooldownSystem {
     }
 
     update() {
-        const indicatorEntities = this.entityManager.query([CooldownIndicatorComponent, PositionComponent]);
+        const indicatorEntities = this.entityManager.query([CooldownIndicatorComponent]);
 
         for (const entityId of indicatorEntities) {
             const indicator = this.entityManager.getComponent(entityId, CooldownIndicatorComponent);
-            const indicatorPos = this.entityManager.getComponent(entityId, PositionComponent);
 
             const target = indicator.targetEntityId;
             if (!this.entityManager.entities.has(target)) {
@@ -20,12 +19,8 @@ export class CooldownSystem {
                 continue;
             }
 
-            const targetPos = this.entityManager.getComponent(target, PositionComponent);
             const targetPlayer = this.entityManager.getComponent(target, PlayerComponent);
-
-            indicatorPos.x = targetPos.x;
-            indicatorPos.y = targetPos.y + indicator.yOffset;
-
+            
             const cooldownProgress = targetPlayer.rollCooldown / 3.0;
 
             const g = indicator.graphics;
