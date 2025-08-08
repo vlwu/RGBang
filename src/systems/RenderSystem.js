@@ -29,8 +29,14 @@ export class RenderSystem {
                     this.renderedPixiObjects.set(entityId, displayObject);
                 }
 
-                displayObject.x = pos.x;
-                displayObject.y = pos.y;
+                displayObject.x = Math.round(pos.x);
+                displayObject.y = Math.round(pos.y);
+
+                if (queryDef.class === CooldownIndicatorComponent) {
+                    displayObject.zIndex = pos.y + 10000;
+                } else if (displayObject.zIndex > -1000) {
+                    displayObject.zIndex = pos.y;
+                }
             }
         }
 

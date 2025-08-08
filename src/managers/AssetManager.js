@@ -76,11 +76,11 @@ const characterData = {
     f_dwarf: { image: 'images/player/fPlayer Dwarf.png' },
 };
 
-// --- NEW ---: Define tileset assets
+
 const tilesetDataPaths = {
     forest_terrain: { json: 'maps/tilemap-info/Forest Terrain.json', firstgid: 1 },
     trees: { json: 'maps/tilemap-info/Trees.json', firstgid: 199 },
-    crystals: { json: 'maps/tilemap-info/Crystals.json', firstgid: 1+198+600 }, // GID needs to be calculated
+    crystals: { json: 'maps/tilemap-info/Crystals.json', firstgid: 1+198+600 },
 }
 
 class AssetManager {
@@ -113,13 +113,13 @@ class AssetManager {
         const manifestPromise = fetch(manifestPath).then(res => res.json());
 
 
-        // --- NEW TILESET LOADING LOGIC ---
+
         const tilesetPromises = Object.entries(tilesetDataPaths).map(async ([key, paths]) => {
             try {
                 const res = await fetch(paths.json);
                 if (!res.ok) throw new Error(`Failed to fetch ${paths.json}`);
                 const data = await res.json();
-                // The image path in the JSON is relative, so we need to fix it.
+
                 const imageUrl = `maps/${data.image.replace('../', '')}`;
                 const texture = await PIXI.Assets.load(imageUrl);
                 texture.source.scaleMode = 'nearest';
@@ -138,7 +138,7 @@ class AssetManager {
                  this.assets.weapons[part.key] = part.texture;
             } else if (part.type === 'map' && part.data) {
                 this.assets.maps[part.key] = part.data;
-            } else if (part.type === 'tileset' && part.data) { // NEW
+            } else if (part.type === 'tileset' && part.data) {
                 this.assets.tilesets[part.key] = part.data;
             } else if (!part.type) {
                  Object.assign(this.assets, part);
@@ -175,7 +175,7 @@ class AssetManager {
         }
         const loadedCharacters = await Promise.all(characterSpritesheetPromises);
         for (const part of loadedCharacters) {
-            if (part.type === 'character' && part.spritesheet) { this.assets.characters[part.key] = part.spritesheet; }
+            if (part.type === 'character' && part.spritesheet) { this.assets.characters[part.charKey] = part.spritesheet; }
         }
 
         return this.assets;

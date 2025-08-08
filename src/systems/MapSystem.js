@@ -5,19 +5,13 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 import { createTree, createCrystal } from '../entities/entity-factory.js';
 
 class Chunk {
-    constructor(entityManager, stage) {
+    constructor(entityManager) {
         this.entityManager = entityManager;
         this.entityIds = new Set();
-        this.container = new PIXI.Container();
-        this.container.sortableChildren = true; // For potential depth sorting
-        stage.addChild(this.container);
     }
 
-    addEntity(id, renderable) {
+    addEntity(id) {
         this.entityIds.add(id);
-        if (renderable && renderable.sprite) {
-            this.container.addChild(renderable.sprite);
-        }
     }
 
     destroy() {
@@ -25,7 +19,6 @@ class Chunk {
             this.entityManager.destroyEntity(id);
         }
         this.entityIds.clear();
-        this.container.destroy({ children: true, texture: false, baseTexture: false });
     }
 }
 
@@ -35,10 +28,10 @@ export class MapSystem {
         this.worldContainer = worldContainer;
         this.playerId = playerId;
         this.assets = assets;
-        this.textureCache = new Map(); // Cache for tile textures
+        this.textureCache = new Map();
 
         this.CHUNK_SIZE_IN_TILES = 16;
-        this.TILE_PIXEL_SIZE = 48; // 16px tile scaled by 3
+        this.TILE_PIXEL_SIZE = 48;
         this.CHUNK_PIXEL_SIZE = this.CHUNK_SIZE_IN_TILES * this.TILE_PIXEL_SIZE;
         this.ACTIVE_RADIUS = 1;
 
@@ -72,9 +65,9 @@ export class MapSystem {
         }
     }
 
-    // --- NEW HELPER METHODS ---
+
     findTilesetForGid(gid) {
-        // Iterate backwards to find the correct tileset
+
         const tilesetKeys = Object.keys(this.assets.tilesets);
         for (let i = tilesetKeys.length - 1; i >= 0; i--) {
             const key = tilesetKeys[i];
@@ -113,26 +106,31 @@ export class MapSystem {
         }
     }
 
-    // --- END NEW HELPER METHODS ---
+
 
     loadChunk(x, y) {
         const key = `${x},${y}`;
-        const newChunk = new Chunk(this.entityManager, this.worldContainer);
+        const newChunk = new Chunk(this.entityManager);
         const chunkData = this.generator.generateChunkData(x, y, this.CHUNK_SIZE_IN_TILES);
         const chunkWorldX = x * this.CHUNK_PIXEL_SIZE;
         const chunkWorldY = y * this.CHUNK_PIXEL_SIZE;
-        
-        // --- RENDER GROUND TILES ---
+
+
         chunkData.ground.forEach(tile => {
+            const entityId = this.entityManager.createEntity();
             const tileTexture = this.getTextureForGid(tile.tileId);
             const tileSprite = new PIXI.Sprite(tileTexture);
-            tileSprite.x = chunkWorldX + tile.x * this.TILE_PIXEL_SIZE;
-            tileSprite.y = chunkWorldY + tile.y * this.TILE_PIXEL_SIZE;
-            tileSprite.scale.set(this.TILE_PIXEL_SIZE / tileTexture.width);
-            tileSprite.zIndex = -1; // Render below objects
-            newChunk.container.addChild(tileSprite);
+            const worldX = chunkWorldX + tile.x * this.TILE_PIXEL_SIZE;
+            const worldY = chunkWorldY + tile.y * this.TILE_PIXEL_SIZE;
+
+            tileSprite.scale.set(this.TILE_PIXEL_SIZE / (tileTexture.width || 16));
+            tileSprite.zIndex = -1000; // Render ground tiles in the background.
+
+            this.entityManager.addComponent(entityId, new PositionComponent(worldX, worldY));
+            this.entityManager.addComponent(entityId, new RenderableComponent(tileSprite));
+            newChunk.addEntity(entityId);
         });
-        // --- END RENDER GROUND TILES ---
+
 
         chunkData.objects.forEach(obj => {
             const worldX = chunkWorldX + obj.x * this.TILE_PIXEL_SIZE + (this.TILE_PIXEL_SIZE / 2);
@@ -146,10 +144,7 @@ export class MapSystem {
             }
 
             if (newEntityId) {
-                const renderable = this.entityManager.getComponent(newEntityId, RenderableComponent);
-                // We add object entities to the chunk so they are destroyed correctly.
-                // Their sprites are already managed by the RenderSystem, so we don't add them to the chunk's container.
-                newChunk.entityIds.add(newEntityId);
+                newChunk.addEntity(newEntityId);
             }
         });
 
