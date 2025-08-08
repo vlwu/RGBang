@@ -34,7 +34,7 @@ export class RenderSystem {
 
                 if (queryDef.class === CooldownIndicatorComponent) {
                     displayObject.zIndex = pos.y + 10000;
-                } else if (displayObject.zIndex > -1000) {
+                } else if (displayObject.zIndex !== -1000) {
                     displayObject.zIndex = pos.y;
                 }
             }
