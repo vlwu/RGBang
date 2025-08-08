@@ -5,6 +5,7 @@ import { InputSystem } from '../systems/InputSystem.js';
 import { MovementSystem } from '../systems/MovementSystem.js';
 import { RenderSystem } from '../systems/RenderSystem.js';
 import { CooldownSystem } from '../systems/CooldownSystem.js';
+import { WeaponSystem } from '../systems/WeaponSystem.js';
 import { GameState } from '../managers/GameState.js';
 import { SoundManager } from '../managers/SoundManager.js';
 import { UISystem } from '../systems/UISystem.js';
@@ -36,17 +37,19 @@ export class Engine {
 
         const initialCharacterId = this.gameState.selectedCharacter;
         const initialSpritesheet = this.assets.characters[initialCharacterId];
-        this.player = createPlayer(this.entityManager, this.pixiApp.screen.width / 2, this.pixiApp.screen.height / 2, initialCharacterId, initialSpritesheet);
+        this.player = createPlayer(this.entityManager, this.pixiApp.screen.width / 2, this.pixiApp.screen.height / 2, initialCharacterId, initialSpritesheet, this.assets);
 
         this.inputSystem = new InputSystem(this.entityManager, this.gameState);
         this.movementSystem = new MovementSystem(this.entityManager);
         this.cooldownSystem = new CooldownSystem(this.entityManager);
+        this.weaponSystem = new WeaponSystem(this.entityManager, this.pixiApp.stage, this.assets);
         this.renderSystem = new RenderSystem(this.entityManager, this.pixiApp.stage);
 
         this.systems = [
             this.inputSystem,
             this.movementSystem,
             this.cooldownSystem,
+            this.weaponSystem,
             this.renderSystem,
             this.uiSystem,
         ];

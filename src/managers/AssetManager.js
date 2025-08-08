@@ -51,6 +51,12 @@ const coreImagePaths = {
     next_button: '/images/ui/buttons/Next.png',
 };
 
+const weaponImagePaths = {
+    gun_1: 'images/guns/1.png',
+    gun_2: 'images/guns/2.png',
+    gun_3: 'images/guns/3.png',
+};
+
 const characterData = {
     m_human: { image: 'images/player/mPlayer Human.png' },
     f_human: { image: 'images/player/fPlayer Human.png' },
@@ -62,7 +68,7 @@ const characterData = {
 
 class AssetManager {
     constructor() {
-        this.assets = { characters: {} };
+        this.assets = { characters: {}, weapons: {} };
     }
 
     async loadCoreAssets() {
@@ -76,25 +82,35 @@ class AssetManager {
             loadImage(src, key).then(img => ({ [key]: img }))
         );
 
-        // Fetch the single JSON manifest for all characters manually
+        const weaponPromises = Object.entries(weaponImagePaths).map(([key, src]) =>
+            PIXI.Assets.load(src)
+                .then(texture => ({ type: 'weapon', key, texture }))
+                .catch(error => {
+                    console.warn(`Could not load weapon texture for ${key} from ${src}:`, error);
+                    return { type: 'weapon', key, texture: null };
+                })
+        );
+
         const manifestPath = 'images/player/mPlayer Human.json';
         const manifestPromise = fetch(manifestPath).then(res => res.json());
 
-        const loadedParts = await Promise.all([...imagePromises]);
-        
+        const loadedParts = await Promise.all([...imagePromises, ...weaponPromises]);
+
         for (const part of loadedParts) {
-            Object.assign(this.assets, part);
+            if (part.type === 'weapon' && part.texture) {
+                 this.assets.weapons[part.key] = part.texture;
+            } else {
+                 Object.assign(this.assets, part);
+            }
         }
 
         const manifestData = await manifestPromise;
 
-        // Load all character textures and create spritesheets
         const characterSpritesheetPromises = [];
         for (const charKey in characterData) {
             const imagePath = characterData[charKey].image;
             const promise = PIXI.Assets.load(imagePath)
                 .then(texture => {
-                    // Create a new spritesheet instance using the shared manifest and the unique texture
                     const spritesheet = new PIXI.Spritesheet({
                         texture: texture,
                         data: manifestData
@@ -115,7 +131,7 @@ class AssetManager {
                 this.assets.characters[part.charKey] = part.spritesheet;
             }
         }
-        
+
         return this.assets;
     }
 }

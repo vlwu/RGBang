@@ -8,5 +8,7 @@ export class PlayerComponent {
         this.rollCooldown = 0;
         this.rollDirectionX = 0;
         this.rollDirectionY = 0;
+        this.availableWeapons = ['gun_red', 'gun_blue', 'gun_yellow'];
+        this.equippedWeaponIndex = 0;
     }
 }

@@ -3,6 +3,7 @@ import { VelocityComponent } from '../components/VelocityComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { PlayerComponent } from '../components/PlayerComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
+import { WeaponComponent } from '../components/WeaponComponent.js';
 import { PLAYER_CONSTANTS } from '../utils/constants.js';
 
 export class MovementSystem {
@@ -11,15 +12,17 @@ export class MovementSystem {
     }
 
     update(dt) {
-        const entities = this.entityManager.query([PlayerComponent, PositionComponent, VelocityComponent, InputComponent, RenderableComponent]);
+        const entities = this.entityManager.query([PlayerComponent, PositionComponent, VelocityComponent, InputComponent, RenderableComponent, WeaponComponent]);
         for (const entity of entities) {
             const pos = this.entityManager.getComponent(entity, PositionComponent);
             const vel = this.entityManager.getComponent(entity, VelocityComponent);
             const input = this.entityManager.getComponent(entity, InputComponent);
             const player = this.entityManager.getComponent(entity, PlayerComponent);
             const renderable = this.entityManager.getComponent(entity, RenderableComponent);
+            const weapon = this.entityManager.getComponent(entity, WeaponComponent);
             const sprite = renderable.sprite;
             const spritesheet = renderable.spritesheet;
+            const gunSprite = weapon.gunSprite;
 
             if (player.rollCooldown > 0) {
                 player.rollCooldown = Math.max(0, player.rollCooldown - dt);
@@ -81,6 +84,7 @@ export class MovementSystem {
             if (!player.isTurning && !player.isRolling && intendedDirection !== player.facingDirection) {
                 player.isTurning = true;
                 player.state = 'turning';
+                if (gunSprite) gunSprite.visible = false;
 
                 sprite.textures = spritesheet.animations.turn;
                 sprite.animationSpeed = 0.7;
@@ -90,6 +94,12 @@ export class MovementSystem {
                 sprite.onComplete = () => {
                     player.facingDirection = intendedDirection;
                     sprite.scale.x = (player.facingDirection === 'right' ? 1 : -1) * Math.abs(sprite.scale.x);
+                    
+                    if (gunSprite) {
+                        gunSprite.scale.y = player.facingDirection === 'right' ? 1 : -1;
+                        gunSprite.visible = true;
+                    }
+                    
                     player.isTurning = false;
                     sprite.onComplete = null;
                 };
@@ -113,7 +123,6 @@ export class MovementSystem {
                     sprite.play();
                 }
             }
-
 
             pos.x += vel.vx * dt;
             pos.y += vel.vy * dt;
