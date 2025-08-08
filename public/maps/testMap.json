@@ -50,11 +50,11 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"Forest Terrain.json"
+         "source":"./tilemap-info/Forest Terrain.json"
         }, 
         {
          "firstgid":199,
-         "source":"Trees.json"
+         "source":"./tilemap-info/Trees.json"
         }],
  "tilewidth":16,
  "type":"map",
