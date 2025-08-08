@@ -1,4 +1,5 @@
 import * as PIXI from 'pixi.js';
+import { generateBulletAnimations } from '../utils/animation-helpers.js';
 
 function loadImage(src, key = 'unknown') {
     return new Promise((resolve) => {
@@ -57,6 +58,12 @@ const weaponImagePaths = {
     gun_3: 'images/guns/3.png',
 };
 
+const bulletSpritesheetPaths = {
+    Red: 'images/bullets/Red.png',
+    Blue: 'images/bullets/Blue.png',
+    Yellow: 'images/bullets/Yellow.png',
+};
+
 const characterData = {
     m_human: { image: 'images/player/mPlayer Human.png' },
     f_human: { image: 'images/player/fPlayer Human.png' },
@@ -68,7 +75,7 @@ const characterData = {
 
 class AssetManager {
     constructor() {
-        this.assets = { characters: {}, weapons: {} };
+        this.assets = { characters: {}, weapons: {}, bullets: {} };
     }
 
     async loadCoreAssets() {
@@ -103,6 +110,38 @@ class AssetManager {
                  Object.assign(this.assets, part);
             }
         }
+        
+        // Load Bullet Spritesheets
+        const bulletAnimationData = generateBulletAnimations();
+        const bulletPromises = Object.entries(bulletSpritesheetPaths).map(([key, src]) =>
+            PIXI.Assets.load(src)
+                .then(texture => {
+                    const spritesheet = new PIXI.Spritesheet({
+                        texture: texture,
+                        data: {
+                            ...bulletAnimationData,
+                            meta: {
+                                image: src,
+                                format: texture.source.format,
+                                size: { w: texture.width, h: texture.height },
+                                scale: 1
+                            }
+                        }
+                    });
+                    return spritesheet.parse().then(() => ({ type: 'bullet', key, spritesheet }));
+                })
+                .catch(error => {
+                    console.warn(`Could not load or parse bullet spritesheet for ${key} from ${src}:`, error);
+                    return { type: 'bullet', key, spritesheet: null };
+                })
+        );
+        const loadedBullets = await Promise.all(bulletPromises);
+        for (const part of loadedBullets) {
+            if (part.type === 'bullet' && part.spritesheet) {
+                this.assets.bullets[part.key] = part.spritesheet;
+            }
+        }
+
 
         const manifestData = await manifestPromise;
 

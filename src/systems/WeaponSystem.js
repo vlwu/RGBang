@@ -3,6 +3,7 @@ import { WeaponComponent } from '../components/WeaponComponent.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { InputComponent } from '../components/InputComponent.js';
 import { WEAPON_CONFIG } from '../entities/weapon-definitions.js';
+import { createBullet } from '../entities/entity-factory.js';
 
 export class WeaponSystem {
     constructor(entityManager, stage, assets) {
@@ -36,26 +37,40 @@ export class WeaponSystem {
                 this.mousePosition.x - gunGlobalPos.x
             );
 
-            const rotationLimit = (80 * Math.PI) / 180; // 80 degrees in radians
+            const rotationLimit = (80 * Math.PI) / 180;
             let finalRotation = 0;
 
             if (player.facingDirection === 'right') {
                 const clampedAngle = Math.max(-rotationLimit, Math.min(worldAngle, rotationLimit));
                 finalRotation = clampedAngle;
-            } else { // facing 'left'
-                const forbiddenZoneLimit = Math.PI - rotationLimit; // 100 degrees
+            } else {
+                const forbiddenZoneLimit = Math.PI - rotationLimit;
                 let clampedAngle = worldAngle;
 
                 if (Math.abs(worldAngle) < forbiddenZoneLimit) {
                     clampedAngle = worldAngle >= 0 ? forbiddenZoneLimit : -forbiddenZoneLimit;
                 }
-                
-                // This transform corrects the rotation for the flipped parent sprite
                 finalRotation = Math.PI - clampedAngle;
             }
             
             gunSprite.rotation = finalRotation;
 
+            // Firing Logic
+            if (weapon.fireCooldown > 0) {
+                weapon.fireCooldown -= dt;
+            }
+
+            if (input.shoot && weapon.fireCooldown <= 0) {
+                const weaponConfig = WEAPON_CONFIG[weapon.currentWeaponId];
+                weapon.fireCooldown = weaponConfig.fireRate;
+                
+                // Use the REAL world angle for the bullet's trajectory
+                const bulletAngle = (player.facingDirection === 'right')
+                    ? finalRotation
+                    : Math.PI - finalRotation;
+
+                createBullet(this.entityManager, this.assets, gunGlobalPos.x, gunGlobalPos.y, bulletAngle, weaponConfig.bulletType);
+            }
 
             // Weapon Switching Logic
             const switchMap = {

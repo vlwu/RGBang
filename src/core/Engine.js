@@ -6,6 +6,7 @@ import { MovementSystem } from '../systems/MovementSystem.js';
 import { RenderSystem } from '../systems/RenderSystem.js';
 import { CooldownSystem } from '../systems/CooldownSystem.js';
 import { WeaponSystem } from '../systems/WeaponSystem.js';
+import { BulletSystem } from '../systems/BulletSystem.js';
 import { GameState } from '../managers/GameState.js';
 import { SoundManager } from '../managers/SoundManager.js';
 import { UISystem } from '../systems/UISystem.js';
@@ -43,13 +44,15 @@ export class Engine {
         this.movementSystem = new MovementSystem(this.entityManager);
         this.cooldownSystem = new CooldownSystem(this.entityManager);
         this.weaponSystem = new WeaponSystem(this.entityManager, this.pixiApp.stage, this.assets);
+        this.bulletSystem = new BulletSystem(this.entityManager);
         this.renderSystem = new RenderSystem(this.entityManager, this.pixiApp.stage);
 
         this.systems = [
             this.inputSystem,
             this.movementSystem,
-            this.cooldownSystem,
             this.weaponSystem,
+            this.bulletSystem,
+            this.cooldownSystem,
             this.renderSystem,
             this.uiSystem,
         ];
