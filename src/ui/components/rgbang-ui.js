@@ -93,6 +93,7 @@ export class RgbangUI extends LitElement {
   static properties = {
     activeModal: { type: String, state: true },
     gameHasStarted: { type: Boolean, state: true },
+    isPaused: { type: Boolean, state: true },
     keybinds: { type: Object, state: true },
     soundSettings: { type: Object, state: true },
     gameState: { type: Object, state: true },
@@ -106,6 +107,7 @@ export class RgbangUI extends LitElement {
     super();
     this.activeModal = 'main-menu';
     this.gameHasStarted = false;
+    this.isPaused = false;
     this.keybinds = { up: 'w', down: 's', left: 'a', right: 'd', roll: 'shift' };
     this.soundSettings = { soundEnabled: true, soundVolume: 0.5 };
     this.gameState = new GameState();
@@ -138,14 +140,25 @@ export class RgbangUI extends LitElement {
 
   _handleEscapePress = () => {
     if (this.activeModal) { this._closeModal(); }
-    else if (this.gameHasStarted) { this.activeModal = 'pause'; eventBus.publish('menuOpened'); }
+    else if (this.gameHasStarted) {
+      this.activeModal = 'pause';
+      this.isPaused = true;
+      eventBus.publish('menuOpened');
+    }
   };
 
   _closeModal = () => {
     const wasOpen = this.activeModal !== null;
-    this.activeModal = (this.gameHasStarted) ? null : 'main-menu';
-    if (wasOpen && this.gameHasStarted) {
-        eventBus.publish('allMenusClosed');
+    const cameFromPauseSubMenu = this.isPaused && (this.activeModal === 'settings' || this.activeModal === 'info');
+
+    if (cameFromPauseSubMenu) {
+        this.activeModal = 'pause';
+    } else {
+        this.activeModal = (this.gameHasStarted) ? null : 'main-menu';
+        if (wasOpen && this.gameHasStarted) {
+            this.isPaused = false;
+            eventBus.publish('allMenusClosed');
+        }
     }
   }
 
@@ -157,11 +170,13 @@ export class RgbangUI extends LitElement {
   _handlePauseClick() {
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     this.activeModal = 'pause';
+    this.isPaused = true;
     eventBus.publish('menuOpened');
   }
 
   _handleExitToMenu = () => {
     this.gameHasStarted = false;
+    this.isPaused = false;
     this.activeModal = 'main-menu';
     eventBus.publish('exitToMenu');
   };
@@ -285,6 +300,8 @@ export class RgbangUI extends LitElement {
                       .fontRenderer=${this.fontRenderer}
                       @resume-game=${this._closeModal}
                       @exit-to-menu=${this._handleExitToMenu}
+                      @open-settings=${() => this._openModalFromMenu('settings')}
+                      @open-info=${() => this._openModalFromMenu('info')}
                     ></pause-modal>`;
       case 'character':
         return html`<character-menu

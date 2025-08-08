@@ -109,6 +109,12 @@ export class PauseModal extends LitElement {
             <button class="modal-image-button" title="Resume" @click=${() => this._dispatch('resume-game')}>
               <img src="images/ui/buttons/Play.png" alt="Resume">
             </button>
+            <button class="modal-image-button" title="Settings" @click=${() => this._dispatch('open-settings')}>
+                <img src="images/ui/buttons/Settings.png" alt="Settings">
+            </button>
+            <button class="modal-image-button" title="Information" @click=${() => this._dispatch('open-info')}>
+                <img src="images/ui/buttons/Info.png" alt="Information">
+            </button>
           </div>
           <div class="exit-button-container">
             <button class="exit-button" @click=${() => this._dispatch('exit-to-menu')}>
