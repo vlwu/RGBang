@@ -76,3 +76,45 @@ export function createBullet(entityManager, assets, x, y, angle, bulletId) {
 
     return bullet;
 }
+
+// --- NEW FUNCTIONS START HERE ---
+
+export function createTree(entityManager, x, y, assets) {
+    const treeEntity = entityManager.createEntity();
+    
+    // --- Placeholder Graphic ---
+    // TODO: Replace this with a PIXI.Sprite using a texture from your loaded assets.
+    // Example: const sprite = new PIXI.Sprite(assets.terrain.tree_1);
+    const placeholder = new PIXI.Graphics()
+        .circle(0, 0, 20)
+        .fill({ color: 0x228B22, alpha: 0.8 });
+    placeholder.x = x;
+    placeholder.y = y;
+    // --- End Placeholder ---
+
+    entityManager.addComponent(treeEntity, new PositionComponent(x, y));
+    entityManager.addComponent(treeEntity, new RenderableComponent(placeholder));
+    // Optional: Add a collision component
+    // entityManager.addComponent(treeEntity, new CollisionComponent({ type: 'static', shape: 'circle', radius: 24 }));
+    
+    return treeEntity;
+}
+
+export function createCrystal(entityManager, x, y, assets) {
+    const crystalEntity = entityManager.createEntity();
+
+    // --- Placeholder Graphic ---
+    // TODO: Replace this with a PIXI.Sprite using a texture from your loaded assets.
+    // Example: const sprite = new PIXI.Sprite(assets.terrain.crystal_blue);
+    const placeholder = new PIXI.Graphics()
+        .rect(-15, -15, 30, 30)
+        .fill({ color: 0x00BFFF, alpha: 0.8 });
+    placeholder.x = x;
+    placeholder.y = y;
+    placeholder.rotation = Math.PI / 4;
+
+    entityManager.addComponent(crystalEntity, new PositionComponent(x, y));
+    entityManager.addComponent(crystalEntity, new RenderableComponent(placeholder));
+    
+    return crystalEntity;
+}

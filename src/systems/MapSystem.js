@@ -1,151 +1,129 @@
 import * as PIXI from 'pixi.js';
-import pako from 'pako';
+import { ProceduralGenerator } from '../core/procedural-generator.js';
+import { PositionComponent } from '../components/PositionComponent.js';
+import { RenderableComponent } from '../components/RenderableComponent.js';
+import { createTree, createCrystal } from '../entities/entity-factory.js';
 
-export class MapSystem {
+// A helper class to manage the entities and rendering container for a single chunk
+class Chunk {
     constructor(entityManager, stage) {
         this.entityManager = entityManager;
-        this.stage = stage;
-        this.tilesets = [];
-        this.mapContainer = new PIXI.Container();
-        this.mapContainer.scale.set(3);
-        this.stage.addChild(this.mapContainer);
-        this.mapContainer.zIndex = -100;
-        this.stage.sortableChildren = true;
-        this.textureCache = new Map();
+        this.entityIds = new Set();
+        this.container = new PIXI.Container();
+        // Keep track of which entities have sprites in the container
+        this.spriteManagedEntities = new Set();
+        stage.addChild(this.container);
     }
 
-    async loadMap(mapData) {
-        const tilesetPromises = mapData.tilesets.map(async (tilesetInfo) => {
-            const tilesetUrl = `maps/${tilesetInfo.source}`;
-            try {
-                const response = await fetch(tilesetUrl);
-                if (!response.ok) {
-                    console.error(`Failed to load tileset definition: ${tilesetUrl}`);
-                    return null;
+    addEntity(id, renderable) {
+        this.entityIds.add(id);
+        if (renderable && renderable.sprite) {
+            this.container.addChild(renderable.sprite);
+            this.spriteManagedEntities.add(id);
+        }
+    }
+
+    destroy() {
+        for (const id of this.entityIds) {
+            // Sprites are in the container, so they will be destroyed with it.
+            // We only need to tell the entity manager to forget the entity.
+            this.entityManager.destroyEntity(id);
+        }
+        this.entityIds.clear();
+        this.container.destroy({ children: true, texture: false, baseTexture: false });
+    }
+}
+
+export class MapSystem {
+    constructor(entityManager, worldContainer, playerId, assets) {
+        this.entityManager = entityManager;
+        this.worldContainer = worldContainer;
+        this.playerId = playerId;
+        this.assets = assets;
+
+        this.CHUNK_SIZE_IN_TILES = 16;
+        this.TILE_PIXEL_SIZE = 48; // Your 16px tiles with a scale of 3
+        this.CHUNK_PIXEL_SIZE = this.CHUNK_SIZE_IN_TILES * this.TILE_PIXEL_SIZE;
+        this.ACTIVE_RADIUS = 1; // Load a 3x3 grid of chunks around the player
+
+        this.activeChunks = new Map();
+        // You can change the seed and biome later based on game state
+        this.generator = new ProceduralGenerator('rgbang-is-cool', 'forest');
+    }
+
+    update(dt) {
+        if (this.playerId === null || !this.entityManager.entities.has(this.playerId)) {
+            return;
+        }
+
+        const playerPos = this.entityManager.getComponent(this.playerId, PositionComponent);
+        if (!playerPos) return;
+
+        const playerChunkX = Math.floor(playerPos.x / this.CHUNK_PIXEL_SIZE);
+        const playerChunkY = Math.floor(playerPos.y / this.CHUNK_PIXEL_SIZE);
+
+        const requiredChunks = new Set();
+        for (let y = playerChunkY - this.ACTIVE_RADIUS; y <= playerChunkY + this.ACTIVE_RADIUS; y++) {
+            for (let x = playerChunkX - this.ACTIVE_RADIUS; x <= playerChunkX + this.ACTIVE_RADIUS; x++) {
+                const key = `${x},${y}`;
+                requiredChunks.add(key);
+                if (!this.activeChunks.has(key)) {
+                    this.loadChunk(x, y);
                 }
-                const tilesetData = await response.json();
+            }
+        }
 
-                const imageUrl = `maps/${tilesetData.image}`;
-                const baseTexture = await PIXI.Assets.load(imageUrl).catch(err => {
-                    console.error(`Failed to load tileset image: ${imageUrl}`, err);
-                    return null;
-                });
+        for (const [key, chunk] of this.activeChunks.entries()) {
+            if (!requiredChunks.has(key)) {
+                this.unloadChunk(key);
+            }
+        }
+    }
 
-                if (!baseTexture) return null;
+    loadChunk(x, y) {
+        const key = `${x},${y}`;
+        const newChunk = new Chunk(this.entityManager, this.worldContainer);
 
-                // Explicitly set scaling mode on the source texture to prevent bleeding
-                baseTexture.source.scaleMode = 'nearest';
+        const chunkData = this.generator.generateChunkData(x, y, this.CHUNK_SIZE_IN_TILES);
+        const chunkWorldX = x * this.CHUNK_PIXEL_SIZE;
+        const chunkWorldY = y * this.CHUNK_PIXEL_SIZE;
 
-                return {
-                    firstgid: tilesetInfo.firstgid,
-                    data: tilesetData,
-                    texture: baseTexture,
-                };
-            } catch (error) {
-                console.error(`Error processing tileset ${tilesetUrl}:`, error);
-                return null;
+        // Note: Ground tiles are not implemented here yet, only objects.
+        // This would be the place to render the `chunkData.ground` tiles to the chunk's container.
+
+        chunkData.objects.forEach(obj => {
+            const worldX = chunkWorldX + obj.x * this.TILE_PIXEL_SIZE + (this.TILE_PIXEL_SIZE / 2);
+            const worldY = chunkWorldY + obj.y * this.TILE_PIXEL_SIZE + (this.TILE_PIXEL_SIZE / 2);
+
+            let newEntityId;
+            if (obj.type === 'tree') {
+                newEntityId = createTree(this.entityManager, worldX, worldY, this.assets);
+            } else if (obj.type === 'crystal') {
+                newEntityId = createCrystal(this.entityManager, worldX, worldY, this.assets);
+            }
+
+            if (newEntityId) {
+                const renderable = this.entityManager.getComponent(newEntityId, RenderableComponent);
+                newChunk.addEntity(newEntityId, renderable);
             }
         });
 
-        this.tilesets = (await Promise.all(tilesetPromises)).filter(t => t !== null);
-
-        mapData.layers.forEach(layer => {
-            if (layer.type === 'tilelayer' && layer.visible) {
-                this.renderTileLayer(layer, mapData.tilewidth, mapData.tileheight);
-            }
-        });
+        this.activeChunks.set(key, newChunk);
     }
 
-    renderTileLayer(layer, tileWidth, tileHeight) {
-        if (typeof layer.data === 'string') {
-
-            if (layer.encoding === 'base64' && (layer.compression === 'zlib' || layer.compression === 'gzip')) {
-                try {
-
-                    const decodedString = atob(layer.data);
-                    const charData = decodedString.split('').map((x) => x.charCodeAt(0));
-                    const byteData = new Uint8Array(charData);
-
-                    // Step 2: Decompress using pako
-                    const decompressedData = pako.inflate(byteData);
-
-                    // Step 3: Create a DataView to read 32-bit GIDs
-                    const gids = new Uint32Array(decompressedData.buffer);
-                    layer.data = Array.from(gids);
-                } catch (e) {
-                    console.error(`Failed to decompress layer data for layer "${layer.name}":`, e);
-                    return;
-                }
-            } else {
-                 console.error(`Unsupported layer data format for layer "${layer.name}"`);
-                 return;
-            }
+    unloadChunk(key) {
+        const chunk = this.activeChunks.get(key);
+        if (chunk) {
+            chunk.destroy();
         }
-
-        const { data, width, name, opacity, x: layerX, y: layerY } = layer;
-        const layerContainer = new PIXI.Container();
-        layerContainer.label = name;
-        layerContainer.alpha = opacity;
-
-        for (let i = 0; i < data.length; i++) {
-            const gid = data[i];
-            if (gid === 0) continue;
-
-            let tileTexture = this.textureCache.get(gid);
-
-            if (!tileTexture) {
-                const tileset = this.findTilesetForGid(gid);
-                if (!tileset) {
-                    console.warn(`No tileset found for GID: ${gid}`);
-                    continue;
-                }
-
-                if (typeof tileset.data.columns !== 'number' || tileset.data.columns === 0) {
-                    console.warn(`Tileset for GID ${gid} has invalid 'columns' property.`, tileset.data);
-                    continue;
-                }
-
-                const localId = gid - tileset.firstgid;
-                const columns = tileset.data.columns;
-                const sx = (localId % columns) * tileWidth;
-                const sy = Math.floor(localId / columns) * tileHeight;
-
-                try {
-                    const frame = new PIXI.Rectangle(sx, sy, tileWidth, tileHeight);
-                    tileTexture = new PIXI.Texture({
-                        source: tileset.texture.source,
-                        frame
-                    });
-                    this.textureCache.set(gid, tileTexture);
-                } catch (error) {
-                    console.error(`Error creating texture for GID ${gid}`, error);
-                    continue;
-                }
-            }
-
-            const tileX = i % width;
-            const tileY = Math.floor(i / width);
-
-            const realX = (tileX + layerX) * tileWidth;
-            const realY = (tileY + layerY) * tileHeight;
-
-            const tileSprite = new PIXI.Sprite(tileTexture);
-            tileSprite.position.set(realX, realY);
-            layerContainer.addChild(tileSprite);
-        }
-        this.mapContainer.addChild(layerContainer);
+        this.activeChunks.delete(key);
     }
 
-    findTilesetForGid(gid) {
-        for (let i = this.tilesets.length - 1; i >= 0; i--) {
-            if (gid >= this.tilesets[i].firstgid) {
-                return this.tilesets[i];
-            }
+    setBiome(biomeId) {
+        this.generator.setBiome(biomeId);
+        // Clear all existing chunks to force a regeneration with the new biome
+        for (const key of this.activeChunks.keys()) {
+            this.unloadChunk(key);
         }
-        return null;
-    }
-
-    update() {
-
     }
 }

@@ -45,12 +45,17 @@ export class Engine {
         this.soundManager = new SoundManager();
         this.uiSystem = new UISystem();
 
-        this.mapSystem = new MapSystem(this.entityManager, this.worldContainer);
-        await this.mapSystem.loadMap(this.assets.maps.testMap);
-
+        // --- MODIFICATION START ---
+        // Player must be created BEFORE the systems that depend on it (MapSystem, CameraSystem).
+        // Player starts at (0,0) in the world space, camera will center on it.
         const initialCharacterId = this.gameState.selectedCharacter;
         const initialSpritesheet = this.assets.characters[initialCharacterId];
-        this.player = createPlayer(this.entityManager, this.pixiApp.screen.width / 2, this.pixiApp.screen.height / 2, initialCharacterId, initialSpritesheet, this.assets, this.gameState);
+        this.player = createPlayer(this.entityManager, 0, 0, initialCharacterId, initialSpritesheet, this.assets, this.gameState);
+
+        // Initialize the new infinite map system, passing it the player ID it needs to track.
+        this.mapSystem = new MapSystem(this.entityManager, this.worldContainer, this.player, this.assets);
+        // --- MODIFICATION END ---
+
 
         this.inputSystem = new InputSystem(this.entityManager, this.gameState);
         this.movementSystem = new MovementSystem(this.entityManager);
@@ -66,7 +71,7 @@ export class Engine {
             this.weaponSystem,
             this.bulletSystem,
             this.cooldownSystem,
-            this.mapSystem,
+            this.mapSystem, // The new MapSystem is now in the update loop
             this.cameraSystem,
             this.renderSystem,
             this.uiSystem,
