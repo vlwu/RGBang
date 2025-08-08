@@ -1,0 +1,15 @@
+{ "columns":40,
+ "image":"..\/..\/images\/terrain\/crystals\/Assets_shadow_source.png",
+ "imageheight":144,
+ "imagewidth":640,
+ "margin":0,
+ "name":"Crystals",
+ "spacing":0,
+ "tilecount":360,
+ "tiledversion":"1.11.2",
+ "tileheight":16,
+ "tilewidth":16,
+ "transparentcolor":"#ff00ff",
+ "type":"tileset",
+ "version":"1.10"
+}
