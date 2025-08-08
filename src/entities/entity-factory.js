@@ -14,6 +14,14 @@ import { HealthComponent } from '../components/HealthComponent.js';
 export function createPlayer(entityManager, x, y, characterId, playerSpritesheet, assets, gameState) {
     const player = entityManager.createEntity();
 
+    // Add a check to prevent crash if spritesheet is missing
+    if (!playerSpritesheet || !playerSpritesheet.animations) {
+        console.error(`Cannot create player: Spritesheet for characterId "${characterId}" is missing or invalid.`);
+        // Create a placeholder entity so the game doesn't fully crash
+        entityManager.addComponent(player, new PositionComponent(x, y));
+        return player;
+    }
+
     const playerSprite = new PIXI.AnimatedSprite(playerSpritesheet.animations.idle);
     playerSprite.anchor.set(0.5);
     playerSprite.scale.set(2.4);
@@ -77,25 +85,26 @@ export function createBullet(entityManager, assets, x, y, angle, bulletId) {
     return bullet;
 }
 
-// --- NEW FUNCTIONS START HERE ---
+function getSpecificTileTexture(tileset, tileX, tileY) {
+    if (!tileset) return PIXI.Texture.EMPTY;
+    const sx = tileX * tileset.tilewidth;
+    const sy = tileY * tileset.tileheight;
+    const frame = new PIXI.Rectangle(sx, sy, tileset.tilewidth, tileset.tileheight);
+    return new PIXI.Texture({ source: tileset.texture.source, frame });
+}
 
 export function createTree(entityManager, x, y, assets) {
     const treeEntity = entityManager.createEntity();
     
-    // --- Placeholder Graphic ---
-    // TODO: Replace this with a PIXI.Sprite using a texture from your loaded assets.
-    // Example: const sprite = new PIXI.Sprite(assets.terrain.tree_1);
-    const placeholder = new PIXI.Graphics()
-        .circle(0, 0, 20)
-        .fill({ color: 0x228B22, alpha: 0.8 });
-    placeholder.x = x;
-    placeholder.y = y;
-    // --- End Placeholder ---
+    const treeTileset = assets.tilesets.trees;
+    const treeTexture = getSpecificTileTexture(treeTileset, 1, 2);
+
+    const sprite = new PIXI.Sprite(treeTexture);
+    sprite.anchor.set(0.5, 0.75);
+    sprite.scale.set(3);
 
     entityManager.addComponent(treeEntity, new PositionComponent(x, y));
-    entityManager.addComponent(treeEntity, new RenderableComponent(placeholder));
-    // Optional: Add a collision component
-    // entityManager.addComponent(treeEntity, new CollisionComponent({ type: 'static', shape: 'circle', radius: 24 }));
+    entityManager.addComponent(treeEntity, new RenderableComponent(sprite));
     
     return treeEntity;
 }
@@ -103,18 +112,16 @@ export function createTree(entityManager, x, y, assets) {
 export function createCrystal(entityManager, x, y, assets) {
     const crystalEntity = entityManager.createEntity();
 
-    // --- Placeholder Graphic ---
-    // TODO: Replace this with a PIXI.Sprite using a texture from your loaded assets.
-    // Example: const sprite = new PIXI.Sprite(assets.terrain.crystal_blue);
-    const placeholder = new PIXI.Graphics()
-        .rect(-15, -15, 30, 30)
-        .fill({ color: 0x00BFFF, alpha: 0.8 });
-    placeholder.x = x;
-    placeholder.y = y;
-    placeholder.rotation = Math.PI / 4;
+    const crystalTileset = assets.tilesets.crystals;
+    const crystalTexture = getSpecificTileTexture(crystalTileset, 0, 1);
+
+    const sprite = new PIXI.Sprite(crystalTexture);
+    sprite.anchor.set(0.5);
+    sprite.scale.set(3);
 
     entityManager.addComponent(crystalEntity, new PositionComponent(x, y));
-    entityManager.addComponent(crystalEntity, new RenderableComponent(placeholder));
+    // --- MODIFICATION: Corrected treeEntity to crystalEntity ---
+    entityManager.addComponent(crystalEntity, new RenderableComponent(sprite));
     
     return crystalEntity;
 }

@@ -76,9 +76,16 @@ const characterData = {
     f_dwarf: { image: 'images/player/fPlayer Dwarf.png' },
 };
 
+// --- NEW ---: Define tileset assets
+const tilesetDataPaths = {
+    forest_terrain: { json: 'maps/tilemap-info/Forest Terrain.json', firstgid: 1 },
+    trees: { json: 'maps/tilemap-info/Trees.json', firstgid: 199 },
+    crystals: { json: 'maps/tilemap-info/Crystals.json', firstgid: 1+198+600 }, // GID needs to be calculated
+}
+
 class AssetManager {
     constructor() {
-        this.assets = { characters: {}, weapons: {}, bullets: {}, maps: {} };
+        this.assets = { characters: {}, weapons: {}, bullets: {}, maps: {}, tilesets: {} };
     }
 
     async loadCoreAssets() {
@@ -91,35 +98,48 @@ class AssetManager {
         const imagePromises = Object.entries(coreImagePaths).map(([key, src]) =>
             loadImage(src, key).then(img => ({ [key]: img }))
         );
-
         const weaponPromises = Object.entries(weaponImagePaths).map(([key, src]) =>
-            PIXI.Assets.load(src)
-                .then(texture => ({ type: 'weapon', key, texture }))
-                .catch(error => {
-                    console.warn(`Could not load weapon texture for ${key} from ${src}:`, error);
-                    return { type: 'weapon', key, texture: null };
-                })
+            PIXI.Assets.load(src).then(texture => ({ type: 'weapon', key, texture })).catch(error => {
+                console.warn(`Could not load weapon texture for ${key} from ${src}:`, error);
+                return { type: 'weapon', key, texture: null };
+            })
         );
-
         const mapPath = 'maps/testMap.json';
-        const mapPromise = fetch(mapPath)
-            .then(res => res.json())
-            .then(data => ({ type: 'map', key: 'testMap', data }))
-            .catch(error => {
-                console.warn(`Could not load map data from ${mapPath}:`, error);
-                return { type: 'map', key: 'testMap', data: null };
-            });
-
+        const mapPromise = fetch(mapPath).then(res => res.json()).then(data => ({ type: 'map', key: 'testMap', data })).catch(error => {
+            console.warn(`Could not load map data from ${mapPath}:`, error);
+            return { type: 'map', key: 'testMap', data: null };
+        });
         const manifestPath = 'images/player/mPlayer Human.json';
         const manifestPromise = fetch(manifestPath).then(res => res.json());
 
-        const loadedParts = await Promise.all([...imagePromises, ...weaponPromises, mapPromise]);
+
+        // --- NEW TILESET LOADING LOGIC ---
+        const tilesetPromises = Object.entries(tilesetDataPaths).map(async ([key, paths]) => {
+            try {
+                const res = await fetch(paths.json);
+                if (!res.ok) throw new Error(`Failed to fetch ${paths.json}`);
+                const data = await res.json();
+                // The image path in the JSON is relative, so we need to fix it.
+                const imageUrl = `maps/${data.image.replace('../', '')}`;
+                const texture = await PIXI.Assets.load(imageUrl);
+                texture.source.scaleMode = 'nearest';
+                return { type: 'tileset', key, data: { ...data, firstgid: paths.firstgid, texture }};
+            } catch (error) {
+                console.error(`Failed to load tileset ${key}:`, error);
+                return { type: 'tileset', key, data: null };
+            }
+        });
+
+
+        const loadedParts = await Promise.all([...imagePromises, ...weaponPromises, mapPromise, ...tilesetPromises]);
 
         for (const part of loadedParts) {
             if (part.type === 'weapon' && part.texture) {
                  this.assets.weapons[part.key] = part.texture;
             } else if (part.type === 'map' && part.data) {
                 this.assets.maps[part.key] = part.data;
+            } else if (part.type === 'tileset' && part.data) { // NEW
+                this.assets.tilesets[part.key] = part.data;
             } else if (!part.type) {
                  Object.assign(this.assets, part);
             }
@@ -128,61 +148,34 @@ class AssetManager {
 
         const bulletAnimationData = generateBulletAnimations();
         const bulletPromises = Object.entries(bulletSpritesheetPaths).map(([key, src]) =>
-            PIXI.Assets.load(src)
-                .then(texture => {
-                    const spritesheet = new PIXI.Spritesheet({
-                        texture: texture,
-                        data: {
-                            ...bulletAnimationData,
-                            meta: {
-                                image: src,
-                                format: texture.source.format,
-                                size: { w: texture.width, h: texture.height },
-                                scale: 1
-                            }
-                        }
-                    });
-                    return spritesheet.parse().then(() => ({ type: 'bullet', key, spritesheet }));
-                })
-                .catch(error => {
-                    console.warn(`Could not load or parse bullet spritesheet for ${key} from ${src}:`, error);
-                    return { type: 'bullet', key, spritesheet: null };
-                })
+            PIXI.Assets.load(src).then(texture => {
+                const spritesheet = new PIXI.Spritesheet({ texture: texture, data: { ...bulletAnimationData, meta: { image: src, format: texture.source.format, size: { w: texture.width, h: texture.height }, scale: 1 }}});
+                return spritesheet.parse().then(() => ({ type: 'bullet', key, spritesheet }));
+            }).catch(error => {
+                console.warn(`Could not load or parse bullet spritesheet for ${key} from ${src}:`, error);
+                return { type: 'bullet', key, spritesheet: null };
+            })
         );
         const loadedBullets = await Promise.all(bulletPromises);
         for (const part of loadedBullets) {
-            if (part.type === 'bullet' && part.spritesheet) {
-                this.assets.bullets[part.key] = part.spritesheet;
-            }
+            if (part.type === 'bullet' && part.spritesheet) { this.assets.bullets[part.key] = part.spritesheet; }
         }
-
-
         const manifestData = await manifestPromise;
-
         const characterSpritesheetPromises = [];
         for (const charKey in characterData) {
             const imagePath = characterData[charKey].image;
-            const promise = PIXI.Assets.load(imagePath)
-                .then(texture => {
-                    const spritesheet = new PIXI.Spritesheet({
-                        texture: texture,
-                        data: manifestData
-                    });
-                    return spritesheet.parse().then(() => ({ type: 'character', charKey, spritesheet }));
-                })
-                .catch(error => {
-                    console.warn(`Could not load character texture for ${charKey} from ${imagePath}:`, error);
-                    return { type: 'character', charKey, spritesheet: null };
-                });
+            const promise = PIXI.Assets.load(imagePath).then(texture => {
+                const spritesheet = new PIXI.Spritesheet({ texture: texture, data: manifestData });
+                return spritesheet.parse().then(() => ({ type: 'character', charKey, spritesheet }));
+            }).catch(error => {
+                console.warn(`Could not load character texture for ${charKey} from ${imagePath}:`, error);
+                return { type: 'character', charKey, spritesheet: null };
+            });
             characterSpritesheetPromises.push(promise);
         }
-
         const loadedCharacters = await Promise.all(characterSpritesheetPromises);
-
         for (const part of loadedCharacters) {
-            if (part.type === 'character' && part.spritesheet) {
-                this.assets.characters[part.charKey] = part.spritesheet;
-            }
+            if (part.type === 'character' && part.spritesheet) { this.assets.characters[part.key] = part.spritesheet; }
         }
 
         return this.assets;
