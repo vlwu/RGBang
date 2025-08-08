@@ -99,6 +99,7 @@ export class RgbangUI extends LitElement {
     assets: { type: Object, state: true },
     fontRenderer: { type: Object },
     hudData: { type: Object, state: true },
+    displayFps: { type: Number, state: true },
   };
 
   constructor() {
@@ -115,6 +116,10 @@ export class RgbangUI extends LitElement {
         weapons: { available: [], activeIndex: 0 },
         fps: 0,
     };
+    this.displayFps = 0;
+    this.fpsSamples = [];
+    this.lastFpsUpdateTime = 0;
+    this.fpsUpdateInterval = 500;
   }
 
   connectedCallback() {
@@ -128,7 +133,7 @@ export class RgbangUI extends LitElement {
         this.activeModal = null;
     });
     eventBus.subscribe('assetsLoaded', (assets) => this.assets = assets);
-    eventBus.subscribe('hudUpdate', (data) => this.hudData = data);
+    eventBus.subscribe('hudUpdate', this._handleHudUpdate);
   }
 
   _handleEscapePress = () => {
@@ -172,6 +177,21 @@ export class RgbangUI extends LitElement {
     eventBus.publish('playSound', { key: 'button_click', volume: 0.8, channel: 'UI' });
     eventBus.publish('characterUpdated', characterId);
   }
+
+  _handleHudUpdate = (data) => {
+    this.hudData = data;
+    this.fpsSamples.push(data.fps);
+    const now = performance.now();
+
+    if (now - this.lastFpsUpdateTime > this.fpsUpdateInterval) {
+      if (this.fpsSamples.length > 0) {
+        const averageFps = this.fpsSamples.reduce((a, b) => a + b, 0) / this.fpsSamples.length;
+        this.displayFps = Math.round(averageFps);
+        this.fpsSamples = [];
+      }
+      this.lastFpsUpdateTime = now;
+    }
+  };
 
   render() {
     const isLoading = !this.assets || !this.fontRenderer;
@@ -232,7 +252,7 @@ export class RgbangUI extends LitElement {
           <div class="hud-top-left">
               <hud-stats
                 .health=${this.hudData.health}
-                .fps=${this.hudData.fps}
+                .fps=${this.displayFps}
                 .fontRenderer=${this.fontRenderer}
               ></hud-stats>
           </div>
