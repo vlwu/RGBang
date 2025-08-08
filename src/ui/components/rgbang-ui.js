@@ -6,8 +6,8 @@ import './pause-modal.js';
 import './character-modal.js';
 import './info-modal.js';
 import './bitmap-text.js';
-import './HUDStats.js';
-import './HUDInventoryBar.js';
+import './hud-stats.js';
+import './hud-inventory-bar.js';
 
 export class RgbangUI extends LitElement {
   static styles = css`
