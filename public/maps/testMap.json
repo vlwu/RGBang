@@ -244,11 +244,11 @@
  "tilesets":[
         {
          "firstgid":1,
-         "source":"..\/..\/..\/..\/..\/Desktop\/Forest Terrain.json"
-        }, 
+         "source":"Forest Terrain.json"
+        },
         {
          "firstgid":199,
-         "source":"..\/..\/..\/..\/..\/Desktop\/Trees.json"
+         "source":"Trees.json"
         }],
  "tilewidth":16,
  "type":"map",

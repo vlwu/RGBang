@@ -1,0 +1,15 @@
+{ "columns":22,
+ "image":"./forest_.png",
+ "imageheight":144,
+ "imagewidth":352,
+ "margin":0,
+ "name":"Forest Terrain",
+ "spacing":0,
+ "tilecount":198,
+ "tiledversion":"1.11.2",
+ "tileheight":16,
+ "tilewidth":16,
+ "transparentcolor":"#ff00ff",
+ "type":"tileset",
+ "version":"1.10"
+}

@@ -56,9 +56,9 @@ const weaponImagePaths = {
     gun_1: 'images/guns/1.png',
     gun_2: 'images/guns/2.png',
     gun_3: 'images/guns/3.png',
-    gun_4: 'images/guns/6.png', //purple
-    gun_5: 'images/guns/10.png', //green
-    gun_6: 'images/guns/12.png', //orange
+    gun_4: 'images/guns/6.png',
+    gun_5: 'images/guns/10.png',
+    gun_6: 'images/guns/12.png',
 };
 
 const bulletSpritesheetPaths = {
@@ -78,7 +78,7 @@ const characterData = {
 
 class AssetManager {
     constructor() {
-        this.assets = { characters: {}, weapons: {}, bullets: {} };
+        this.assets = { characters: {}, weapons: {}, bullets: {}, maps: {} };
     }
 
     async loadCoreAssets() {
@@ -101,15 +101,26 @@ class AssetManager {
                 })
         );
 
+        const mapPath = 'maps/testMap.json';
+        const mapPromise = fetch(mapPath)
+            .then(res => res.json())
+            .then(data => ({ type: 'map', key: 'testMap', data }))
+            .catch(error => {
+                console.warn(`Could not load map data from ${mapPath}:`, error);
+                return { type: 'map', key: 'testMap', data: null };
+            });
+
         const manifestPath = 'images/player/mPlayer Human.json';
         const manifestPromise = fetch(manifestPath).then(res => res.json());
 
-        const loadedParts = await Promise.all([...imagePromises, ...weaponPromises]);
+        const loadedParts = await Promise.all([...imagePromises, ...weaponPromises, mapPromise]);
 
         for (const part of loadedParts) {
             if (part.type === 'weapon' && part.texture) {
                  this.assets.weapons[part.key] = part.texture;
-            } else {
+            } else if (part.type === 'map' && part.data) {
+                this.assets.maps[part.key] = part.data;
+            } else if (!part.type) {
                  Object.assign(this.assets, part);
             }
         }

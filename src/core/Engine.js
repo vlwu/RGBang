@@ -14,6 +14,7 @@ import { eventBus } from '../utils/event-bus.js';
 import { PlayerComponent } from '../components/PlayerComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { HealthComponent } from '../components/HealthComponent.js';
+import { MapSystem } from '../systems/MapSystem.js';
 
 export class Engine {
     constructor(container, assets) {
@@ -36,6 +37,9 @@ export class Engine {
         this.gameState = new GameState();
         this.soundManager = new SoundManager();
         this.uiSystem = new UISystem();
+        
+        this.mapSystem = new MapSystem(this.entityManager, this.pixiApp.stage);
+        await this.mapSystem.loadMap(this.assets.maps.testMap);
 
         const initialCharacterId = this.gameState.selectedCharacter;
         const initialSpritesheet = this.assets.characters[initialCharacterId];
@@ -54,6 +58,7 @@ export class Engine {
             this.weaponSystem,
             this.bulletSystem,
             this.cooldownSystem,
+            this.mapSystem,
             this.renderSystem,
             this.uiSystem,
         ];
