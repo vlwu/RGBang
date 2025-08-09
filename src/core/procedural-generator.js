@@ -78,14 +78,42 @@ export class ProceduralGenerator {
 
 
                 if (isOverlay(globalX, globalY)) {
+                    const north = isOverlay(globalX, globalY - 1);
+                    const west = isOverlay(globalX - 1, globalY);
+                    const south = isOverlay(globalX, globalY + 1);
+                    const east = isOverlay(globalX + 1, globalY);
+
                     let mask = 0;
-                    if (isOverlay(globalX, globalY - 1)) mask |= 1;
-                    if (isOverlay(globalX - 1, globalY)) mask |= 2;
-                    if (isOverlay(globalX, globalY + 1)) mask |= 4;
-                    if (isOverlay(globalX + 1, globalY)) mask |= 8;
-                    const overlayTileId = overlayDef.mapping[mask];
-                    if (overlayTileId !== undefined) {
-                        tileId = overlayTileId;
+                    if (north) mask |= 1;
+                    if (west) mask |= 2;
+                    if (south) mask |= 4;
+                    if (east) mask |= 8;
+
+                    if (mask === 15 && overlayDef.innerCorners) { // It's a solid tile, check for inner corners
+                        const nw = isOverlay(globalX - 1, globalY - 1);
+                        const ne = isOverlay(globalX + 1, globalY - 1);
+                        const sw = isOverlay(globalX - 1, globalY + 1);
+                        const se = isOverlay(globalX + 1, globalY + 1);
+
+                        // If a diagonal is NOT an overlay, it's an inner corner
+                        if (!nw) {
+                            tileId = overlayDef.innerCorners.se;
+                        } else if (!ne) {
+                            tileId = overlayDef.innerCorners.sw;
+                        } else if (!sw) {
+                            tileId = overlayDef.innerCorners.ne;
+                        } else if (!se) {
+                            tileId = overlayDef.innerCorners.nw;
+                        } else {
+                            // All diagonals are overlays, so it's a true solid tile
+                            tileId = overlayDef.mapping[mask];
+                        }
+                    } else {
+                        // It's a regular edge tile
+                        const overlayTileId = overlayDef.mapping[mask];
+                        if (overlayTileId !== undefined) {
+                            tileId = overlayTileId;
+                        }
                     }
                 }
                 ground.push({ x, y, tileId });

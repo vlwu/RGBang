@@ -2,8 +2,6 @@ export const BIOME_CONFIG = {
     forest: {
         name: "Enchanted Forest",
 
-
-
         baseTiles: [
             { id: 56, weight: 0.8 },
             { id: 226, weight: 0.05 },
@@ -16,6 +14,12 @@ export const BIOME_CONFIG = {
             noiseScale: 30,
             threshold: 0.5,
 
+            innerCorners: {
+                nw: 28,
+                ne: 30,
+                sw: 82,
+                se: 84,
+            },
 
             mapping: {
                  0: 86,
