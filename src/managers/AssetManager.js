@@ -187,12 +187,14 @@ class AssetManager {
                     const type = getProperty(obj, 'type');
                     const assetKey = getProperty(obj, 'assetKey', '');
 
+                    // --- MODIFICATION: Made the "NormalTree" check more specific ---
                     if (type === 'Tree') {
                         if (assetKey.includes('Autumn')) {
                             this.assets.objectDefinitions.AutumnTree.push(obj);
                         } else if (assetKey.includes('Broken')) {
                             this.assets.objectDefinitions.BrokenTree.push(obj);
-                        } else {
+                        } else if (assetKey.includes('Normal') || assetKey.startsWith('Tree')) {
+                            // Only add trees explicitly marked as 'Normal' or the default 'Tree1/2/3'
                             this.assets.objectDefinitions.NormalTree.push(obj);
                         }
                     } else if (type === 'Crystal') {
@@ -230,7 +232,6 @@ class AssetManager {
             });
             characterSpritesheetPromises.push(promise);
         }
-        // --- FIX: Corrected the variable name in Promise.all() ---
         const loadedCharacters = await Promise.all(characterSpritesheetPromises);
         for (const part of loadedCharacters) {
             if (part.type === 'character' && part.spritesheet) { this.assets.characters[part.charKey] = part.spritesheet; }

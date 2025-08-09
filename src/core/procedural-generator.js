@@ -2,6 +2,7 @@ import { createNoise2D } from 'simplex-noise';
 import { BIOME_CONFIG } from '../entities/biome-definitions.js';
 
 export class ProceduralGenerator {
+
     constructor(seed, objectDefinitions, tilePixelSize, biomeId = 'forest') {
         this.noise2D = createNoise2D();
         this.setBiome(biomeId);
@@ -16,6 +17,7 @@ export class ProceduralGenerator {
     generateChunkData(chunkX, chunkY, chunkSize) {
         const ground = [];
         const objects = [];
+        const occupiedCells = new Set();
 
         for (let y = 0; y < chunkSize; y++) {
             for (let x = 0; x < chunkSize; x++) {
@@ -24,6 +26,9 @@ export class ProceduralGenerator {
 
                 ground.push({ x, y, tileId: this.biome.groundTiles[0].id });
 
+                if (occupiedCells.has(`${globalX},${globalY}`)) {
+                    continue;
+                }
 
                 this.biome.objects.forEach((objDef, index) => {
                     const objNoise = this.noise2D(
@@ -38,17 +43,22 @@ export class ProceduralGenerator {
 
                             const template = possibleObjects[Math.floor(Math.random() * possibleObjects.length)];
 
-
                             const newObject = {
                                 ...template,
-                                x: (chunkX * chunkSize + x) * this.tilePixelSize + this.tilePixelSize / 2,
-                                y: (chunkY * chunkSize + y) * this.tilePixelSize + this.tilePixelSize / 2,
+                                x: globalX * this.tilePixelSize + this.tilePixelSize / 2,
+                                y: globalY * this.tilePixelSize + this.tilePixelSize / 2,
                             };
                             objects.push(newObject);
+
+                            const spacing = objDef.spacing || 1; // Default to 1 if spacing isn't defined
+                            for (let i = -Math.floor(spacing / 2); i < Math.ceil(spacing / 2); i++) {
+                                for (let j = -Math.floor(spacing / 2); j < Math.ceil(spacing / 2); j++) {
+                                    occupiedCells.add(`${globalX + i},${globalY + j}`);
+                                }
+                            }
                         }
                     }
                 });
-
             }
         }
 
