@@ -10,29 +10,27 @@ export const BIOME_CONFIG = {
             { id: 227, weight: 0.05 },
         ],
 
-        // Replaced overlayTiles with an array of overlays for layering.
-        // Water is first, so it gets priority during generation.
         overlays: [
             {
                 key: 'water',
-                noiseScale: 50, // Larger scale for bigger, less frequent pools
-                threshold: 0.65, // Higher threshold makes it rarer than dirt
+                noiseScale: 50,
+                threshold: 0.65,
                 innerCorners: {
-                    nw: 298, // placeholder: water_inner_corner_nw
-                    ne: 300, // placeholder: water_inner_corner_ne
-                    sw: 352, // placeholder: water_inner_corner_sw
-                    se: 354, // placeholder: water_inner_corner_se
+                    nw: [298, 303, 308, 313],
+                    ne: [300, 305, 310, 315],
+                    sw: [352, 357, 362, 367],
+                    se: [354, 359, 364, 369],
                 },
                 mapping: {
-                     3: 329, // placeholder: water_corner_sw
-                     6: 302, // placeholder: water_corner_nw
-                     7: 325, // placeholder: water_t_junction_e
-                     9: 328, // placeholder: water_corner_se
-                    11: 299, // placeholder: water_t_junction_s
-                    12: 301, // placeholder: water_corner_ne
-                    13: 327, // placeholder: water_t_junction_w
-                    14: 353, // placeholder: water_t_junction_n
-                    15: 355, // placeholder: water_center
+                     3: [329, 334, 339, 344], // corner_sw
+                     6: [302, 307, 312, 317], // corner_nw
+                     7: [325, 330, 335, 340], // t_junction_e
+                     9: [328, 333, 338, 343], // corner_se
+                    11: [299, 304, 309, 314], // t_junction_s
+                    12: [301, 306, 311, 316], // corner_ne
+                    13: [327, 332, 337, 342], // t_junction_w
+                    14: [353, 358, 363, 368], // t_junction_n
+                    15: [355, 360, 365, 370], // center
                 }
             },
             {
@@ -46,7 +44,6 @@ export const BIOME_CONFIG = {
                     se: 84,
                 },
                 mapping: {
-                    // This mapping is intentionally sparse to create more natural patches
                      3: 59,
                      6: 32,
                      7: 55,

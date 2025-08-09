@@ -17,6 +17,7 @@ import { HealthComponent } from '../components/HealthComponent.js';
 import { MapSystem } from '../systems/MapSystem.js';
 import { CameraSystem } from '../systems/CameraSystem.js';
 import { CollisionSystem } from '../systems/CollisionSystem.js';
+import { AnimationSystem } from '../systems/AnimationSystem.js';
 
 export class Engine {
     constructor(container, assets) {
@@ -65,6 +66,7 @@ export class Engine {
         this.weaponSystem = new WeaponSystem(this.entityManager, this.worldContainer, this.assets);
         this.bulletSystem = new BulletSystem(this.entityManager);
         this.collisionSystem = new CollisionSystem(this.entityManager);
+        this.animationSystem = new AnimationSystem(this.entityManager, this.mapSystem);
         this.renderSystem = new RenderSystem(this.entityManager, this.worldContainer);
         this.cameraSystem = new CameraSystem(this.entityManager, this.worldContainer, this.pixiApp.screen, this.player);
 
@@ -75,6 +77,7 @@ export class Engine {
             this.bulletSystem,
             this.cooldownSystem,
             this.mapSystem,
+            this.animationSystem,
             this.collisionSystem,
             this.cameraSystem,
             this.renderSystem,

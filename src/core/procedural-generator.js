@@ -44,19 +44,14 @@ export class ProceduralGenerator {
         const occupiedCells = new Set();
         const overlays = this.biome.overlays || [];
 
-        // This map will store which overlay type a tile belongs to ('water', 'dirt', or null).
         const logicalOverlayMap = new Map();
 
-        // Helper to check if a global coordinate is of a certain overlay type
         const isOverlayType = (gx, gy, overlayDef) => {
-            // Use a different noise "quadrant" for each overlay type to get different patterns
             const seedOffset = overlays.indexOf(overlayDef) * 10000;
             const noise = this.noise2D((gx + seedOffset) / overlayDef.noiseScale, (gy + seedOffset) / overlayDef.noiseScale);
             return noise > overlayDef.threshold;
         };
 
-        // Pre-populate the logical overlay map for the chunk area + borders.
-        // This respects priority: the first overlay in the biome config's list wins.
         for (let y = -1; y <= chunkSize; y++) {
             for (let x = -1; x <= chunkSize; x++) {
                 const gx = chunkX * chunkSize + x;
@@ -74,19 +69,15 @@ export class ProceduralGenerator {
             }
         }
 
-        // Main loop to generate tiles
         for (let y = 0; y < chunkSize; y++) {
             for (let x = 0; x < chunkSize; x++) {
                 const globalX = chunkX * chunkSize + x;
                 const globalY = chunkY * chunkSize + y;
-
-                let tileId = this._getWeightedRandomTileId(this.biome.baseTiles);
+                let tileDef = this._getWeightedRandomTileId(this.biome.baseTiles);
                 const overlayType = logicalOverlayMap.get(`${globalX},${globalY}`);
 
                 if (overlayType) {
                     const overlayDef = overlays.find(o => o.key === overlayType);
-
-                    // A helper to check if a neighbor has the same overlay type
                     const hasSameOverlay = (gx, gy) => logicalOverlayMap.get(`${gx},${gy}`) === overlayType;
 
                     const north = hasSameOverlay(globalX, globalY - 1);
@@ -108,7 +99,6 @@ export class ProceduralGenerator {
                         const sw = hasSameOverlay(globalX - 1, globalY + 1);
                         const se = hasSameOverlay(globalX + 1, globalY + 1);
 
-
                         if (!nw) {
                             overlayTileDef = overlayDef.innerCorners.se;
                         } else if (!ne) {
@@ -121,24 +111,22 @@ export class ProceduralGenerator {
                     }
 
                     if (overlayTileDef !== undefined) {
-                        if (Array.isArray(overlayTileDef)) {
-                            tileId = this._getWeightedRandomTileId(overlayTileDef);
+                        if (Array.isArray(overlayTileDef) && overlayTileDef.length > 0 && typeof overlayTileDef[0] === 'object' && overlayTileDef[0].weight !== undefined) {
+                            tileDef = this._getWeightedRandomTileId(overlayTileDef);
                         } else {
-                            tileId = overlayTileDef;
+                            tileDef = overlayTileDef;
                         }
                     }
 
                     if (overlayType === 'water') {
-                        // Prevent objects from spawning on water
                         occupiedCells.add(`${globalX},${globalY}`);
                     }
                 }
-                ground.push({ x, y, tileId });
+                ground.push({ x, y, tileDef });
 
                 if (occupiedCells.has(`${globalX},${globalY}`)) {
                     continue;
                 }
-
 
                 for (const [index, objDef] of this.biome.objects.entries()) {
                     const objNoise = this.noise2D(
@@ -149,7 +137,6 @@ export class ProceduralGenerator {
                     if (objNoise > objDef.threshold) {
                         const possibleObjects = this.objectDefinitions[objDef.type];
                         if (possibleObjects && possibleObjects.length > 0) {
-
                             const template = possibleObjects[Math.floor(Math.random() * possibleObjects.length)];
                             const assetKey = this._getProperty(template, 'assetKey', '');
 

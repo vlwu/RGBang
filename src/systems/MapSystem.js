@@ -3,6 +3,7 @@ import { ProceduralGenerator } from '../core/procedural-generator.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { createGameObjectFromTiled } from '../entities/entity-factory.js';
+import { AnimationComponent } from '../components/AnimationComponent.js';
 
 class Chunk {
     constructor(entityManager) {
@@ -56,7 +57,7 @@ export class MapSystem {
         const { texture, metadata } = this.forestTileset;
         const { tileWidth, tileHeight, columns } = metadata;
 
-        // --- MODIFICATION: Enforce nearest-neighbor scaling to prevent texture bleeding ---
+
         if (texture.source) {
             texture.source.scaleMode = 'nearest';
         }
@@ -123,7 +124,19 @@ export class MapSystem {
 
         chunkData.ground.forEach(tile => {
             const entityId = this.entityManager.createEntity();
-            const tileTexture = this._getTileTexture(tile.tileId);
+            let initialTileId;
+
+            if (Array.isArray(tile.tileDef)) {
+                initialTileId = tile.tileDef[0];
+                this.entityManager.addComponent(entityId, new AnimationComponent({
+                    frames: tile.tileDef,
+                    frameDuration: 0.5,
+                }));
+            } else {
+                initialTileId = tile.tileDef;
+            }
+
+            const tileTexture = this._getTileTexture(initialTileId);
             const tileSprite = new PIXI.Sprite(tileTexture);
             const worldX = chunkWorldX + tile.x * this.TILE_PIXEL_SIZE;
             const worldY = chunkWorldY + tile.y * this.TILE_PIXEL_SIZE;
