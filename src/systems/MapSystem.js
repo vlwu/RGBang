@@ -38,11 +38,9 @@ export class MapSystem {
         this.ACTIVE_RADIUS = 2;
 
         this.activeChunks = new Map();
-        // --- MODIFICATION: Pass the object definitions to the generator ---
-        this.generator = new ProceduralGenerator('rgbang-is-cool', assets.objectDefinitions, 'forest');
 
-        // --- MODIFICATION: The incorrect loading method has been removed ---
-        // this.loadObjectsFromCatalog(); 
+        // --- FIX: Pass the TILE_PIXEL_SIZE to the generator's constructor ---
+        this.generator = new ProceduralGenerator('rgbang-is-cool', assets.objectDefinitions, this.TILE_PIXEL_SIZE, 'forest');
     }
 
     update(dt) {
@@ -75,10 +73,10 @@ export class MapSystem {
         if (this.textureCache.has(gid)) {
             return this.textureCache.get(gid);
         }
-        
-        const firstgid = 1; 
+
+        const firstgid = 1;
         const tileId = gid - firstgid;
-        
+
         if (this.assets.gameObjectTextures && this.assets.gameObjectTextures.has(tileId)) {
             const texture = this.assets.gameObjectTextures.get(tileId);
             this.textureCache.set(gid, texture);
@@ -109,7 +107,7 @@ export class MapSystem {
             newChunk.addEntity(entityId);
         });
 
-        // --- MODIFICATION: Create objects from the procedural data ---
+
         chunkData.objects.forEach(tiledObject => {
             const texture = this.getTextureForGid(tiledObject.gid);
             if (texture && texture !== PIXI.Texture.EMPTY) {
@@ -117,7 +115,7 @@ export class MapSystem {
                 newChunk.addEntity(entityId);
             }
         });
-        // --- END MODIFICATION ---
+
 
         this.activeChunks.set(key, newChunk);
     }
