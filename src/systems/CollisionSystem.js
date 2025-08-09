@@ -44,40 +44,63 @@ export class CollisionSystem {
                 const staticPos = this.entityManager.getComponent(staticId, PositionComponent);
                 const staticCollision = this.entityManager.getComponent(staticId, CollisionComponent);
 
+                if (staticCollision.shape === 'circle') {
+                    const staticCircle = {
+                        x: staticPos.x + staticCollision.offsetX,
+                        y: staticPos.y + staticCollision.offsetY,
+                        radius: staticCollision.radius
+                    };
 
-                const staticCircle = {
-                    x: staticPos.x + staticCollision.offsetX,
-                    y: staticPos.y + staticCollision.offsetY,
-                    radius: staticCollision.radius
-                };
+                    const dx = dynamicCircle.x - staticCircle.x;
+                    const dy = dynamicCircle.y - staticCircle.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const combinedRadius = dynamicCircle.radius + staticCircle.radius;
 
-                const dx = dynamicCircle.x - staticCircle.x;
-                const dy = dynamicCircle.y - staticCircle.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                const combinedRadius = dynamicCircle.radius + staticCircle.radius;
+                    if (distance < combinedRadius) {
+                        const overlap = combinedRadius - distance;
+                        if (distance > 0) {
+                            const pushX = (dx / distance) * overlap;
+                            const pushY = (dy / distance) * overlap;
 
-                if (distance < combinedRadius) {
-                    const overlap = combinedRadius - distance;
-                    if (distance > 0) {
-                        const pushX = (dx / distance) * overlap;
-                        const pushY = (dy / distance) * overlap;
+                            dynamicPos.x += pushX;
+                            dynamicPos.y += pushY;
+                        } else {
+                            dynamicPos.y += overlap;
+                        }
+                    }
+                } else if (staticCollision.shape === 'box') {
+                    const staticBox = {
+                        x: staticPos.x + staticCollision.offsetX - staticCollision.width / 2,
+                        y: staticPos.y + staticCollision.offsetY - staticCollision.height / 2,
+                        width: staticCollision.width,
+                        height: staticCollision.height
+                    };
 
-                        dynamicPos.x += pushX;
-                        dynamicPos.y += pushY;
-                    } else {
-                        dynamicPos.y += overlap;
+                    const closestX = Math.max(staticBox.x, Math.min(dynamicCircle.x, staticBox.x + staticBox.width));
+                    const closestY = Math.max(staticBox.y, Math.min(dynamicCircle.y, staticBox.y + staticBox.height));
+
+                    const dx = dynamicCircle.x - closestX;
+                    const dy = dynamicCircle.y - closestY;
+                    const distanceSq = dx * dx + dy * dy;
+
+                    if (distanceSq < dynamicCircle.radius * dynamicCircle.radius) {
+                        if (distanceSq === 0) {
+                            dynamicPos.y += dynamicCircle.radius;
+                        } else {
+                            const distance = Math.sqrt(distanceSq);
+                            const overlap = dynamicCircle.radius - distance;
+                            dynamicPos.x += (dx / distance) * overlap;
+                            dynamicPos.y += (dy / distance) * overlap;
+                        }
                     }
                 }
-
-
-
 
                 const staticRenderable = this.entityManager.getComponent(staticId, RenderableComponent);
                 if (staticRenderable && staticRenderable.sprite) {
                      const isPlayerBehind = dynamicPos.y < staticPos.y;
-                     // The horizontal check now uses the collision radius, which is more accurate than the sprite width.
-                     // A multiplier is used to approximate the foliage width relative to the trunk's collision radius.
-                     const isHorizontallyClose = Math.abs(dynamicCircle.x - staticCircle.x) < staticCollision.radius * 1.5;
+
+
+                     const isHorizontallyClose = Math.abs(dynamicCircle.x - (staticPos.x + staticCollision.offsetX)) < (staticCollision.radius || staticCollision.width / 2) * 1.5;
 
                      if (isPlayerBehind && isHorizontallyClose) {
                         staticRenderable.sprite.alpha = this.occlusionAlpha;

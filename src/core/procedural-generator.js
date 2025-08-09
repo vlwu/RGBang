@@ -41,6 +41,7 @@ export class ProceduralGenerator {
     generateChunkData(chunkX, chunkY, chunkSize) {
         const ground = [];
         const objects = [];
+        const collisions = [];
         const occupiedCells = new Set();
         const overlays = this.biome.overlays || [];
 
@@ -120,6 +121,12 @@ export class ProceduralGenerator {
 
                     if (overlayType === 'water') {
                         occupiedCells.add(`${globalX},${globalY}`);
+                        if (!(north && west && south && east)) {
+                            collisions.push({
+                                x: globalX * this.tilePixelSize,
+                                y: globalY * this.tilePixelSize,
+                            });
+                        }
                     }
                 }
                 ground.push({ x, y, tileDef });
@@ -170,6 +177,6 @@ export class ProceduralGenerator {
                 }
             }
         }
-        return { ground, objects };
+        return { ground, objects, collisions };
     }
 }

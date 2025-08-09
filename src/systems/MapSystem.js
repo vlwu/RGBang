@@ -4,6 +4,7 @@ import { PositionComponent } from '../components/PositionComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
 import { createGameObjectFromTiled } from '../entities/entity-factory.js';
 import { AnimationComponent } from '../components/AnimationComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
 
 class Chunk {
     constructor(entityManager) {
@@ -158,6 +159,21 @@ export class MapSystem {
                 const entityId = createGameObjectFromTiled(this.entityManager, tiledObject, texture, this.assets);
                 newChunk.addEntity(entityId);
             }
+        });
+
+        chunkData.collisions.forEach(coll => {
+            const entityId = this.entityManager.createEntity();
+            const centerX = coll.x + this.TILE_PIXEL_SIZE / 2;
+            const centerY = coll.y + this.TILE_PIXEL_SIZE / 2;
+
+            this.entityManager.addComponent(entityId, new PositionComponent(centerX, centerY));
+            this.entityManager.addComponent(entityId, new CollisionComponent({
+                shape: 'box',
+                width: this.TILE_PIXEL_SIZE,
+                height: this.TILE_PIXEL_SIZE,
+                isDynamic: false,
+            }));
+            newChunk.addEntity(entityId);
         });
 
 
