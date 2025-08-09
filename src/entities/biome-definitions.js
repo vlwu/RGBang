@@ -11,19 +11,19 @@ export const BIOME_CONFIG = {
             {
                 type: 'NormalTree',
                 noiseScale: 15,
-                threshold: 0.75,
+                threshold: 0.82,
                 spacing: 6,
             },
             {
                 type: 'AutumnTree',
                 noiseScale: 25,
-                threshold: 0.8,
+                threshold: 0.88,
                 spacing: 6,
             },
             {
                 type: 'BrokenTree',
                 noiseScale: 12,
-                threshold: 0.85,
+                threshold: 0.9,
                 spacing: 4,
             },
         ]

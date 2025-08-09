@@ -38,7 +38,7 @@ export class ProceduralGenerator {
                     continue;
                 }
 
-                this.biome.objects.forEach((objDef, index) => {
+                for (const [index, objDef] of this.biome.objects.entries()) {
                     const objNoise = this.noise2D(
                         (globalX + index * 100) / objDef.noiseScale,
                         (globalY + index * 100) / objDef.noiseScale
@@ -76,9 +76,10 @@ export class ProceduralGenerator {
                                     occupiedCells.add(`${globalX + i},${globalY + j}`);
                                 }
                             }
+                            break;
                         }
                     }
-                });
+                }
             }
         }
 
