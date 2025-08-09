@@ -76,16 +76,13 @@ const characterData = {
     f_dwarf: { image: 'images/player/fPlayer Dwarf.png' },
 };
 
-
-const tilesetDataPaths = {
-    forest_terrain: { json: 'maps/tilemap-info/Forest Terrain.json', firstgid: 1 },
-    trees: { json: 'maps/tilemap-info/Trees.json', firstgid: 199 },
-    crystals: { json: 'maps/tilemap-info/Crystals.json', firstgid: 1+198+600 },
-}
+// --- MODIFICATION: This const is no longer needed and has been removed. ---
+// const tilesetDataPaths = { ... }
 
 class AssetManager {
     constructor() {
-        this.assets = { characters: {}, weapons: {}, bullets: {}, maps: {}, tilesets: {} };
+        // Initialize gameObjectTextures as a Map for object images
+        this.assets = { characters: {}, weapons: {}, bullets: {}, maps: {}, tilesets: {}, gameObjectTextures: new Map() };
     }
 
     async loadCoreAssets() {
@@ -104,47 +101,64 @@ class AssetManager {
                 return { type: 'weapon', key, texture: null };
             })
         );
-        const mapPath = 'maps/testMap.json';
-        const mapPromise = fetch(mapPath).then(res => res.json()).then(data => ({ type: 'map', key: 'testMap', data })).catch(error => {
+        
+        const mapPath = 'maps/object_catalog.json';
+        const mapPromise = fetch(mapPath).then(res => res.json()).then(data => ({ type: 'map', key: 'objectCatalog', data })).catch(error => {
             console.warn(`Could not load map data from ${mapPath}:`, error);
-            return { type: 'map', key: 'testMap', data: null };
+            return { type: 'map', key: 'objectCatalog', data: null };
         });
+        
+        const gameObjectsTilesetPromise = fetch('maps/GameObjects.tsx')
+            .then(res => res.text())
+            .then(xmlString => {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlString, "application/xml");
+                const tiles = Array.from(xmlDoc.getElementsByTagName('tile'));
+                const texturePromises = tiles.map(tile => {
+                    const id = parseInt(tile.getAttribute('id'), 10);
+                    const imageEl = tile.querySelector('image');
+                    if (!imageEl) return Promise.resolve(null);
+
+                    const sourcePath = imageEl.getAttribute('source').replace('../', '');
+                    
+                    return PIXI.Assets.load(sourcePath)
+                        .then(texture => ({ id, texture }))
+                        .catch(err => {
+                            console.warn(`Failed to load texture for tile ID ${id} at ${sourcePath}:`, err);
+                            return null;
+                        });
+                });
+                return Promise.all(texturePromises);
+            });
+
         const manifestPath = 'images/player/mPlayer Human.json';
         const manifestPromise = fetch(manifestPath).then(res => res.json());
 
-
-
-        const tilesetPromises = Object.entries(tilesetDataPaths).map(async ([key, paths]) => {
-            try {
-                const res = await fetch(paths.json);
-                if (!res.ok) throw new Error(`Failed to fetch ${paths.json}`);
-                const data = await res.json();
-
-                const imageUrl = `maps/${data.image.replace('../', '')}`;
-                const texture = await PIXI.Assets.load(imageUrl);
-                texture.source.scaleMode = 'nearest';
-                return { type: 'tileset', key, data: { ...data, firstgid: paths.firstgid, texture }};
-            } catch (error) {
-                console.error(`Failed to load tileset ${key}:`, error);
-                return { type: 'tileset', key, data: null };
-            }
-        });
-
-
-        const loadedParts = await Promise.all([...imagePromises, ...weaponPromises, mapPromise, ...tilesetPromises]);
+        // --- MODIFICATION: Removed tilesetPromises from this block ---
+        const [loadedParts, gameObjectTextures] = await Promise.all([
+             Promise.all([...imagePromises, ...weaponPromises, mapPromise]),
+             gameObjectsTilesetPromise
+        ]);
 
         for (const part of loadedParts) {
             if (part.type === 'weapon' && part.texture) {
                  this.assets.weapons[part.key] = part.texture;
             } else if (part.type === 'map' && part.data) {
-                this.assets.maps[part.key] = part.data;
+                 this.assets[part.key] = part.data;
             } else if (part.type === 'tileset' && part.data) {
                 this.assets.tilesets[part.key] = part.data;
             } else if (!part.type) {
                  Object.assign(this.assets, part);
             }
         }
-
+        
+        if (gameObjectTextures) {
+            gameObjectTextures.forEach(item => {
+                if (item) {
+                    this.assets.gameObjectTextures.set(item.id, item.texture);
+                }
+            });
+        }
 
         const bulletAnimationData = generateBulletAnimations();
         const bulletPromises = Object.entries(bulletSpritesheetPaths).map(([key, src]) =>

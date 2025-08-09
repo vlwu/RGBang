@@ -1,12 +1,4 @@
 { "compressionlevel":-1,
- "editorsettings":
-    {
-     "export":
-        {
-         "format":"json",
-         "target":"object_catalog.json"
-        }
-    },
  "height":60,
  "infinite":false,
  "layers":[
@@ -20,8 +12,29 @@
                  "height":128,
                  "id":26,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Autumn_tree1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":0,
@@ -32,8 +45,29 @@
                  "height":64,
                  "id":27,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Autumn_tree2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -44,8 +78,29 @@
                  "height":64,
                  "id":28,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Autumn_tree3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -56,8 +111,29 @@
                  "height":48,
                  "id":29,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Broken_tree3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":48,
                  "x":256,
@@ -68,8 +144,29 @@
                  "height":64,
                  "id":30,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Broken_tree4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -80,8 +177,29 @@
                  "height":32,
                  "id":31,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Broken_tree5"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":304,
@@ -92,8 +210,29 @@
                  "height":128,
                  "id":32,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Burned_tree1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":0,
@@ -104,8 +243,29 @@
                  "height":64,
                  "id":33,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Burned_tree2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -116,8 +276,29 @@
                  "height":64,
                  "id":34,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Burned_tree3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -128,8 +309,29 @@
                  "height":128,
                  "id":35,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Christmas_tree1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":0,
@@ -140,8 +342,29 @@
                  "height":64,
                  "id":36,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Christmas_tree2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -152,8 +375,29 @@
                  "height":32,
                  "id":37,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Christmas_tree3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":304,
@@ -164,8 +408,29 @@
                  "height":128,
                  "id":38,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Flower_tree1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":0,
@@ -176,8 +441,29 @@
                  "height":64,
                  "id":39,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Flower_tree2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -188,8 +474,29 @@
                  "height":64,
                  "id":40,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Flower_tree2-1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -200,8 +507,29 @@
                  "height":128,
                  "id":41,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Fruit_tree1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":0,
@@ -212,8 +540,29 @@
                  "height":128,
                  "id":42,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Fruit_tree2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":0,
@@ -224,8 +573,29 @@
                  "height":64,
                  "id":43,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Fruit_tree3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -236,8 +606,29 @@
                  "height":128,
                  "id":44,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Moss_tree1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":0,
@@ -248,8 +639,29 @@
                  "height":64,
                  "id":45,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Moss_tree2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -260,8 +672,29 @@
                  "height":64,
                  "id":46,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Moss_tree3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -272,8 +705,29 @@
                  "height":128,
                  "id":47,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Palm_tree1-1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":336,
@@ -284,8 +738,29 @@
                  "height":64,
                  "id":48,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Palm_tree1-2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -296,8 +771,29 @@
                  "height":64,
                  "id":49,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Palm_tree1-3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -308,8 +804,29 @@
                  "height":128,
                  "id":50,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Palm_tree2-1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":336,
@@ -320,8 +837,29 @@
                  "height":64,
                  "id":51,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Palm_tree2-2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -332,8 +870,29 @@
                  "height":64,
                  "id":52,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Palm_tree2-2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -344,8 +903,29 @@
                  "height":128,
                  "id":53,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":""
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":336,
@@ -356,8 +936,29 @@
                  "height":64,
                  "id":54,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":""
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -368,8 +969,29 @@
                  "height":32,
                  "id":55,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":""
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":304,
@@ -380,8 +1002,29 @@
                  "height":128,
                  "id":56,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Snow_tree1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":336,
@@ -392,8 +1035,29 @@
                  "height":64,
                  "id":57,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Snow_tree2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -404,8 +1068,29 @@
                  "height":64,
                  "id":58,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Snow_tree3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -416,8 +1101,29 @@
                  "height":128,
                  "id":59,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Normal_tree1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":128,
                  "x":336,
@@ -428,8 +1134,29 @@
                  "height":64,
                  "id":60,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Normal_tree2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":128,
@@ -440,8 +1167,29 @@
                  "height":64,
                  "id":61,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Normal_tree3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Tree"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":192,
@@ -452,8 +1200,29 @@
                  "height":64,
                  "id":62,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Black_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -464,8 +1233,29 @@
                  "height":64,
                  "id":63,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Black_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -476,8 +1266,29 @@
                  "height":32,
                  "id":64,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Black_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -488,8 +1299,29 @@
                  "height":16,
                  "id":65,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Black_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,
@@ -500,8 +1332,29 @@
                  "height":64,
                  "id":66,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Blue_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -512,8 +1365,29 @@
                  "height":32,
                  "id":67,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Blue_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -524,8 +1398,29 @@
                  "height":16,
                  "id":68,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Blue_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,
@@ -536,8 +1431,29 @@
                  "height":64,
                  "id":70,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Red_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -548,8 +1464,29 @@
                  "height":64,
                  "id":71,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Red_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -560,8 +1497,29 @@
                  "height":32,
                  "id":72,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Red_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -572,8 +1530,29 @@
                  "height":16,
                  "id":73,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Red_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,
@@ -584,8 +1563,29 @@
                  "height":64,
                  "id":74,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Blue_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -596,8 +1596,29 @@
                  "height":64,
                  "id":75,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Green_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -608,8 +1629,29 @@
                  "height":64,
                  "id":76,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Green_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -620,8 +1662,29 @@
                  "height":32,
                  "id":77,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Green_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -632,8 +1695,29 @@
                  "height":16,
                  "id":78,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Green_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,
@@ -644,8 +1728,29 @@
                  "height":64,
                  "id":79,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Pink_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -656,8 +1761,29 @@
                  "height":64,
                  "id":80,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Pink_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -668,8 +1794,29 @@
                  "height":32,
                  "id":81,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Pink_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -680,8 +1827,29 @@
                  "height":16,
                  "id":82,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Pink_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,
@@ -692,8 +1860,29 @@
                  "height":64,
                  "id":83,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Orange_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -704,8 +1893,29 @@
                  "height":64,
                  "id":84,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Orange_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -716,8 +1926,29 @@
                  "height":32,
                  "id":85,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Orange_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -728,8 +1959,29 @@
                  "height":16,
                  "id":86,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Orange_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,
@@ -741,8 +1993,29 @@
                  "height":64,
                  "id":87,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Purple_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -753,8 +2026,29 @@
                  "height":32,
                  "id":88,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Purple_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -765,8 +2059,29 @@
                  "height":16,
                  "id":89,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Purple_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,
@@ -777,8 +2092,29 @@
                  "height":64,
                  "id":90,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Purple_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -789,8 +2125,29 @@
                  "height":64,
                  "id":91,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"White_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -801,8 +2158,29 @@
                  "height":64,
                  "id":92,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"White_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -813,8 +2191,29 @@
                  "height":32,
                  "id":93,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"White_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -825,8 +2224,29 @@
                  "height":16,
                  "id":94,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"White_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,
@@ -837,8 +2257,29 @@
                  "height":64,
                  "id":95,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Yellow_crystal1"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":480,
@@ -849,8 +2290,29 @@
                  "height":64,
                  "id":96,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Yellow_crystal2"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":64,
                  "x":544,
@@ -861,8 +2323,29 @@
                  "height":32,
                  "id":97,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Yellow_crystal3"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":32,
                  "x":608,
@@ -873,8 +2356,29 @@
                  "height":16,
                  "id":98,
                  "name":"",
+                 "properties":[
+                        {
+                         "name":"anchorX",
+                         "type":"float",
+                         "value":0.5
+                        }, 
+                        {
+                         "name":"anchorY",
+                         "type":"float",
+                         "value":1
+                        }, 
+                        {
+                         "name":"assetKey",
+                         "type":"string",
+                         "value":"Yellow_crystal4"
+                        }, 
+                        {
+                         "name":"type",
+                         "type":"string",
+                         "value":"Crystal"
+                        }],
                  "rotation":0,
-                 "type":"",
+                 "type":"GameObject",
                  "visible":true,
                  "width":16,
                  "x":640,

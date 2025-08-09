@@ -2,7 +2,7 @@ import * as PIXI from 'pixi.js';
 import { ProceduralGenerator } from '../core/procedural-generator.js';
 import { PositionComponent } from '../components/PositionComponent.js';
 import { RenderableComponent } from '../components/RenderableComponent.js';
-import { createTree, createCrystal } from '../entities/entity-factory.js';
+import { createGameObjectFromTiled } from '../entities/entity-factory.js';
 
 class Chunk {
     constructor(entityManager) {
@@ -37,6 +37,32 @@ export class MapSystem {
 
         this.activeChunks = new Map();
         this.generator = new ProceduralGenerator('rgbang-is-cool', 'forest');
+
+        this.loadObjectsFromCatalog();
+    }
+
+    loadObjectsFromCatalog() {
+        const objectCatalog = this.assets.objectCatalog;
+        if (!objectCatalog || !objectCatalog.layers) {
+            console.warn("Object catalog map data not found or is invalid.");
+            return;
+        }
+
+        const objectLayer = objectCatalog.layers.find(layer => layer.type === 'objectgroup');
+        if (!objectLayer || !objectLayer.objects) {
+            console.warn("No object layer found in the object catalog.");
+            return;
+        }
+
+        for (const tiledObject of objectLayer.objects) {
+            const texture = this.getTextureForGid(tiledObject.gid);
+            if (!texture || texture === PIXI.Texture.EMPTY) {
+                console.warn(`Could not find pre-loaded texture for object with GID: ${tiledObject.gid}`);
+                continue;
+            }
+            
+            createGameObjectFromTiled(this.entityManager, tiledObject, texture);
+        }
     }
 
     update(dt) {
@@ -65,48 +91,28 @@ export class MapSystem {
         }
     }
 
-
-    findTilesetForGid(gid) {
-
-        const tilesetKeys = Object.keys(this.assets.tilesets);
-        for (let i = tilesetKeys.length - 1; i >= 0; i--) {
-            const key = tilesetKeys[i];
-            const tileset = this.assets.tilesets[key];
-            if (gid >= tileset.firstgid) {
-                return tileset;
-            }
-        }
-        return null;
-    }
-
     getTextureForGid(gid) {
         if (this.textureCache.has(gid)) {
             return this.textureCache.get(gid);
         }
 
-        const tileset = this.findTilesetForGid(gid);
-        if (!tileset) return PIXI.Texture.EMPTY;
-
-        const localId = gid - tileset.firstgid;
-        const tileWidth = tileset.tilewidth;
-        const tileHeight = tileset.tileheight;
-        const columns = tileset.columns;
-
-        const sx = (localId % columns) * tileWidth;
-        const sy = Math.floor(localId / columns) * tileHeight;
-
-        try {
-            const frame = new PIXI.Rectangle(sx, sy, tileWidth, tileHeight);
-            const texture = new PIXI.Texture({ source: tileset.texture.source, frame });
+        // --- MODIFICATION: Simplified logic ---
+        // In `object_catalog.json`, the tileset `GameObjects.tsx` has a `firstgid` of 1.
+        // The tile IDs in your `.tsx` file (e.g., id="80") are what we need to look up.
+        const firstgid = 1; 
+        const tileId = gid - firstgid;
+        
+        // This is the primary path for your game objects (trees, crystals, etc.)
+        if (this.assets.gameObjectTextures && this.assets.gameObjectTextures.has(tileId)) {
+            const texture = this.assets.gameObjectTextures.get(tileId);
             this.textureCache.set(gid, texture);
             return texture;
-        } catch (error) {
-            console.error(`Error creating texture for GID ${gid}`, error);
-            return PIXI.Texture.EMPTY;
         }
+
+        // If we've reached here, it's likely a ground tile from procedural generation
+        // for which we have no texture. We will return EMPTY to avoid rendering errors.
+        return PIXI.Texture.EMPTY;
     }
-
-
 
     loadChunk(x, y) {
         const key = `${x},${y}`;
@@ -115,37 +121,20 @@ export class MapSystem {
         const chunkWorldX = x * this.CHUNK_PIXEL_SIZE;
         const chunkWorldY = y * this.CHUNK_PIXEL_SIZE;
 
-
+        // --- MODIFICATION: This part will now create empty sprites for the ground ---
         chunkData.ground.forEach(tile => {
             const entityId = this.entityManager.createEntity();
-            const tileTexture = this.getTextureForGid(tile.tileId);
+            // Get an empty texture since the ground tileset loading was removed.
+            const tileTexture = PIXI.Texture.EMPTY;
             const tileSprite = new PIXI.Sprite(tileTexture);
             const worldX = chunkWorldX + tile.x * this.TILE_PIXEL_SIZE;
             const worldY = chunkWorldY + tile.y * this.TILE_PIXEL_SIZE;
 
-            tileSprite.scale.set(this.TILE_PIXEL_SIZE / (tileTexture.width || 16));
             tileSprite.zIndex = -1000;
 
             this.entityManager.addComponent(entityId, new PositionComponent(worldX, worldY));
             this.entityManager.addComponent(entityId, new RenderableComponent(tileSprite));
             newChunk.addEntity(entityId);
-        });
-
-
-        chunkData.objects.forEach(obj => {
-            const worldX = chunkWorldX + obj.x * this.TILE_PIXEL_SIZE + (this.TILE_PIXEL_SIZE / 2);
-            const worldY = chunkWorldY + obj.y * this.TILE_PIXEL_SIZE + (this.TILE_PIXEL_SIZE / 2);
-
-            let newEntityId;
-            if (obj.type === 'tree') {
-                newEntityId = createTree(this.entityManager, worldX, worldY, this.assets);
-            } else if (obj.type === 'crystal') {
-                newEntityId = createCrystal(this.entityManager, worldX, worldY, this.assets);
-            }
-
-            if (newEntityId) {
-                newChunk.addEntity(newEntityId);
-            }
         });
 
         this.activeChunks.set(key, newChunk);

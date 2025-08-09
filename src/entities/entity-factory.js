@@ -84,43 +84,38 @@ export function createBullet(entityManager, assets, x, y, angle, bulletId) {
     return bullet;
 }
 
-function getSpecificTileTexture(tileset, tileX, tileY) {
-    if (!tileset) return PIXI.Texture.EMPTY;
-    const sx = tileX * tileset.tilewidth;
-    const sy = tileY * tileset.tileheight;
-    const frame = new PIXI.Rectangle(sx, sy, tileset.tilewidth, tileset.tileheight);
-    return new PIXI.Texture({ source: tileset.texture.source, frame });
+// Helper function to safely get a custom property from a Tiled object
+function getProperty(tiledObject, propertyName, defaultValue = null) {
+    if (!tiledObject.properties) {
+        return defaultValue;
+    }
+    const prop = tiledObject.properties.find(p => p.name === propertyName);
+    return prop ? prop.value : defaultValue;
 }
 
-export function createTree(entityManager, x, y, assets) {
-    const treeEntity = entityManager.createEntity();
+export function createGameObjectFromTiled(entityManager, tiledObject, texture) {
+    const entity = entityManager.createEntity();
 
-    const treeTileset = assets.tilesets.trees;
-    const treeTexture = getSpecificTileTexture(treeTileset, 1, 2);
+    // Get all the custom properties you defined in Tiled
+    const anchorX = getProperty(tiledObject, 'anchorX', 0.5);
+    const anchorY = getProperty(tiledObject, 'anchorY', 1.0);
+    const type = getProperty(tiledObject, 'type', 'default');
+    
+    // Create the sprite with the correct texture from the MapSystem
+    const sprite = new PIXI.Sprite(texture);
+    
+    // Set anchor using your Tiled properties
+    sprite.anchor.set(anchorX, anchorY);
+    
+    // The position is taken directly from the Tiled object's x and y
+    entityManager.addComponent(entity, new PositionComponent(tiledObject.x, tiledObject.y));
+    entityManager.addComponent(entity, new RenderableComponent(sprite));
 
-    const sprite = new PIXI.Sprite(treeTexture);
-    sprite.anchor.set(0.5, 0.75);
-    sprite.scale.set(3);
+    // Here, you can add other components based on the object's type
+    // For example, adding collision later:
+    // if (type === 'Tree' || type === 'Crystal') {
+    //     entityManager.addComponent(entity, new CollisionComponent({ type: 'static', width: 32, height: 32 }));
+    // }
 
-    entityManager.addComponent(treeEntity, new PositionComponent(x, y));
-    entityManager.addComponent(treeEntity, new RenderableComponent(sprite));
-
-    return treeEntity;
-}
-
-export function createCrystal(entityManager, x, y, assets) {
-    const crystalEntity = entityManager.createEntity();
-
-    const crystalTileset = assets.tilesets.crystals;
-    const crystalTexture = getSpecificTileTexture(crystalTileset, 0, 1);
-
-    const sprite = new PIXI.Sprite(crystalTexture);
-    sprite.anchor.set(0.5);
-    sprite.scale.set(3);
-
-    entityManager.addComponent(crystalEntity, new PositionComponent(x, y));
-
-    entityManager.addComponent(crystalEntity, new RenderableComponent(sprite));
-
-    return crystalEntity;
+    return entity;
 }
