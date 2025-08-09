@@ -21,7 +21,7 @@ export class CollisionSystem {
             }
         }
 
-        // Reset all static entities to be opaque at the start of the frame.
+
         for (const staticId of staticEntities) {
             const renderable = this.entityManager.getComponent(staticId, RenderableComponent);
             if (renderable && renderable.sprite) {
@@ -29,7 +29,7 @@ export class CollisionSystem {
             }
         }
 
-        // Process collisions and occlusions.
+
         for (const dynamicId of dynamicEntities) {
             const dynamicPos = this.entityManager.getComponent(dynamicId, PositionComponent);
             const dynamicCollision = this.entityManager.getComponent(dynamicId, CollisionComponent);
@@ -44,7 +44,7 @@ export class CollisionSystem {
                 const staticPos = this.entityManager.getComponent(staticId, PositionComponent);
                 const staticCollision = this.entityManager.getComponent(staticId, CollisionComponent);
 
-                // --- Collision Check ---
+
                 const staticCircle = {
                     x: staticPos.x + staticCollision.offsetX,
                     y: staticPos.y + staticCollision.offsetY,
@@ -68,14 +68,16 @@ export class CollisionSystem {
                         dynamicPos.y += overlap;
                     }
                 }
-                
-                // --- Occlusion Check ---
-                // If the player is behind an object, make it translucent.
-                // This check is independent of collision.
+
+
+
+
                 const staticRenderable = this.entityManager.getComponent(staticId, RenderableComponent);
                 if (staticRenderable && staticRenderable.sprite) {
                      const isPlayerBehind = dynamicPos.y < staticPos.y;
-                     const isHorizontallyClose = Math.abs(dynamicPos.x - staticPos.x) < (staticRenderable.sprite.width * staticRenderable.sprite.scale.x) / 2;
+                     // The horizontal check now uses the collision radius, which is more accurate than the sprite width.
+                     // A multiplier is used to approximate the foliage width relative to the trunk's collision radius.
+                     const isHorizontallyClose = Math.abs(dynamicCircle.x - staticCircle.x) < staticCollision.radius * 1.5;
 
                      if (isPlayerBehind && isHorizontallyClose) {
                         staticRenderable.sprite.alpha = this.occlusionAlpha;
