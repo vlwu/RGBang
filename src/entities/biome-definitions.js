@@ -2,7 +2,6 @@ export const BIOME_CONFIG = {
     forest: {
         name: "Enchanted Forest",
 
-
         groundTiles: [
             { id: 33, weight: 0.8 },
             { id: 55, weight: 0.2 },
@@ -13,19 +12,19 @@ export const BIOME_CONFIG = {
                 type: 'NormalTree',
                 noiseScale: 15,
                 threshold: 0.75,
-                spacing: 5,
+                spacing: 6,
             },
             {
                 type: 'AutumnTree',
                 noiseScale: 25,
                 threshold: 0.8,
-                spacing: 5,
+                spacing: 6,
             },
             {
                 type: 'BrokenTree',
                 noiseScale: 12,
                 threshold: 0.85,
-                spacing: 3,
+                spacing: 4,
             },
         ]
     },
@@ -41,7 +40,7 @@ export const BIOME_CONFIG = {
                 type: 'Crystal',
                 noiseScale: 10,
                 threshold: 0.85,
-                spacing: 2,
+                spacing: 3,
             },
         ]
     }

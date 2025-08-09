@@ -14,6 +14,14 @@ export class ProceduralGenerator {
         this.biome = BIOME_CONFIG[biomeId] || BIOME_CONFIG.forest;
     }
 
+    _getProperty(tiledObject, propertyName, defaultValue = null) {
+        if (!tiledObject.properties) {
+            return defaultValue;
+        }
+        const prop = tiledObject.properties.find(p => p.name === propertyName);
+        return prop ? prop.value : defaultValue;
+    }
+
     generateChunkData(chunkX, chunkY, chunkSize) {
         const ground = [];
         const objects = [];
@@ -24,7 +32,7 @@ export class ProceduralGenerator {
                 const globalX = chunkX * chunkSize + x;
                 const globalY = chunkY * chunkSize + y;
 
-                ground.push({ x, y, tileId: this.biome.groundTiles[0].id });
+                ground.push({ x, y, tileId: this.biome.groundTiles.id });
 
                 if (occupiedCells.has(`${globalX},${globalY}`)) {
                     continue;
@@ -42,6 +50,19 @@ export class ProceduralGenerator {
                         if (possibleObjects && possibleObjects.length > 0) {
 
                             const template = possibleObjects[Math.floor(Math.random() * possibleObjects.length)];
+                            const assetKey = this._getProperty(template, 'assetKey', '');
+
+                            let spacing = objDef.spacing || 1;
+                            if (objDef.type.includes('Tree')) {
+                                const baseSpacing = objDef.spacing || 5;
+                                if (assetKey.endsWith('1')) {
+                                    spacing = baseSpacing;
+                                } else if (assetKey.endsWith('2')) {
+                                    spacing = Math.max(1, baseSpacing - 1);
+                                } else if (assetKey.endsWith('3')) {
+                                    spacing = Math.max(1, baseSpacing - 2);
+                                }
+                            }
 
                             const newObject = {
                                 ...template,
@@ -50,7 +71,6 @@ export class ProceduralGenerator {
                             };
                             objects.push(newObject);
 
-                            const spacing = objDef.spacing || 1; // Default to 1 if spacing isn't defined
                             for (let i = -Math.floor(spacing / 2); i < Math.ceil(spacing / 2); i++) {
                                 for (let j = -Math.floor(spacing / 2); j < Math.ceil(spacing / 2); j++) {
                                     occupiedCells.add(`${globalX + i},${globalY + j}`);
