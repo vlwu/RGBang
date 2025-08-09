@@ -30,7 +30,6 @@ export function createPlayer(entityManager, x, y, characterId, playerSpritesheet
     playerSprite.animationSpeed = 0.15;
     playerSprite.play();
 
-
     const playerComp = new PlayerComponent(characterId, gameState.upgrades.unlocked_weapons);
     const initialWeaponId = playerComp.availableWeapons[playerComp.equippedWeaponIndex];
     const weaponConfig = WEAPON_CONFIG[initialWeaponId];
@@ -84,7 +83,6 @@ export function createBullet(entityManager, assets, x, y, angle, bulletId) {
     return bullet;
 }
 
-// Helper function to safely get a custom property from a Tiled object
 function getProperty(tiledObject, propertyName, defaultValue = null) {
     if (!tiledObject.properties) {
         return defaultValue;
@@ -96,26 +94,21 @@ function getProperty(tiledObject, propertyName, defaultValue = null) {
 export function createGameObjectFromTiled(entityManager, tiledObject, texture) {
     const entity = entityManager.createEntity();
 
-    // Get all the custom properties you defined in Tiled
+
     const anchorX = getProperty(tiledObject, 'anchorX', 0.5);
     const anchorY = getProperty(tiledObject, 'anchorY', 1.0);
     const type = getProperty(tiledObject, 'type', 'default');
-    
-    // Create the sprite with the correct texture from the MapSystem
+
+
     const sprite = new PIXI.Sprite(texture);
-    
-    // Set anchor using your Tiled properties
+
+
     sprite.anchor.set(anchorX, anchorY);
     
-    // The position is taken directly from the Tiled object's x and y
+    sprite.scale.set(3.0);
+
     entityManager.addComponent(entity, new PositionComponent(tiledObject.x, tiledObject.y));
     entityManager.addComponent(entity, new RenderableComponent(sprite));
-
-    // Here, you can add other components based on the object's type
-    // For example, adding collision later:
-    // if (type === 'Tree' || type === 'Crystal') {
-    //     entityManager.addComponent(entity, new CollisionComponent({ type: 'static', width: 32, height: 32 }));
-    // }
 
     return entity;
 }

@@ -76,18 +76,29 @@ const characterData = {
     f_dwarf: { image: 'images/player/fPlayer Dwarf.png' },
 };
 
+// Helper function to get a property from a Tiled object
+function getProperty(tiledObject, propertyName, defaultValue = null) {
+    if (!tiledObject.properties) {
+        return defaultValue;
+    }
+    const prop = tiledObject.properties.find(p => p.name === propertyName);
+    return prop ? prop.value : defaultValue;
+}
+
 class AssetManager {
     constructor() {
-        this.assets = { 
-            characters: {}, 
-            weapons: {}, 
-            bullets: {}, 
-            maps: {}, 
-            tilesets: {}, 
+        this.assets = {
+            characters: {},
+            weapons: {},
+            bullets: {},
+            maps: {},
+            tilesets: {},
             gameObjectTextures: new Map(),
-            // --- MODIFICATION: Added a place to store categorized object definitions ---
+            
             objectDefinitions: {
-                Tree: [],
+                NormalTree: [],
+                BrokenTree: [],
+                AutumnTree: [],
                 Crystal: []
             }
         };
@@ -109,13 +120,13 @@ class AssetManager {
                 return { type: 'weapon', key, texture: null };
             })
         );
-        
+
         const mapPath = 'maps/object_catalog.json';
         const mapPromise = fetch(mapPath).then(res => res.json()).then(data => ({ type: 'map', key: 'objectCatalog', data })).catch(error => {
             console.warn(`Could not load map data from ${mapPath}:`, error);
             return { type: 'map', key: 'objectCatalog', data: null };
         });
-        
+
         const gameObjectsTilesetPromise = fetch('maps/GameObjects.tsx')
             .then(res => res.text())
             .then(xmlString => {
@@ -128,7 +139,7 @@ class AssetManager {
                     if (!imageEl) return Promise.resolve(null);
 
                     const sourcePath = imageEl.getAttribute('source').replace('../', '');
-                    
+
                     return PIXI.Assets.load(sourcePath)
                         .then(texture => ({ id, texture }))
                         .catch(err => {
@@ -158,7 +169,7 @@ class AssetManager {
                  Object.assign(this.assets, part);
             }
         }
-        
+
         if (gameObjectTextures) {
             gameObjectTextures.forEach(item => {
                 if (item) {
@@ -166,21 +177,31 @@ class AssetManager {
                 }
             });
         }
-        
-        // --- MODIFICATION: Parse and categorize the object definitions ---
+
+
         const catalog = this.assets.objectCatalog;
         if (catalog && catalog.layers) {
             const objectLayer = catalog.layers.find(l => l.type === 'objectgroup');
             if (objectLayer && objectLayer.objects) {
                 objectLayer.objects.forEach(obj => {
-                    const typeProp = obj.properties.find(p => p.name === 'type');
-                    if (typeProp && this.assets.objectDefinitions[typeProp.value]) {
-                        this.assets.objectDefinitions[typeProp.value].push(obj);
+                    const type = getProperty(obj, 'type');
+                    const assetKey = getProperty(obj, 'assetKey', '');
+
+                    if (type === 'Tree') {
+                        if (assetKey.includes('Autumn')) {
+                            this.assets.objectDefinitions.AutumnTree.push(obj);
+                        } else if (assetKey.includes('Broken')) {
+                            this.assets.objectDefinitions.BrokenTree.push(obj);
+                        } else {
+                            this.assets.objectDefinitions.NormalTree.push(obj);
+                        }
+                    } else if (type === 'Crystal') {
+                        this.assets.objectDefinitions.Crystal.push(obj);
                     }
                 });
             }
         }
-        // --- END MODIFICATION ---
+
 
         const bulletAnimationData = generateBulletAnimations();
         const bulletPromises = Object.entries(bulletSpritesheetPaths).map(([key, src]) =>
@@ -209,6 +230,7 @@ class AssetManager {
             });
             characterSpritesheetPromises.push(promise);
         }
+        // --- FIX: Corrected the variable name in Promise.all() ---
         const loadedCharacters = await Promise.all(characterSpritesheetPromises);
         for (const part of loadedCharacters) {
             if (part.type === 'character' && part.spritesheet) { this.assets.characters[part.charKey] = part.spritesheet; }
