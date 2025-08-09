@@ -67,6 +67,10 @@ const bulletSpritesheetPaths = {
     Yellow: 'images/bullets/Yellow.png',
 };
 
+const tilesetImagePaths = {
+    forest: 'images/terrain/biomes/forest_/forest_tileset.png',
+};
+
 const characterData = {
     m_human: { image: 'images/player/mPlayer Human.png' },
     f_human: { image: 'images/player/fPlayer Human.png' },
@@ -92,7 +96,9 @@ class AssetManager {
             weapons: {},
             bullets: {},
             maps: {},
-            tilesets: {},
+            tilesets: {
+                forest: null
+            },
             gameObjectTextures: new Map(),
             gameObjectCollisionData: new Map(),
 
@@ -119,6 +125,23 @@ class AssetManager {
             PIXI.Assets.load(src).then(texture => ({ type: 'weapon', key, texture })).catch(error => {
                 console.warn(`Could not load weapon texture for ${key} from ${src}:`, error);
                 return { type: 'weapon', key, texture: null };
+            })
+        );
+
+        const tilesetPromises = Object.entries(tilesetImagePaths).map(([key, src]) =>
+            PIXI.Assets.load(src).then(texture => {
+                let metadata = {};
+                if (key === 'forest') {
+                    metadata = {
+                        tileWidth: 16,
+                        tileHeight: 16,
+                        columns: 27,
+                    };
+                }
+                return { type: 'tileset', key, texture, metadata };
+            }).catch(error => {
+                console.warn(`Could not load tileset texture for ${key} from ${src}:`, error);
+                return { type: 'tileset', key, texture: null, metadata: {} };
             })
         );
 
@@ -170,7 +193,7 @@ class AssetManager {
         const manifestPromise = fetch(manifestPath).then(res => res.json());
 
         const [loadedParts, gameObjectTextures] = await Promise.all([
-             Promise.all([...imagePromises, ...weaponPromises, mapPromise]),
+             Promise.all([...imagePromises, ...weaponPromises, mapPromise, ...tilesetPromises]),
              gameObjectsTilesetPromise
         ]);
 
@@ -179,8 +202,11 @@ class AssetManager {
                  this.assets.weapons[part.key] = part.texture;
             } else if (part.type === 'map' && part.data) {
                  this.assets[part.key] = part.data;
-            } else if (part.type === 'tileset' && part.data) {
-                this.assets.tilesets[part.key] = part.data;
+            } else if (part.type === 'tileset' && part.texture) {
+                this.assets.tilesets[part.key] = {
+                    texture: part.texture,
+                    metadata: part.metadata,
+                };
             } else if (!part.type) {
                  Object.assign(this.assets, part);
             }

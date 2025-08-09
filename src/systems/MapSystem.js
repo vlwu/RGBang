@@ -41,6 +41,29 @@ export class MapSystem {
 
 
         this.generator = new ProceduralGenerator('rgbang-is-cool', assets.objectDefinitions, this.TILE_PIXEL_SIZE, 'forest');
+        this.forestTileset = this.assets.tilesets.forest;
+        this.tileTextureCache = new Map();
+    }
+
+    _getTileTexture(tileId) {
+        if (this.tileTextureCache.has(tileId)) {
+            return this.tileTextureCache.get(tileId);
+        }
+        if (!this.forestTileset || !this.forestTileset.texture) {
+            return PIXI.Texture.EMPTY;
+        }
+
+        const { texture, metadata } = this.forestTileset;
+        const { tileWidth, tileHeight, columns } = metadata;
+
+        const tileX = (tileId % columns) * tileWidth;
+        const tileY = Math.floor(tileId / columns) * tileHeight;
+
+        const rect = new PIXI.Rectangle(tileX, tileY, tileWidth, tileHeight);
+        const tileTexture = new PIXI.Texture({ source: texture.source, frame: rect });
+
+        this.tileTextureCache.set(tileId, tileTexture);
+        return tileTexture;
     }
 
     update(dt) {
@@ -95,11 +118,14 @@ export class MapSystem {
 
         chunkData.ground.forEach(tile => {
             const entityId = this.entityManager.createEntity();
-            const tileTexture = PIXI.Texture.EMPTY;
+            const tileTexture = this._getTileTexture(tile.tileId);
             const tileSprite = new PIXI.Sprite(tileTexture);
             const worldX = chunkWorldX + tile.x * this.TILE_PIXEL_SIZE;
             const worldY = chunkWorldY + tile.y * this.TILE_PIXEL_SIZE;
 
+            if (this.forestTileset && this.forestTileset.metadata.tileWidth > 0) {
+                tileSprite.scale.set(this.TILE_PIXEL_SIZE / this.forestTileset.metadata.tileWidth);
+            }
             tileSprite.zIndex = -1000;
 
             this.entityManager.addComponent(entityId, new PositionComponent(worldX, worldY));

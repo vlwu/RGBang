@@ -3,9 +3,20 @@ export const BIOME_CONFIG = {
         name: "Enchanted Forest",
 
         groundTiles: [
-            { id: 33, weight: 0.8 },
-            { id: 55, weight: 0.2 },
+            { id: 28, weight: 0.9 },
+            { id: 29, weight: 0.05 },
+            { id: 30, weight: 0.05 },
         ],
+
+        pathTiles: {
+            noiseScale: 30,
+            threshold: 0.6,
+            tiles: [
+                { id: 216, weight: 0.8 },
+                { id: 217, weight: 0.1 },
+                { id: 218, weight: 0.1 },
+            ]
+        },
 
         objects: [
             {

@@ -22,6 +22,22 @@ export class ProceduralGenerator {
         return prop ? prop.value : defaultValue;
     }
 
+    _getWeightedRandomTileId(tileArray) {
+        if (!tileArray || tileArray.length === 0) return 0;
+        let totalWeight = 0;
+        for (const tile of tileArray) {
+            totalWeight += tile.weight;
+        }
+        let random = Math.random() * totalWeight;
+        for (const tile of tileArray) {
+            if (random < tile.weight) {
+                return tile.id;
+            }
+            random -= tile.weight;
+        }
+        return tileArray[0].id;
+    }
+
     generateChunkData(chunkX, chunkY, chunkSize) {
         const ground = [];
         const objects = [];
@@ -32,7 +48,19 @@ export class ProceduralGenerator {
                 const globalX = chunkX * chunkSize + x;
                 const globalY = chunkY * chunkSize + y;
 
-                ground.push({ x, y, tileId: this.biome.groundTiles.id });
+                let tileId;
+                const pathDef = this.biome.pathTiles;
+                if (pathDef) {
+                    const pathNoise = this.noise2D(globalX / pathDef.noiseScale, globalY / pathDef.noiseScale);
+                    if (pathNoise > pathDef.threshold) {
+                        tileId = this._getWeightedRandomTileId(pathDef.tiles);
+                    } else {
+                        tileId = this._getWeightedRandomTileId(this.biome.groundTiles);
+                    }
+                } else {
+                    tileId = this._getWeightedRandomTileId(this.biome.groundTiles);
+                }
+                ground.push({ x, y, tileId });
 
                 if (occupiedCells.has(`${globalX},${globalY}`)) {
                     continue;
