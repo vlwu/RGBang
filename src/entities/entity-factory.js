@@ -120,7 +120,8 @@ export function createGameObjectFromTiled(entityManager, tiledObject, texture) {
     if (type === 'Tree') {
         entityManager.addComponent(entity, new CollisionComponent({
             shape: 'circle',
-            radius: 28,
+            radius: 24,
+            offsetY: -50,
             isDynamic: false,
         }));
     }

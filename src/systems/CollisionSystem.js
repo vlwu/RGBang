@@ -21,14 +21,15 @@ export class CollisionSystem {
             }
         }
 
-        // Reset opacity for all static objects
+        // Reset all static entities to be opaque at the start of the frame.
         for (const staticId of staticEntities) {
             const renderable = this.entityManager.getComponent(staticId, RenderableComponent);
-            if (renderable && renderable.sprite && renderable.sprite.alpha !== 1.0) {
+            if (renderable && renderable.sprite) {
                 renderable.sprite.alpha = 1.0;
             }
         }
 
+        // Process collisions and occlusions.
         for (const dynamicId of dynamicEntities) {
             const dynamicPos = this.entityManager.getComponent(dynamicId, PositionComponent);
             const dynamicCollision = this.entityManager.getComponent(dynamicId, CollisionComponent);
@@ -43,6 +44,7 @@ export class CollisionSystem {
                 const staticPos = this.entityManager.getComponent(staticId, PositionComponent);
                 const staticCollision = this.entityManager.getComponent(staticId, CollisionComponent);
 
+                // --- Collision Check ---
                 const staticCircle = {
                     x: staticPos.x + staticCollision.offsetX,
                     y: staticPos.y + staticCollision.offsetY,
@@ -55,7 +57,6 @@ export class CollisionSystem {
                 const combinedRadius = dynamicCircle.radius + staticCircle.radius;
 
                 if (distance < combinedRadius) {
-                    // Collision Response
                     const overlap = combinedRadius - distance;
                     if (distance > 0) {
                         const pushX = (dx / distance) * overlap;
@@ -63,23 +64,22 @@ export class CollisionSystem {
 
                         dynamicPos.x += pushX;
                         dynamicPos.y += pushY;
-
-                        // Update dynamic circle position for subsequent checks
-                        dynamicCircle.x += pushX;
-                        dynamicCircle.y += pushY;
                     } else {
-                        // Handle case where objects are at the exact same position
                         dynamicPos.y += overlap;
-                        dynamicCircle.y += overlap;
                     }
+                }
+                
+                // --- Occlusion Check ---
+                // If the player is behind an object, make it translucent.
+                // This check is independent of collision.
+                const staticRenderable = this.entityManager.getComponent(staticId, RenderableComponent);
+                if (staticRenderable && staticRenderable.sprite) {
+                     const isPlayerBehind = dynamicPos.y < staticPos.y;
+                     const isHorizontallyClose = Math.abs(dynamicPos.x - staticPos.x) < (staticRenderable.sprite.width * staticRenderable.sprite.scale.x) / 2;
 
-                    // Occlusion check
-                    if (dynamicPos.y < staticPos.y) {
-                        const staticRenderable = this.entityManager.getComponent(staticId, RenderableComponent);
-                        if (staticRenderable && staticRenderable.sprite) {
-                            staticRenderable.sprite.alpha = this.occlusionAlpha;
-                        }
-                    }
+                     if (isPlayerBehind && isHorizontallyClose) {
+                        staticRenderable.sprite.alpha = this.occlusionAlpha;
+                     }
                 }
             }
         }
