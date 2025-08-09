@@ -42,23 +42,48 @@ export class ProceduralGenerator {
         const ground = [];
         const objects = [];
         const occupiedCells = new Set();
+        const overlayDef = this.biome.overlayTiles;
+
+        // --- PHASE 1: Generate a logical map of where the overlay (e.g., grass) should be ---
+        const logicalOverlayMap = new Map();
+        const isOverlay = (gx, gy) => {
+            if (!overlayDef) return false;
+            const key = `${gx},${gy}`;
+            if (logicalOverlayMap.has(key)) {
+                return logicalOverlayMap.get(key);
+            }
+            const noise = this.noise2D(gx / overlayDef.noiseScale, gy / overlayDef.noiseScale);
+            const result = noise > overlayDef.threshold;
+            logicalOverlayMap.set(key, result);
+            return result;
+        };
+
+        // Pre-calculate noise for the chunk and its borders to ensure correct auto-tiling at edges
+        for (let y = -1; y <= chunkSize; y++) {
+            for (let x = -1; x <= chunkSize; x++) {
+                isOverlay(chunkX * chunkSize + x, chunkY * chunkSize + y);
+            }
+        }
+
 
         for (let y = 0; y < chunkSize; y++) {
             for (let x = 0; x < chunkSize; x++) {
                 const globalX = chunkX * chunkSize + x;
                 const globalY = chunkY * chunkSize + y;
 
+                // --- PHASE 2: Determine correct tile ID ---
                 let tileId;
-                const pathDef = this.biome.pathTiles;
-                if (pathDef) {
-                    const pathNoise = this.noise2D(globalX / pathDef.noiseScale, globalY / pathDef.noiseScale);
-                    if (pathNoise > pathDef.threshold) {
-                        tileId = this._getWeightedRandomTileId(pathDef.tiles);
-                    } else {
-                        tileId = this._getWeightedRandomTileId(this.biome.groundTiles);
-                    }
-                } else {
-                    tileId = this._getWeightedRandomTileId(this.biome.groundTiles);
+                // Default to a random base tile (e.g., dirt)
+                tileId = this._getWeightedRandomTileId(this.biome.baseTiles);
+
+                // If this spot should have an overlay (e.g., grass), calculate the correct border tile
+                if (isOverlay(globalX, globalY)) {
+                    let mask = 0;
+                    if (isOverlay(globalX, globalY - 1)) mask |= 1; // North neighbor is also overlay
+                    if (isOverlay(globalX - 1, globalY)) mask |= 2; // West
+                    if (isOverlay(globalX, globalY + 1)) mask |= 4; // South
+                    if (isOverlay(globalX + 1, globalY)) mask |= 8; // East
+                    tileId = overlayDef.mapping[mask] || overlayDef.mapping[15]; // Use the full tile as a fallback
                 }
                 ground.push({ x, y, tileId });
 
@@ -66,12 +91,12 @@ export class ProceduralGenerator {
                     continue;
                 }
 
+                // --- PHASE 3: Place objects (no changes needed here) ---
                 for (const [index, objDef] of this.biome.objects.entries()) {
                     const objNoise = this.noise2D(
                         (globalX + index * 100) / objDef.noiseScale,
                         (globalY + index * 100) / objDef.noiseScale
                     );
-
 
                     if (objNoise > objDef.threshold) {
                         const possibleObjects = this.objectDefinitions[objDef.type];
@@ -110,7 +135,6 @@ export class ProceduralGenerator {
                 }
             }
         }
-
         return { ground, objects };
     }
 }
