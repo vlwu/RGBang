@@ -98,14 +98,19 @@ export function createGameObjectFromTiled(entityManager, tiledObject, texture) {
     const anchorX = getProperty(tiledObject, 'anchorX', 0.5);
     const anchorY = getProperty(tiledObject, 'anchorY', 1.0);
     const type = getProperty(tiledObject, 'type', 'default');
+    const assetKey = getProperty(tiledObject, 'assetKey', '');
 
 
     const sprite = new PIXI.Sprite(texture);
 
 
     sprite.anchor.set(anchorX, anchorY);
-    
-    sprite.scale.set(3.0);
+
+    if (assetKey.includes('Broken')) {
+        sprite.scale.set(2.0);
+    } else {
+        sprite.scale.set(3.0);
+    }
 
     entityManager.addComponent(entity, new PositionComponent(tiledObject.x, tiledObject.y));
     entityManager.addComponent(entity, new RenderableComponent(sprite));

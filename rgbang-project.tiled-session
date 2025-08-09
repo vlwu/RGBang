@@ -1,11 +1,47 @@
 {
-    "activeFile": "public/maps/GameObjects.tsx",
+    "activeFile": "public/maps/ForestTileset.tsx",
     "expandedProjectPaths": [
-        ".",
         "public/maps",
-        "public"
+        "public",
+        "."
     ],
     "fileStates": {
+        "C:/Users/victo/AppData/Local/Temp/973995e9-ccf8-4074-9782-f3e0f728759b_EPIC RPG World Pack - [FREE Demo]Ancient Ruins.zip.59b/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-Tileset-wall-8.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/Users/victo/AppData/Local/Temp/973995e9-ccf8-4074-9782-f3e0f728759b_EPIC RPG World Pack - [FREE Demo]Ancient Ruins.zip.59b/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-wall-8-rule.tmx": {
+            "scale": 0.45125,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 720.2216066481994,
+                "y": 640.4432132963989
+            }
+        },
+        "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-Tileset-wall-8.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-wall-8-rule.tmx": {
+            "scale": 0.6069444444444444,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 719.9999999999999,
+                "y": 639.2677345537758
+            }
+        },
+        "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Terrain - Ancient Ruins.tsx": {
+            "scaleInDock": 1
+        },
+        "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/TiledMap Editor Example Demo- Ancient Ruins.tmx": {
+            "scale": 1.3240625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 320.22657540712765,
+                "y": 222.79915034222327
+            }
+        },
+        "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Tileset-Animated Terrains-8 frames--.tsx": {
+            "scaleInDock": 1
+        },
         "C:/Users/victo/OneDrive/Desktop/forest_tileset.tsx": {
             "scaleInDock": 1,
             "scaleInEditor": 3
@@ -40,13 +76,15 @@
     "last.imagePath": "C:/Users/victo/OneDrive/Documents/GitHub/RGBang/public/images/terrain/biomes/forest_",
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "openFiles": [
-        "public/maps/GameObjects.tsx",
-        "public/maps/object_catalog.json"
+        "public/maps/ForestTileset.tsx"
     ],
     "project": "rgbang-project.tiled-project",
     "property.type": "string",
     "recentFiles": [
         "public/maps/ForestTileset.tsx",
+        "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-wall-8-rule.tmx",
+        "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/TiledMap Editor Example Demo- Ancient Ruins.tmx",
+        "C:/Users/victo/AppData/Local/Temp/973995e9-ccf8-4074-9782-f3e0f728759b_EPIC RPG World Pack - [FREE Demo]Ancient Ruins.zip.59b/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-wall-8-rule.tmx",
         "C:/Users/victo/OneDrive/Desktop/forest_tileset.tsx",
         "public/maps/GameObjects.tsx",
         "public/maps/object_catalog.json",
