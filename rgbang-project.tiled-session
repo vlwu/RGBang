@@ -6,6 +6,14 @@
         "public"
     ],
     "fileStates": {
+        "C:/Users/victo/OneDrive/Desktop/forest_tileset.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 3
+        },
+        "public/maps/ForestTileset.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 2
+        },
         "public/maps/GameObjects.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1,
@@ -29,7 +37,7 @@
         }
     },
     "last.exportedFilePath": "C:/Users/victo/OneDrive/Documents/GitHub/RGBang/public/maps",
-    "last.imagePath": "C:/Users/victo/OneDrive/Documents/GitHub/RGBang/public/images/terrain/crystals/Assets_shadow",
+    "last.imagePath": "C:/Users/victo/OneDrive/Documents/GitHub/RGBang/public/images/terrain/biomes/forest_",
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "openFiles": [
         "public/maps/GameObjects.tsx",
@@ -38,8 +46,16 @@
     "project": "rgbang-project.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "public/maps/object_catalog.json",
+        "public/maps/ForestTileset.tsx",
+        "C:/Users/victo/OneDrive/Desktop/forest_tileset.tsx",
         "public/maps/GameObjects.tsx",
+        "public/maps/object_catalog.json",
         "public/maps/temp.json"
-    ]
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    },
+    "tileset.useTransparentColor": true
 }
