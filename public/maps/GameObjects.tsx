@@ -52,7 +52,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Broken_tree1.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="16" y="21">
+   <object id="1" x="10" y="17" width="12" height="8">
     <ellipse/>
    </object>
   </objectgroup>
@@ -66,7 +66,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Broken_tree2.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="15.6667" y="19.3333">
+   <object id="1" x="10" y="16" width="12" height="8">
     <ellipse/>
    </object>
   </objectgroup>
@@ -108,7 +108,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Broken_tree5.png" width="32" height="32"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="14.3333" y="17.6667">
+   <object id="1" x="9" y="14" width="14" height="9">
     <ellipse/>
    </object>
   </objectgroup>
@@ -164,7 +164,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Burned_tree2.png" width="64" height="64"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="30" y="52.6667">
+   <object id="1" x="22" y="44" width="18" height="12">
     <ellipse/>
    </object>
   </objectgroup>
@@ -234,7 +234,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Flower_tree1.png" width="128" height="128"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="62.3333" y="87.6667">
+   <object id="1" x="48" y="80" width="30" height="18">
     <ellipse/>
    </object>
   </objectgroup>
@@ -248,7 +248,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Flower_tree2.png" width="64" height="64"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="30.3333" y="52.3333">
+   <object id="1" x="22" y="44" width="22" height="14">
     <ellipse/>
    </object>
   </objectgroup>
@@ -276,7 +276,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Fruit_tree1.png" width="128" height="128"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="62" y="89.6667">
+   <object id="1" x="48" y="80" width="30" height="18">
     <ellipse/>
    </object>
   </objectgroup>
@@ -290,7 +290,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Fruit_tree2.png" width="128" height="128"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="63.6667" y="85">
+   <object id="1" x="50" y="78" width="28" height="18">
     <ellipse/>
    </object>
   </objectgroup>
@@ -332,7 +332,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Moss_tree2.png" width="64" height="64"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="33.6667" y="51.6667">
+   <object id="1" x="24" y="44" width="18" height="12">
     <ellipse/>
    </object>
   </objectgroup>
@@ -360,7 +360,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Palm_tree1_1.png" width="128" height="128"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="63.6667" y="88.6667">
+   <object id="1" x="54" y="82" width="20" height="14">
     <ellipse/>
    </object>
   </objectgroup>
@@ -374,7 +374,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Palm_tree1_2.png" width="64" height="64"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="32.3333" y="53">
+   <object id="1" x="26" y="46" width="14" height="10">
     <ellipse/>
    </object>
   </objectgroup>
@@ -402,7 +402,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Palm_tree2_1.png" width="128" height="128"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="64.6667" y="88">
+   <object id="1" x="54" y="80" width="18" height="14">
     <ellipse/>
    </object>
   </objectgroup>
@@ -456,7 +456,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Snow_christmass_tree2.png" width="64" height="64"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="32.6667" y="50">
+   <object id="1" x="22" y="42" width="22" height="14">
     <ellipse/>
    </object>
   </objectgroup>
@@ -497,7 +497,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Snow_tree2.png" width="64" height="64"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="32" y="52.3333">
+   <object id="1" x="22" y="46" width="20" height="12">
     <ellipse/>
    </object>
   </objectgroup>
@@ -539,7 +539,7 @@
   </properties>
   <image source="../images/terrain/trees/Assets Separate/Trees_shadow/Tree2.png" width="64" height="64"/>
   <objectgroup draworder="index" id="2">
-   <object id="1" x="31.6667" y="53.6667">
+   <object id="1" x="22" y="44" width="22" height="14">
     <ellipse/>
    </object>
   </objectgroup>
