@@ -1,5 +1,5 @@
 {
-    "activeFile": "public/maps/ForestTileset.tsx",
+    "activeFile": "public/maps/GameObjects.tsx",
     "expandedProjectPaths": [
         "public/maps",
         "public",
@@ -56,11 +56,11 @@
             "scaleInEditor": 0.75
         },
         "public/maps/object_catalog.json": {
-            "scale": 0.8827083333333333,
+            "scale": 1,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 429.3603965069625,
-                "y": 480.3398631106915
+                "x": 403,
+                "y": 309
             }
         },
         "public/maps/temp.json": {
@@ -76,18 +76,20 @@
     "last.imagePath": "C:/Users/victo/OneDrive/Documents/GitHub/RGBang/public/images/terrain/biomes/forest_",
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "openFiles": [
-        "public/maps/ForestTileset.tsx"
+        "public/maps/ForestTileset.tsx",
+        "public/maps/GameObjects.tsx",
+        "public/maps/object_catalog.json"
     ],
     "project": "rgbang-project.tiled-project",
     "property.type": "string",
     "recentFiles": [
         "public/maps/ForestTileset.tsx",
+        "public/maps/object_catalog.json",
+        "public/maps/GameObjects.tsx",
         "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-wall-8-rule.tmx",
         "C:/Users/victo/Downloads/EPIC RPG World Pack - [FREE Demo]Ancient Ruins/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/TiledMap Editor Example Demo- Ancient Ruins.tmx",
         "C:/Users/victo/AppData/Local/Temp/973995e9-ccf8-4074-9782-f3e0f728759b_EPIC RPG World Pack - [FREE Demo]Ancient Ruins.zip.59b/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-wall-8-rule.tmx",
         "C:/Users/victo/OneDrive/Desktop/forest_tileset.tsx",
-        "public/maps/GameObjects.tsx",
-        "public/maps/object_catalog.json",
         "public/maps/temp.json"
     ],
     "tileset.lastUsedFormat": "tsx",

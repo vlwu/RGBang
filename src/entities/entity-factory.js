@@ -98,7 +98,7 @@ function getProperty(tiledObject, propertyName, defaultValue = null) {
     return prop ? prop.value : defaultValue;
 }
 
-export function createGameObjectFromTiled(entityManager, tiledObject, texture) {
+export function createGameObjectFromTiled(entityManager, tiledObject, texture, assets) {
     const entity = entityManager.createEntity();
 
 
@@ -112,18 +112,54 @@ export function createGameObjectFromTiled(entityManager, tiledObject, texture) {
 
     sprite.anchor.set(anchorX, anchorY);
 
-    sprite.scale.set(3.0);
+    const scale = 3.0;
+    sprite.scale.set(scale);
 
     entityManager.addComponent(entity, new PositionComponent(tiledObject.x, tiledObject.y));
     entityManager.addComponent(entity, new RenderableComponent(sprite));
 
     if (type === 'Tree') {
-        entityManager.addComponent(entity, new CollisionComponent({
-            shape: 'circle',
-            radius: 24,
-            offsetY: -50,
-            isDynamic: false,
-        }));
+        const firstgid = 1;
+        const tileId = tiledObject.gid - firstgid;
+        const collisionData = assets.gameObjectCollisionData.get(tileId);
+
+        if (collisionData) {
+            const imageWidth = texture.width;
+            const imageHeight = texture.height;
+
+            const anchorPixelX = imageWidth * anchorX;
+            const anchorPixelY = imageHeight * anchorY;
+
+            let collisionCenterX;
+            let collisionCenterY;
+            if (collisionData.isEllipse) {
+                collisionCenterX = collisionData.x + collisionData.width / 2;
+                collisionCenterY = collisionData.y + collisionData.height / 2;
+            } else {
+                collisionCenterX = collisionData.x + collisionData.width / 2;
+                collisionCenterY = collisionData.y + collisionData.height / 2;
+            }
+
+            const offsetX = (collisionCenterX - anchorPixelX) * scale;
+            const offsetY = (collisionCenterY - anchorPixelY) * scale;
+
+            const radius = ((collisionData.width + collisionData.height) / 4) * scale;
+
+            entityManager.addComponent(entity, new CollisionComponent({
+                shape: 'circle',
+                radius: radius,
+                offsetX: offsetX,
+                offsetY: offsetY,
+                isDynamic: false,
+            }));
+        } else {
+            entityManager.addComponent(entity, new CollisionComponent({
+                shape: 'circle',
+                radius: 24,
+                offsetY: -50,
+                isDynamic: false,
+            }));
+        }
     }
 
     return entity;

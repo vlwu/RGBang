@@ -76,7 +76,7 @@ const characterData = {
     f_dwarf: { image: 'images/player/fPlayer Dwarf.png' },
 };
 
-// Helper function to get a property from a Tiled object
+
 function getProperty(tiledObject, propertyName, defaultValue = null) {
     if (!tiledObject.properties) {
         return defaultValue;
@@ -94,7 +94,8 @@ class AssetManager {
             maps: {},
             tilesets: {},
             gameObjectTextures: new Map(),
-            
+            gameObjectCollisionData: new Map(),
+
             objectDefinitions: {
                 NormalTree: [],
                 BrokenTree: [],
@@ -140,8 +141,23 @@ class AssetManager {
 
                     const sourcePath = imageEl.getAttribute('source').replace('../', '');
 
+                    const objectGroup = tile.querySelector('objectgroup');
+                    let collisionObject = null;
+                    if (objectGroup) {
+                        const objectEl = objectGroup.querySelector('object');
+                        if (objectEl) {
+                            collisionObject = {
+                                x: parseFloat(objectEl.getAttribute('x') || 0),
+                                y: parseFloat(objectEl.getAttribute('y') || 0),
+                                width: parseFloat(objectEl.getAttribute('width') || 0),
+                                height: parseFloat(objectEl.getAttribute('height') || 0),
+                                isEllipse: !!objectEl.querySelector('ellipse')
+                            };
+                        }
+                    }
+
                     return PIXI.Assets.load(sourcePath)
-                        .then(texture => ({ id, texture }))
+                        .then(texture => ({ id, texture, collisionObject }))
                         .catch(err => {
                             console.warn(`Failed to load texture for tile ID ${id} at ${sourcePath}:`, err);
                             return null;
@@ -174,6 +190,9 @@ class AssetManager {
             gameObjectTextures.forEach(item => {
                 if (item) {
                     this.assets.gameObjectTextures.set(item.id, item.texture);
+                    if (item.collisionObject) {
+                        this.assets.gameObjectCollisionData.set(item.id, item.collisionObject);
+                    }
                 }
             });
         }
@@ -194,7 +213,7 @@ class AssetManager {
                         } else if (assetKey.includes('Broken')) {
                             this.assets.objectDefinitions.BrokenTree.push(obj);
                         } else if (assetKey.includes('Normal') || assetKey.startsWith('Tree')) {
-                            // Only add trees explicitly marked as 'Normal' or the default 'Tree1/2/3'
+
                             this.assets.objectDefinitions.NormalTree.push(obj);
                         }
                     } else if (type === 'Crystal') {

@@ -39,7 +39,7 @@ export class MapSystem {
 
         this.activeChunks = new Map();
 
-        // --- FIX: Pass the TILE_PIXEL_SIZE to the generator's constructor ---
+
         this.generator = new ProceduralGenerator('rgbang-is-cool', assets.objectDefinitions, this.TILE_PIXEL_SIZE, 'forest');
     }
 
@@ -111,7 +111,7 @@ export class MapSystem {
         chunkData.objects.forEach(tiledObject => {
             const texture = this.getTextureForGid(tiledObject.gid);
             if (texture && texture !== PIXI.Texture.EMPTY) {
-                const entityId = createGameObjectFromTiled(this.entityManager, tiledObject, texture);
+                const entityId = createGameObjectFromTiled(this.entityManager, tiledObject, texture, this.assets);
                 newChunk.addEntity(entityId);
             }
         });
