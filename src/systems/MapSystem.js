@@ -56,6 +56,11 @@ export class MapSystem {
         const { texture, metadata } = this.forestTileset;
         const { tileWidth, tileHeight, columns } = metadata;
 
+        // --- MODIFICATION: Enforce nearest-neighbor scaling to prevent texture bleeding ---
+        if (texture.source) {
+            texture.source.scaleMode = 'nearest';
+        }
+
         const tileX = (tileId % columns) * tileWidth;
         const tileY = Math.floor(tileId / columns) * tileHeight;
 
