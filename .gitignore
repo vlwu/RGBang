@@ -11,3 +11,7 @@
 
 # IDE config
 .vscode/
+
+# Tiled Map Editor files
+*.tiled-project
+*.tiled-session

@@ -1,9 +1,9 @@
 {
-    "activeFile": "public/maps/object_catalog.json",
+    "activeFile": "public/maps/GameObjects.tsx",
     "expandedProjectPaths": [
-        "public",
+        ".",
         "public/maps",
-        "."
+        "public"
     ],
     "fileStates": {
         "public/maps/GameObjects.tsx": {
@@ -38,8 +38,8 @@
     "project": "rgbang-project.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "public/maps/GameObjects.tsx",
         "public/maps/object_catalog.json",
+        "public/maps/GameObjects.tsx",
         "public/maps/temp.json"
     ]
 }
