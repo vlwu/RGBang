@@ -3,9 +3,9 @@ export const BIOME_CONFIG = {
         name: "Enchanted Forest",
 
         baseTiles: [
-            { id: 56, weight: 0.8 },
-            { id: 226, weight: 0.05 },
-            { id: 224, weight: 0.05 },
+            { id: 56, weight: 0.9 },
+            { id: 226, weight: 0.025 },
+            { id: 224, weight: 0.025 },
             { id: 199, weight: 0.05 },
             { id: 227, weight: 0.05 },
         ],
@@ -31,7 +31,13 @@ export const BIOME_CONFIG = {
                 12: 31,
                 13: 57,
                 14: 83,
-                15: 85,
+                15: [
+                    { id: 85, weight: 0.9 },
+                    { id: 86, weight: 0.05 },
+                    { id: 87, weight: 0.05 },
+                    { id: 33, weight: 0.025 },
+                    { id: 60, weight: 0.025 }
+                ],
             }
         },
 

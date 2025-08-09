@@ -89,30 +89,31 @@ export class ProceduralGenerator {
                     if (south) mask |= 4;
                     if (east) mask |= 8;
 
-                    if (mask === 15 && overlayDef.innerCorners) { // It's a solid tile, check for inner corners
+                    let overlayTileDef = overlayDef.mapping[mask];
+
+                    if (mask === 15 && overlayDef.innerCorners) {
                         const nw = isOverlay(globalX - 1, globalY - 1);
                         const ne = isOverlay(globalX + 1, globalY - 1);
                         const sw = isOverlay(globalX - 1, globalY + 1);
                         const se = isOverlay(globalX + 1, globalY + 1);
 
-                        // If a diagonal is NOT an overlay, it's an inner corner
+
                         if (!nw) {
-                            tileId = overlayDef.innerCorners.se;
+                            overlayTileDef = overlayDef.innerCorners.se;
                         } else if (!ne) {
-                            tileId = overlayDef.innerCorners.sw;
+                            overlayTileDef = overlayDef.innerCorners.sw;
                         } else if (!sw) {
-                            tileId = overlayDef.innerCorners.ne;
+                            overlayTileDef = overlayDef.innerCorners.ne;
                         } else if (!se) {
-                            tileId = overlayDef.innerCorners.nw;
-                        } else {
-                            // All diagonals are overlays, so it's a true solid tile
-                            tileId = overlayDef.mapping[mask];
+                            overlayTileDef = overlayDef.innerCorners.nw;
                         }
-                    } else {
-                        // It's a regular edge tile
-                        const overlayTileId = overlayDef.mapping[mask];
-                        if (overlayTileId !== undefined) {
-                            tileId = overlayTileId;
+                    }
+
+                    if (overlayTileDef !== undefined) {
+                        if (Array.isArray(overlayTileDef)) {
+                            tileId = this._getWeightedRandomTileId(overlayTileDef);
+                        } else {
+                            tileId = overlayTileDef;
                         }
                     }
                 }
