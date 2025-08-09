@@ -61,6 +61,7 @@ export class MovementSystem {
                 }
 
 
+                if (gunSprite) gunSprite.visible = false;
                 sprite.textures = spritesheet.animations.roll;
                 sprite.animationSpeed = 0.25;
                 sprite.loop = false;
@@ -68,6 +69,7 @@ export class MovementSystem {
 
                 sprite.onComplete = () => {
                     player.isRolling = false;
+                    if (gunSprite) gunSprite.visible = true;
                     sprite.onComplete = null;
                 };
             }
