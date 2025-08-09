@@ -10,6 +10,7 @@ import { WEAPON_CONFIG } from './weapon-definitions.js';
 import { BulletComponent } from '../components/BulletComponent.js';
 import { BULLET_CONFIG } from './bullet-definitions.js';
 import { HealthComponent } from '../components/HealthComponent.js';
+import { CollisionComponent } from '../components/CollisionComponent.js';
 
 export function createPlayer(entityManager, x, y, characterId, playerSpritesheet, assets, gameState) {
     const player = entityManager.createEntity();
@@ -49,6 +50,12 @@ export function createPlayer(entityManager, x, y, characterId, playerSpritesheet
     entityManager.addComponent(player, new RenderableComponent(playerSprite, playerSpritesheet));
     entityManager.addComponent(player, new WeaponComponent(initialWeaponId, gunSprite));
     entityManager.addComponent(player, new HealthComponent(100));
+    entityManager.addComponent(player, new CollisionComponent({
+        shape: 'circle',
+        radius: 12,
+        offsetY: 20,
+        isDynamic: true,
+    }));
 
     const cooldownBar = entityManager.createEntity();
     entityManager.addComponent(cooldownBar, new CooldownIndicatorComponent(player));
@@ -98,7 +105,6 @@ export function createGameObjectFromTiled(entityManager, tiledObject, texture) {
     const anchorX = getProperty(tiledObject, 'anchorX', 0.5);
     const anchorY = getProperty(tiledObject, 'anchorY', 1.0);
     const type = getProperty(tiledObject, 'type', 'default');
-    const assetKey = getProperty(tiledObject, 'assetKey', '');
 
 
     const sprite = new PIXI.Sprite(texture);
@@ -106,14 +112,18 @@ export function createGameObjectFromTiled(entityManager, tiledObject, texture) {
 
     sprite.anchor.set(anchorX, anchorY);
 
-    if (assetKey.includes('Broken')) {
-        sprite.scale.set(2.0);
-    } else {
-        sprite.scale.set(3.0);
-    }
+    sprite.scale.set(3.0);
 
     entityManager.addComponent(entity, new PositionComponent(tiledObject.x, tiledObject.y));
     entityManager.addComponent(entity, new RenderableComponent(sprite));
+
+    if (type === 'Tree') {
+        entityManager.addComponent(entity, new CollisionComponent({
+            shape: 'circle',
+            radius: 28,
+            isDynamic: false,
+        }));
+    }
 
     return entity;
 }
