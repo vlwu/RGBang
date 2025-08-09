@@ -42,46 +42,57 @@ export class ProceduralGenerator {
         const ground = [];
         const objects = [];
         const occupiedCells = new Set();
-        const overlayDef = this.biome.overlayTiles;
+        const overlays = this.biome.overlays || [];
 
-
+        // This map will store which overlay type a tile belongs to ('water', 'dirt', or null).
         const logicalOverlayMap = new Map();
-        const isOverlay = (gx, gy) => {
-            if (!overlayDef) return false;
-            const key = `${gx},${gy}`;
-            if (logicalOverlayMap.has(key)) {
-                return logicalOverlayMap.get(key);
-            }
-            const noise = this.noise2D(gx / overlayDef.noiseScale, gy / overlayDef.noiseScale);
-            const result = noise > overlayDef.threshold;
-            logicalOverlayMap.set(key, result);
-            return result;
+
+        // Helper to check if a global coordinate is of a certain overlay type
+        const isOverlayType = (gx, gy, overlayDef) => {
+            // Use a different noise "quadrant" for each overlay type to get different patterns
+            const seedOffset = overlays.indexOf(overlayDef) * 10000;
+            const noise = this.noise2D((gx + seedOffset) / overlayDef.noiseScale, (gy + seedOffset) / overlayDef.noiseScale);
+            return noise > overlayDef.threshold;
         };
 
-
+        // Pre-populate the logical overlay map for the chunk area + borders.
+        // This respects priority: the first overlay in the biome config's list wins.
         for (let y = -1; y <= chunkSize; y++) {
             for (let x = -1; x <= chunkSize; x++) {
-                isOverlay(chunkX * chunkSize + x, chunkY * chunkSize + y);
+                const gx = chunkX * chunkSize + x;
+                const gy = chunkY * chunkSize + y;
+                const key = `${gx},${gy}`;
+
+                let appliedType = null;
+                for (const overlayDef of overlays) {
+                    if (isOverlayType(gx, gy, overlayDef)) {
+                        appliedType = overlayDef.key;
+                        break;
+                    }
+                }
+                logicalOverlayMap.set(key, appliedType);
             }
         }
 
-
+        // Main loop to generate tiles
         for (let y = 0; y < chunkSize; y++) {
             for (let x = 0; x < chunkSize; x++) {
                 const globalX = chunkX * chunkSize + x;
                 const globalY = chunkY * chunkSize + y;
 
+                let tileId = this._getWeightedRandomTileId(this.biome.baseTiles);
+                const overlayType = logicalOverlayMap.get(`${globalX},${globalY}`);
 
-                let tileId;
+                if (overlayType) {
+                    const overlayDef = overlays.find(o => o.key === overlayType);
 
-                tileId = this._getWeightedRandomTileId(this.biome.baseTiles);
+                    // A helper to check if a neighbor has the same overlay type
+                    const hasSameOverlay = (gx, gy) => logicalOverlayMap.get(`${gx},${gy}`) === overlayType;
 
-
-                if (isOverlay(globalX, globalY)) {
-                    const north = isOverlay(globalX, globalY - 1);
-                    const west = isOverlay(globalX - 1, globalY);
-                    const south = isOverlay(globalX, globalY + 1);
-                    const east = isOverlay(globalX + 1, globalY);
+                    const north = hasSameOverlay(globalX, globalY - 1);
+                    const west = hasSameOverlay(globalX - 1, globalY);
+                    const south = hasSameOverlay(globalX, globalY + 1);
+                    const east = hasSameOverlay(globalX + 1, globalY);
 
                     let mask = 0;
                     if (north) mask |= 1;
@@ -92,10 +103,10 @@ export class ProceduralGenerator {
                     let overlayTileDef = overlayDef.mapping[mask];
 
                     if (mask === 15 && overlayDef.innerCorners) {
-                        const nw = isOverlay(globalX - 1, globalY - 1);
-                        const ne = isOverlay(globalX + 1, globalY - 1);
-                        const sw = isOverlay(globalX - 1, globalY + 1);
-                        const se = isOverlay(globalX + 1, globalY + 1);
+                        const nw = hasSameOverlay(globalX - 1, globalY - 1);
+                        const ne = hasSameOverlay(globalX + 1, globalY - 1);
+                        const sw = hasSameOverlay(globalX - 1, globalY + 1);
+                        const se = hasSameOverlay(globalX + 1, globalY + 1);
 
 
                         if (!nw) {
@@ -115,6 +126,11 @@ export class ProceduralGenerator {
                         } else {
                             tileId = overlayTileDef;
                         }
+                    }
+
+                    if (overlayType === 'water') {
+                        // Prevent objects from spawning on water
+                        occupiedCells.add(`${globalX},${globalY}`);
                     }
                 }
                 ground.push({ x, y, tileId });
