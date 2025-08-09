@@ -1,0 +1,54 @@
+{
+    "automappingRulesFile": "",
+    "commands": [
+    ],
+    "compatibilityVersion": 1100,
+    "extensionsPath": "extensions",
+    "folders": [
+        "."
+    ],
+    "properties": [
+    ],
+    "propertyTypes": [
+        {
+            "color": "#ffa0a0a4",
+            "drawFill": true,
+            "id": 1,
+            "members": [
+                {
+                    "name": "anchorX",
+                    "type": "float",
+                    "value": 0
+                },
+                {
+                    "name": "anchorY",
+                    "type": "float",
+                    "value": 0
+                },
+                {
+                    "name": "assetKey",
+                    "type": "string",
+                    "value": ""
+                },
+                {
+                    "name": "type",
+                    "type": "string",
+                    "value": ""
+                }
+            ],
+            "name": "GameObject",
+            "type": "class",
+            "useAs": [
+                "property",
+                "map",
+                "layer",
+                "object",
+                "tile",
+                "tileset",
+                "wangcolor",
+                "wangset",
+                "project"
+            ]
+        }
+    ]
+}
