@@ -2,8 +2,8 @@
     "activeFile": "public/maps/GameObjects.tsx",
     "expandedProjectPaths": [
         "public/maps",
-        "public",
-        "."
+        ".",
+        "public"
     ],
     "fileStates": {
         "C:/Users/victo/AppData/Local/Temp/973995e9-ccf8-4074-9782-f3e0f728759b_EPIC RPG World Pack - [FREE Demo]Ancient Ruins.zip.59b/EPIC RPG World Pack - [FREE Demo]Ancient Ruins - Copia/TiledMap Editor/Ancient Ruins-Tileset-wall-8.tsx": {
@@ -59,8 +59,8 @@
             "scale": 1,
             "selectedLayer": 0,
             "viewCenter": {
-                "x": 403,
-                "y": 309
+                "x": 480.5,
+                "y": 480.5
             }
         },
         "public/maps/temp.json": {

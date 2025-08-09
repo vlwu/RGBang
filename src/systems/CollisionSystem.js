@@ -5,7 +5,7 @@ import { RenderableComponent } from '../components/RenderableComponent.js';
 export class CollisionSystem {
     constructor(entityManager) {
         this.entityManager = entityManager;
-        this.occlusionAlpha = 0.7;
+        this.occlusionAlpha = 0.5;
     }
 
     update() {
