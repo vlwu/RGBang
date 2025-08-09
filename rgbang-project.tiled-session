@@ -1,12 +1,15 @@
 {
-    "activeFile": "",
+    "activeFile": "public/maps/object_catalog.json",
     "expandedProjectPaths": [
+        "public",
+        "public/maps",
+        "."
     ],
     "fileStates": {
         "public/maps/GameObjects.tsx": {
             "dynamicWrapping": false,
             "scaleInDock": 1,
-            "scaleInEditor": 1
+            "scaleInEditor": 0.75
         },
         "public/maps/object_catalog.json": {
             "scale": 0.8827083333333333,
@@ -29,11 +32,14 @@
     "last.imagePath": "C:/Users/victo/OneDrive/Documents/GitHub/RGBang/public/images/terrain/crystals/Assets_shadow",
     "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "openFiles": [
+        "public/maps/GameObjects.tsx",
+        "public/maps/object_catalog.json"
     ],
     "project": "rgbang-project.tiled-project",
     "property.type": "string",
     "recentFiles": [
-        "public/maps/temp.json",
-        "public/maps/GameObjects.tsx"
+        "public/maps/GameObjects.tsx",
+        "public/maps/object_catalog.json",
+        "public/maps/temp.json"
     ]
 }

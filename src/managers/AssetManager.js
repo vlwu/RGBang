@@ -76,13 +76,21 @@ const characterData = {
     f_dwarf: { image: 'images/player/fPlayer Dwarf.png' },
 };
 
-// --- MODIFICATION: This const is no longer needed and has been removed. ---
-// const tilesetDataPaths = { ... }
-
 class AssetManager {
     constructor() {
-        // Initialize gameObjectTextures as a Map for object images
-        this.assets = { characters: {}, weapons: {}, bullets: {}, maps: {}, tilesets: {}, gameObjectTextures: new Map() };
+        this.assets = { 
+            characters: {}, 
+            weapons: {}, 
+            bullets: {}, 
+            maps: {}, 
+            tilesets: {}, 
+            gameObjectTextures: new Map(),
+            // --- MODIFICATION: Added a place to store categorized object definitions ---
+            objectDefinitions: {
+                Tree: [],
+                Crystal: []
+            }
+        };
     }
 
     async loadCoreAssets() {
@@ -134,7 +142,6 @@ class AssetManager {
         const manifestPath = 'images/player/mPlayer Human.json';
         const manifestPromise = fetch(manifestPath).then(res => res.json());
 
-        // --- MODIFICATION: Removed tilesetPromises from this block ---
         const [loadedParts, gameObjectTextures] = await Promise.all([
              Promise.all([...imagePromises, ...weaponPromises, mapPromise]),
              gameObjectsTilesetPromise
@@ -159,6 +166,21 @@ class AssetManager {
                 }
             });
         }
+        
+        // --- MODIFICATION: Parse and categorize the object definitions ---
+        const catalog = this.assets.objectCatalog;
+        if (catalog && catalog.layers) {
+            const objectLayer = catalog.layers.find(l => l.type === 'objectgroup');
+            if (objectLayer && objectLayer.objects) {
+                objectLayer.objects.forEach(obj => {
+                    const typeProp = obj.properties.find(p => p.name === 'type');
+                    if (typeProp && this.assets.objectDefinitions[typeProp.value]) {
+                        this.assets.objectDefinitions[typeProp.value].push(obj);
+                    }
+                });
+            }
+        }
+        // --- END MODIFICATION ---
 
         const bulletAnimationData = generateBulletAnimations();
         const bulletPromises = Object.entries(bulletSpritesheetPaths).map(([key, src]) =>
