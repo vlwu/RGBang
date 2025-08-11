@@ -57,6 +57,7 @@ export abstract class Enemy {
         if (damageColor === this.color) {
             this.health -= amount;
             if (this.health <= 0) {
+                this.health = 0;
                 this.isAlive = false;
                 particles.add(this.pos, this.color, 30);
                 return this.points;
