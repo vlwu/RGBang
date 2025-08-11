@@ -41,10 +41,10 @@ export class Player {
 
     private handleMovement(input: InputHandler, canvasWidth: number, canvasHeight: number) {
         let moveDir = new Vec2(0, 0);
-        if (input.isKeyDown('w')) moveDir.y -= 1;
-        if (input.isKeyDown('s')) moveDir.y += 1;
-        if (input.isKeyDown('a')) moveDir.x -= 1;
-        if (input.isKeyDown('d')) moveDir.x += 1;
+        if (input.isKeyDown(input.keybindings.up)) moveDir.y -= 1;
+        if (input.isKeyDown(input.keybindings.down)) moveDir.y += 1;
+        if (input.isKeyDown(input.keybindings.left)) moveDir.x -= 1;
+        if (input.isKeyDown(input.keybindings.right)) moveDir.x += 1;
 
         if (moveDir.magnitude() > 0) {
             this.pos = this.pos.add(moveDir.normalize().scale(this.speed));
@@ -56,14 +56,14 @@ export class Player {
     }
     
     private handleColorSelection(input: InputHandler) {
-        if (input.isKeyDown('1')) this.primaryColor = GameColor.RED;
-        if (input.isKeyDown('2')) this.primaryColor = GameColor.YELLOW;
-        if (input.isKeyDown('3')) this.primaryColor = GameColor.BLUE;
+        if (input.isKeyDown(input.keybindings.primary1)) this.primaryColor = GameColor.RED;
+        if (input.isKeyDown(input.keybindings.primary2)) this.primaryColor = GameColor.YELLOW;
+        if (input.isKeyDown(input.keybindings.primary3)) this.primaryColor = GameColor.BLUE;
 
-        if (input.isKeyDown('shift')) {
-            if (input.isKeyDown('1') && GameColor.RED !== this.primaryColor) this.secondaryColor = GameColor.RED;
-            else if (input.isKeyDown('2') && GameColor.YELLOW !== this.primaryColor) this.secondaryColor = GameColor.YELLOW;
-            else if (input.isKeyDown('3') && GameColor.BLUE !== this.primaryColor) this.secondaryColor = GameColor.BLUE;
+        if (input.isKeyDown(input.keybindings.combine)) {
+            if (input.isKeyDown(input.keybindings.primary1) && GameColor.RED !== this.primaryColor) this.secondaryColor = GameColor.RED;
+            else if (input.isKeyDown(input.keybindings.primary2) && GameColor.YELLOW !== this.primaryColor) this.secondaryColor = GameColor.YELLOW;
+            else if (input.isKeyDown(input.keybindings.primary3) && GameColor.BLUE !== this.primaryColor) this.secondaryColor = GameColor.BLUE;
             else this.secondaryColor = null;
         } else {
             this.secondaryColor = null;

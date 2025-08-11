@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Game } from './chroma-clash/game';
-import InputHandler from './chroma-clash/input-handler';
+import InputHandler, { Keybindings, defaultKeybindings } from './chroma-clash/input-handler';
 import { Button } from '@/components/ui/button';
-import { Award, Gamepad2, Github, Waves, Pause, Play, LogOut } from 'lucide-react';
+import { Award, Gamepad2, Github, Waves, Pause, Play, LogOut, Settings } from 'lucide-react';
+import { SettingsModal } from './chroma-clash/settings-modal';
 
 const CANVAS_WIDTH = 1000;
 const CANVAS_HEIGHT = 700;
@@ -25,7 +26,6 @@ function GameCanvas({ onGameOver, setScore, setWave, isPaused, inputHandler }: {
             canvas.width = CANVAS_WIDTH;
             canvas.height = CANVAS_HEIGHT;
             
-            // Pass the canvas to the singleton instance
             InputHandler.getInstance(canvas);
             
             const game = new Game(canvas, onGameOver, setScore, setWave, inputHandler);
@@ -54,22 +54,31 @@ export default function Home() {
     const [wave, setWave] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [bestWave, setBestWave] = useState(0);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
     const inputHandlerRef = useRef<InputHandler | null>(null);
 
     useEffect(() => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
         setBestWave(parseInt(localStorage.getItem('rgBangBestWave') || '0'));
         
-        // Initialize input handler here but without a canvas initially
-        // The canvas will be provided when the GameCanvas mounts
         inputHandlerRef.current = InputHandler.getInstance();
+        inputHandlerRef.current.setKeybindings(keybindings);
 
     }, []);
+
+    useEffect(() => {
+        if(inputHandlerRef.current) {
+            inputHandlerRef.current.setKeybindings(keybindings);
+        }
+    }, [keybindings]);
     
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                if (gameState === 'playing') {
+                if (isSettingsOpen) {
+                    setIsSettingsOpen(false);
+                } else if (gameState === 'playing') {
                     setGameState('paused');
                 } else if (gameState === 'paused') {
                     setGameState('playing');
@@ -79,7 +88,7 @@ export default function Home() {
 
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [gameState]);
+    }, [gameState, isSettingsOpen]);
 
 
     const handleGameOver = useCallback(() => {
@@ -110,6 +119,13 @@ export default function Home() {
 
     return (
         <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
+             <SettingsModal 
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                keybindings={keybindings}
+                onKeybindingsChange={setKeybindings}
+            />
+
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
                     <h1 className="text-7xl font-bold tracking-tighter text-primary font-headline">RGBang</h1>
@@ -120,6 +136,10 @@ export default function Home() {
                         <Button size="lg" onClick={startGame} className="font-bold text-lg">
                             <Gamepad2 className="mr-2" />
                             Play Game
+                        </Button>
+                         <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)} className="font-bold text-lg">
+                            <Settings className="mr-2" />
+                            Settings
                         </Button>
                     </div>
                     <div className="flex gap-8 pt-4 text-lg">
@@ -151,6 +171,10 @@ export default function Home() {
                                 <Button size="lg" onClick={resumeGame} className="font-bold text-lg">
                                     <Play className="mr-2" />
                                     Resume
+                                </Button>
+                                <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)}>
+                                    <Settings className="mr-2" />
+                                    Settings
                                 </Button>
                                 <Button size="lg" onClick={quitToMenu} variant="destructive" className="font-bold text-lg">
                                      <LogOut className="mr-2" />

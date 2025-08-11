@@ -1,19 +1,40 @@
 import { Vec2 } from './utils';
 
+export interface Keybindings {
+    up: string;
+    down: string;
+    left: string;
+    right: string;
+    primary1: string;
+    primary2: string;
+    primary3: string;
+    combine: string;
+}
+
+export const defaultKeybindings: Keybindings = {
+    up: 'w',
+    down: 's',
+    left: 'a',
+    right: 'd',
+    primary1: '1',
+    primary2: '2',
+    primary3: '3',
+    combine: 'shift',
+}
+
 class InputHandler {
     public keys: Set<string> = new Set();
     public mousePos: Vec2 = new Vec2();
     public isMouseDown: boolean = false;
     private canvas: HTMLCanvasElement | null = null;
+    public keybindings: Keybindings = defaultKeybindings;
 
     private static instance: InputHandler;
 
-    // Make constructor private for singleton
     private constructor() {
         this.init();
     }
     
-    // Static method to get instance
     public static getInstance(canvas?: HTMLCanvasElement): InputHandler {
         if (!InputHandler.instance) {
             InputHandler.instance = new InputHandler();
@@ -23,10 +44,13 @@ class InputHandler {
         }
         return InputHandler.instance;
     }
+    
+    public setKeybindings(keybindings: Keybindings) {
+        this.keybindings = keybindings;
+    }
 
     private setCanvas(canvas: HTMLCanvasElement) {
         if (this.canvas) {
-            // Clean up old listeners if canvas is being replaced
             this.canvas.removeEventListener('mousemove', this.handleMouseMove);
             this.canvas.removeEventListener('mousedown', this.handleMouseDown);
             this.canvas.removeEventListener('mouseup', this.handleMouseUp);
