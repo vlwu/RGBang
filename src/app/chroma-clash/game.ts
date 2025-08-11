@@ -1,11 +1,53 @@
 import { Player } from './player';
 import { Bullet } from './bullet';
-import { Enemy } from './enemy';
-import { WaveManager } from './wave-manager';
+import { Enemy, BaseEnemy } from './enemy';
 import { UI } from './ui';
 import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
 import { circleCollision, Vec2 } from './utils';
+import { getRandomElement, PRIMARY_COLORS } from './color';
+
+class EnemySpawner {
+    private spawnInterval = 120; // frames
+    private spawnTimer = 0;
+    private maxEnemies = 20;
+
+    constructor(private canvasWidth: number, private canvasHeight: number) {}
+
+    update(currentEnemyCount: number, createEnemy: (enemy: Enemy) => void) {
+        this.spawnTimer--;
+        if (this.spawnTimer <= 0 && currentEnemyCount < this.maxEnemies) {
+            this.spawnEnemy(createEnemy);
+            this.spawnTimer = this.spawnInterval;
+            
+            // Gradually decrease spawn interval to increase difficulty
+            if (this.spawnInterval > 30) {
+                this.spawnInterval *= 0.995;
+            }
+        }
+    }
+
+    private spawnEnemy(createEnemy: (enemy: Enemy) => void) {
+        const edge = Math.floor(Math.random() * 4);
+        let x, y;
+        if (edge === 0) { // Top
+            x = Math.random() * this.canvasWidth;
+            y = -30;
+        } else if (edge === 1) { // Right
+            x = this.canvasWidth + 30;
+            y = Math.random() * this.canvasHeight;
+        } else if (edge === 2) { // Bottom
+            x = Math.random() * this.canvasWidth;
+            y = this.canvasHeight + 30;
+        } else { // Left
+            x = -30;
+            y = Math.random() * this.canvasHeight;
+        }
+
+        const color = getRandomElement(PRIMARY_COLORS);
+        createEnemy(new BaseEnemy(x, y, color));
+    }
+}
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -14,7 +56,7 @@ export class Game {
     private bullets: Bullet[] = [];
     private enemies: Enemy[] = [];
     private particles: ParticleSystem;
-    private waveManager: WaveManager;
+    private enemySpawner: EnemySpawner;
     private ui: UI;
     private inputHandler: InputHandler;
 
@@ -24,24 +66,21 @@ export class Game {
     
     private onGameOver: () => void;
     private setScore: (score: number) => void;
-    private setWave: (wave: number) => void;
 
     constructor(
         canvas: HTMLCanvasElement, 
         onGameOver: () => void,
         setScore: (score: number) => void,
-        setWave: (wave: number) => void,
         inputHandler: InputHandler
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
         this.setScore = setScore;
-        this.setWave = setWave;
         this.inputHandler = inputHandler;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2);
-        this.waveManager = new WaveManager(canvas.width, canvas.height);
+        this.enemySpawner = new EnemySpawner(canvas.width, canvas.height);
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();
     }
@@ -90,8 +129,7 @@ export class Game {
         
         this.enemies = this.enemies.filter(e => e.isAlive);
 
-        this.waveManager.update(this.enemies.length, this.createEnemy);
-        this.setWave(this.waveManager.currentWave);
+        this.enemySpawner.update(this.enemies.length, this.createEnemy);
         
         this.particles.update();
         
@@ -157,14 +195,7 @@ export class Game {
         this.enemies.forEach(e => e.draw(this.ctx));
         this.particles.draw(this.ctx);
         
-        this.ui.draw(this.player, this.score, this.waveManager.currentWave);
-
-        // This is a bit of a hack to get the timer from wavemanager, should be refactored
-        const waveTimer = this.waveManager.getWaveTimer();
-        if (this.enemies.length === 0 && waveTimer > 0) {
-            const maxTime = this.waveManager.getTimeBetweenWaves();
-            this.ui.drawWaveAnnouncement(this.waveManager.currentWave + 1, waveTimer, maxTime);
-        }
+        this.ui.draw(this.player, this.score);
     }
 
     private gameLoop = () => {

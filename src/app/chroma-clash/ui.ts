@@ -10,10 +10,10 @@ export class UI {
         this.ctx = canvas.getContext('2d')!;
     }
     
-    draw(player: Player, score: number, wave: number) {
+    draw(player: Player, score: number) {
         this.drawHealthBar(player);
         this.drawHotbar(player);
-        this.drawScoreAndWave(score, wave);
+        this.drawScore(score);
         this.drawDashCooldown(player);
     }
 
@@ -117,7 +117,7 @@ export class UI {
         this.ctx.restore();
     }
 
-    private drawScoreAndWave(score: number, wave: number) {
+    private drawScore(score: number) {
         this.ctx.save();
         this.ctx.fillStyle = 'white';
         this.ctx.font = 'bold 24px "Space Grotesk"';
@@ -125,25 +125,6 @@ export class UI {
         this.ctx.textBaseline = 'top';
 
         this.ctx.fillText(`Score: ${score}`, this.canvas.width - 20, 20);
-        this.ctx.fillText(`Wave: ${wave}`, this.canvas.width - 20, 50);
-        this.ctx.restore();
-    }
-
-    drawWaveAnnouncement(wave: number, timer: number, maxTime: number) {
-        if (timer <= 0) return;
-        
-        const alpha = Math.min(1, timer / (maxTime / 4));
-
-        this.ctx.save();
-        this.ctx.globalAlpha = alpha;
-        this.ctx.fillStyle = '#7DF9FF';
-        this.ctx.font = 'bold 48px "Space Grotesk"';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.shadowColor = '#7DF9FF';
-        this.ctx.shadowBlur = 20;
-
-        this.ctx.fillText(`Wave ${wave} starting...`, this.canvas.width / 2, this.canvas.height / 2);
         this.ctx.restore();
     }
 }

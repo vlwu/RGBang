@@ -10,10 +10,9 @@ import { SettingsModal } from './chroma-clash/settings-modal';
 const CANVAS_WIDTH = 1000;
 const CANVAS_HEIGHT = 700;
 
-function GameCanvas({ onGameOver, setScore, setWave, isPaused, inputHandler }: { 
+function GameCanvas({ onGameOver, setScore, isPaused, inputHandler }: { 
     onGameOver: () => void, 
     setScore: (score: number) => void,
-    setWave: (wave: number) => void,
     isPaused: boolean,
     inputHandler: InputHandler
 }) {
@@ -28,7 +27,7 @@ function GameCanvas({ onGameOver, setScore, setWave, isPaused, inputHandler }: {
             
             InputHandler.getInstance(canvas);
             
-            const game = new Game(canvas, onGameOver, setScore, setWave, inputHandler);
+            const game = new Game(canvas, onGameOver, setScore, inputHandler);
             gameRef.current = game;
             game.start();
 
@@ -36,7 +35,7 @@ function GameCanvas({ onGameOver, setScore, setWave, isPaused, inputHandler }: {
                 game.stop();
             };
         }
-    }, [onGameOver, setScore, setWave, inputHandler]);
+    }, [onGameOver, setScore, inputHandler]);
 
     useEffect(() => {
         if (gameRef.current) {
@@ -48,19 +47,16 @@ function GameCanvas({ onGameOver, setScore, setWave, isPaused, inputHandler }: {
     return <canvas ref={canvasRef} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
 }
 
-export default function Home({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default function Home() {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver'>('menu');
     const [score, setScore] = useState(0);
-    const [wave, setWave] = useState(0);
     const [highScore, setHighScore] = useState(0);
-    const [bestWave, setBestWave] = useState(0);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
     const inputHandlerRef = useRef<InputHandler | null>(null);
 
     useEffect(() => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
-        setBestWave(parseInt(localStorage.getItem('rgBangBestWave') || '0'));
         
         inputHandlerRef.current = InputHandler.getInstance();
         inputHandlerRef.current.setKeybindings(keybindings);
@@ -97,15 +93,10 @@ export default function Home({ searchParams }: { searchParams: { [key: string]: 
             localStorage.setItem('rgBangHighScore', score.toString());
             setHighScore(score);
         }
-        if (wave > bestWave) {
-            localStorage.setItem('rgBangBestWave', wave.toString());
-            setBestWave(wave);
-        }
-    }, [score, highScore, wave, bestWave]);
+    }, [score, highScore]);
 
     const startGame = () => {
         setScore(0);
-        setWave(0);
         setGameState('playing');
     };
     
@@ -147,10 +138,6 @@ export default function Home({ searchParams }: { searchParams: { [key: string]: 
                             <Award className="text-accent" />
                             <span>High Score: {highScore}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Waves className="text-accent" />
-                            <span>Best Wave: {bestWave}</span>
-                        </div>
                     </div>
                 </div>
             )}
@@ -160,7 +147,6 @@ export default function Home({ searchParams }: { searchParams: { [key: string]: 
                     <GameCanvas 
                         onGameOver={handleGameOver} 
                         setScore={setScore} 
-                        setWave={setWave}
                         isPaused={gameState === 'paused'}
                         inputHandler={inputHandlerRef.current}
                     />
@@ -191,16 +177,11 @@ export default function Home({ searchParams }: { searchParams: { [key: string]: 
                     <h2 className="text-6xl font-bold text-primary/80 font-headline">Game Over</h2>
                     <div className="text-2xl space-y-2">
                         <p>Final Score: <span className="font-bold text-accent">{score}</span></p>
-                        <p>You reached Wave: <span className="font-bold text-accent">{wave}</span></p>
                     </div>
                     <div className="flex gap-8 pt-4 text-lg">
                         <div className="flex items-center gap-2">
                             <Award className="text-accent" />
                             <span>High Score: {highScore}</span>
-                        </div>
-                         <div className="flex items-center gap-2">
-                            <Waves className="text-accent" />
-                            <span>Best Wave: {bestWave}</span>
                         </div>
                     </div>
                      <Button size="lg" onClick={quitToMenu} className="font-bold text-lg mt-4">
