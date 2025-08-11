@@ -1,3 +1,4 @@
+
 import { Player } from './player';
 import { Bullet } from './bullet';
 import { Enemy, BaseEnemy } from './enemy';
@@ -20,7 +21,6 @@ class EnemySpawner {
             this.spawnEnemy(createEnemy);
             this.spawnTimer = this.spawnInterval;
             
-            // Gradually decrease spawn interval to increase difficulty
             if (this.spawnInterval > 30) {
                 this.spawnInterval *= 0.995;
             }
@@ -107,28 +107,31 @@ export class Game {
     }
 
     private update() {
-        // 1. Update player and input
+        // 1. Update player and handle input
         this.player.update(this.inputHandler, this.createBullet, this.canvas.width, this.canvas.height);
         this.inputHandler.resetScroll();
         
         // 2. Update bullets and filter out-of-bounds bullets
-        this.bullets = this.bullets.filter((bullet) => {
-            bullet.update();
-            return !(bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height);
-        });
+        this.bullets.forEach(bullet => bullet.update());
 
         // 3. Update all enemies
         this.enemies.forEach((enemy) => {
-            enemy.update(this.player);
+            if (enemy.isAlive) {
+                enemy.update(this.player);
+            }
         });
 
         // 4. Handle collisions
-        this.handleBulletCollisions();
-        this.handlePlayerEnemyCollisions();
-        this.handleEnemyCollisions();
-        
-        // 5. Remove dead enemies from the game
+        this.handleCollisions();
+
+        // 5. Remove dead enemies and off-screen bullets
+        const deadEnemies = this.enemies.filter(e => !e.isAlive);
+        deadEnemies.forEach(enemy => this.particles.add(enemy.pos, enemy.color, 30));
         this.enemies = this.enemies.filter(e => e.isAlive);
+        
+        this.bullets = this.bullets.filter((bullet) => 
+            !(bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height)
+        );
 
         // 6. Spawn new enemies
         this.enemySpawner.update(this.enemies.length, this.createEnemy);
@@ -143,49 +146,47 @@ export class Game {
         }
     }
 
-    private handleBulletCollisions() {
+    private handleCollisions() {
+        // Bullet-Enemy Collisions
         for (let i = this.bullets.length - 1; i >= 0; i--) {
+            const bullet = this.bullets[i];
+            let bulletRemoved = false;
             for (let j = this.enemies.length - 1; j >= 0; j--) {
-                const bullet = this.bullets[i];
                 const enemy = this.enemies[j];
                 
-                // Only check collisions if both bullet and enemy exist and enemy is alive
-                if (bullet && enemy && enemy.isAlive && circleCollision({pos: bullet.pos, radius: bullet.radius}, {pos: enemy.pos, radius: enemy.radius})) {
-                    const pointsGained = enemy.takeDamage(bullet.damage, bullet.color, this.particles);
+                if (enemy.isAlive && circleCollision(bullet, enemy)) {
+                    const pointsGained = enemy.takeDamage(bullet.damage, bullet.color);
                     if (pointsGained > 0) {
                         this.score += pointsGained;
                         this.setScore(this.score);
                     }
                     
                     this.particles.add(bullet.pos, bullet.color, 10);
-                    // Remove bullet after collision
                     this.bullets.splice(i, 1);
-                    // A bullet can only hit one enemy, so we break to the next bullet
+                    bulletRemoved = true;
                     break; 
                 }
             }
+            if (bulletRemoved) continue;
         }
-    }
-    
-    private handlePlayerEnemyCollisions() {
+
+        // Player-Enemy Collisions
         for (let i = this.enemies.length - 1; i >= 0; i--) {
             const enemy = this.enemies[i];
-            if (enemy.isAlive && circleCollision({pos: this.player.pos, radius: this.player.radius}, {pos: enemy.pos, radius: enemy.radius})) {
+            if (enemy.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(10);
-                enemy.isAlive = false; // Destroy enemy on collision with player
+                enemy.isAlive = false; 
                 this.particles.add(enemy.pos, enemy.color, 10);
             }
         }
-    }
 
-
-    private handleEnemyCollisions() {
+        // Enemy-Enemy Collisions
         for (let i = 0; i < this.enemies.length; i++) {
             for (let j = i + 1; j < this.enemies.length; j++) {
                 const enemy1 = this.enemies[i];
                 const enemy2 = this.enemies[j];
 
-                if (circleCollision(enemy1, enemy2)) {
+                if (enemy1.isAlive && enemy2.isAlive && circleCollision(enemy1, enemy2)) {
                     this.resolveEnemyCollision(enemy1, enemy2);
                 }
             }
@@ -219,7 +220,6 @@ export class Game {
 
     private gameLoop = () => {
         if (!this.isRunning) {
-             // Still draw the last frame when paused
              this.draw();
         } else {
             this.update();

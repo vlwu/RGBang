@@ -29,6 +29,7 @@ export abstract class Enemy {
     abstract update(player: Player): void;
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (!this.isAlive) return;
         // Body
         ctx.fillStyle = this.hexColor;
         ctx.beginPath();
@@ -51,7 +52,7 @@ export abstract class Enemy {
         }
     }
     
-    takeDamage(amount: number, damageColor: GameColor, particles: ParticleSystem): number {
+    takeDamage(amount: number, damageColor: GameColor): number {
         if (!this.isAlive) return 0;
         
         if (damageColor === this.color) {
@@ -59,16 +60,11 @@ export abstract class Enemy {
             if (this.health <= 0) {
                 this.health = 0;
                 this.isAlive = false;
-                particles.add(this.pos, this.color, 30);
                 return this.points;
             }
-        } else {
-            this.onWrongHit(particles);
         }
         return 0;
     }
-    
-    abstract onWrongHit(particles: ParticleSystem): void;
 }
 
 export class BaseEnemy extends Enemy {
@@ -81,10 +77,5 @@ export class BaseEnemy extends Enemy {
         if (!this.isAlive) return;
         const direction = player.pos.sub(this.pos).normalize();
         this.pos = this.pos.add(direction.scale(this.speed));
-    }
-    
-    onWrongHit(particles: ParticleSystem) {
-        particles.add(this.pos, GameColor.RED, 5); // show a "resist" effect
-        this.speed *= 1.05; // becomes slightly faster
     }
 }
