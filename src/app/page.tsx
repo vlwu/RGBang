@@ -48,7 +48,7 @@ function GameCanvas({ onGameOver, setScore, setWave, isPaused, inputHandler }: {
     return <canvas ref={canvasRef} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
 }
 
-export default function Home() {
+export default function Home({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver'>('menu');
     const [score, setScore] = useState(0);
     const [wave, setWave] = useState(0);
