@@ -117,7 +117,7 @@ export class Game {
 
         this.enemies.forEach((enemy) => {
             enemy.update(this.player);
-            if (circleCollision({pos: this.player.pos, radius: this.player.radius}, {pos: enemy.pos, radius: enemy.radius})) {
+            if (enemy.isAlive && circleCollision({pos: this.player.pos, radius: this.player.radius}, {pos: enemy.pos, radius: enemy.radius})) {
                 this.player.takeDamage(10);
                 enemy.isAlive = false;
                 this.particles.add(enemy.pos, enemy.color, 10);
