@@ -68,19 +68,16 @@ export class Game {
     public isRunning = false;
     private animationFrameId: number | null = null;
     
-    private onGameOver: () => void;
-    private setScore: (score: number) => void;
+    private onGameOver: (finalScore: number) => void;
 
     constructor(
         canvas: HTMLCanvasElement, 
-        onGameOver: () => void,
-        setScore: (score: number) => void,
+        onGameOver: (finalScore: number) => void,
         inputHandler: InputHandler
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
-        this.setScore = setScore;
         this.inputHandler = inputHandler;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2);
@@ -133,7 +130,7 @@ export class Game {
         // 6. Check for game over condition
         if (!this.player.isAlive) {
             this.isRunning = false;
-            this.onGameOver();
+            this.onGameOver(this.score);
         }
     }
 
@@ -154,7 +151,6 @@ export class Game {
                         // Damage was of correct type
                         if (!enemy.isAlive) {
                             this.score += enemy.points;
-                            this.setScore(this.score);
                         }
                     }
                     break;

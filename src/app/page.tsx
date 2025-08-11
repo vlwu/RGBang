@@ -10,9 +10,8 @@ import { SettingsModal } from './chroma-clash/settings-modal';
 const CANVAS_WIDTH = 1000;
 const CANVAS_HEIGHT = 700;
 
-function GameCanvas({ onGameOver, setScore, isPaused, inputHandler }: { 
-    onGameOver: () => void, 
-    setScore: (score: number) => void,
+function GameCanvas({ onGameOver, isPaused, inputHandler }: { 
+    onGameOver: (score: number) => void, 
     isPaused: boolean,
     inputHandler: InputHandler
 }) {
@@ -27,7 +26,7 @@ function GameCanvas({ onGameOver, setScore, isPaused, inputHandler }: {
             
             InputHandler.getInstance(canvas);
             
-            const game = new Game(canvas, onGameOver, setScore, inputHandler);
+            const game = new Game(canvas, onGameOver, inputHandler);
             gameRef.current = game;
             game.start();
 
@@ -35,7 +34,7 @@ function GameCanvas({ onGameOver, setScore, isPaused, inputHandler }: {
                 game.stop();
             };
         }
-    }, [onGameOver, setScore, inputHandler]);
+    }, [onGameOver, inputHandler]);
 
     useEffect(() => {
         if (gameRef.current) {
@@ -47,11 +46,7 @@ function GameCanvas({ onGameOver, setScore, isPaused, inputHandler }: {
     return <canvas ref={canvasRef} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
 }
 
-export default function Home({
-  searchParams,
-}: {
-  searchParams: { [key: string]: string | string[] | undefined };
-}) {
+export default function Home() {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver'>('menu');
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
@@ -99,13 +94,14 @@ export default function Home({
     }, [gameState, isSettingsOpen]);
 
 
-    const handleGameOver = useCallback(() => {
+    const handleGameOver = useCallback((finalScore: number) => {
+        setScore(finalScore);
         setGameState('gameOver');
-        if (score > highScore) {
-            localStorage.setItem('rgBangHighScore', score.toString());
-            setHighScore(score);
+        if (finalScore > highScore) {
+            localStorage.setItem('rgBangHighScore', finalScore.toString());
+            setHighScore(finalScore);
         }
-    }, [score, highScore]);
+    }, [highScore]);
 
     const startGame = () => {
         setScore(0);
@@ -158,7 +154,6 @@ export default function Home({
                 <div className="relative">
                     <GameCanvas 
                         onGameOver={handleGameOver} 
-                        setScore={setScore} 
                         isPaused={gameState === 'paused'}
                         inputHandler={inputHandlerRef.current}
                     />
