@@ -49,7 +49,8 @@ class EnemySpawner {
         const health = 30;
         const speed = 1.5;
         const points = 10;
-        createEnemy(new Enemy(x, y, color, radius, health, speed, points));
+        const newEnemy = new Enemy(x, y, color, radius, health, speed, points);
+        createEnemy(newEnemy);
     }
 }
 
@@ -104,6 +105,7 @@ export class Game {
     }
     
     private createEnemy = (enemy: Enemy) => {
+        enemy.onSplit = this.createEnemy; // Assign the callback here
         this.enemies.push(enemy);
     }
 
@@ -144,16 +146,17 @@ export class Game {
                 
                 if (enemy.isAlive && circleCollision(bullet, enemy)) {
                     this.particles.add(bullet.pos, bullet.color, 10);
+                    
+                    const hitSuccess = enemy.takeDamage(bullet.damage, bullet.color);
+                    
+                    if (hitSuccess && !enemy.isAlive) {
+                        this.score += enemy.points;
+                    }
+                    
+                    // Always remove bullet on hit
                     this.bullets.splice(i, 1);
                     bulletRemoved = true;
-                    
-                    if (enemy.takeDamage(bullet.damage, bullet.color)) {
-                        // Damage was of correct type
-                        if (!enemy.isAlive) {
-                            this.score += enemy.points;
-                        }
-                    }
-                    break;
+                    break; 
                 }
             }
             if (bulletRemoved) continue;
@@ -162,7 +165,7 @@ export class Game {
         // Player-Enemy Collisions
         for (const enemy of this.enemies) {
             if (enemy.isAlive && circleCollision(this.player, enemy)) {
-                this.player.takeDamage(10);
+                this.player.takeDamage(enemy.damage); // Use enemy's damage property
                 enemy.isAlive = false; 
                 this.particles.add(enemy.pos, enemy.color, 10);
             }
