@@ -45,13 +45,15 @@ export abstract class Enemy {
             ctx.fillStyle = '#333';
             ctx.fillRect(barX, barY, barWidth, barHeight);
             
-            ctx.fillStyle = 'red';
             const healthPercentage = this.health / this.maxHealth;
+            ctx.fillStyle = 'red';
             ctx.fillRect(barX, barY, barWidth * healthPercentage, barHeight);
         }
     }
     
     takeDamage(amount: number, damageColor: GameColor, particles: ParticleSystem, createEnemy: (enemy: Enemy) => void): number {
+        if (!this.isAlive) return 0;
+        
         if (damageColor === this.color) {
             this.health -= amount;
             if (this.health <= 0) {
@@ -75,13 +77,14 @@ export class BaseEnemy extends Enemy {
     }
     
     update(player: Player) {
+        if (!this.isAlive) return;
         const direction = player.pos.sub(this.pos).normalize();
         this.pos = this.pos.add(direction.scale(this.speed));
     }
     
     onWrongHit(particles: ParticleSystem) {
         particles.add(this.pos, GameColor.RED, 5); // show a "resist" effect
-        this.speed *= 1.1; // becomes faster
+        this.speed *= 1.05; // becomes slightly faster
     }
 }
 
@@ -92,19 +95,19 @@ export class SplitterEnemy extends Enemy {
     }
     
     update(player: Player) {
+        if (!this.isAlive) return;
         const direction = player.pos.sub(this.pos).normalize();
         this.pos = this.pos.add(direction.scale(this.speed));
     }
 
     onWrongHit(particles: ParticleSystem, createEnemy: (enemy: Enemy) => void) {
-        if (this.isAlive) {
-            this.isAlive = false;
-            particles.add(this.pos, this.color, 15);
-            const components = COLOR_DETAILS[this.color].components;
-            if (components) {
-                createEnemy(new BaseEnemy(this.pos.x - 20, this.pos.y, components[0]));
-                createEnemy(new BaseEnemy(this.pos.x + 20, this.pos.y, components[1]));
-            }
+        if (!this.isAlive) return;
+        this.isAlive = false; // This enemy splits and is "dead"
+        particles.add(this.pos, this.color, 15);
+        const components = COLOR_DETAILS[this.color].components;
+        if (components) {
+            createEnemy(new BaseEnemy(this.pos.x - 20, this.pos.y, components[0]));
+            createEnemy(new BaseEnemy(this.pos.x + 20, this.pos.y, components[1]));
         }
     }
 }
