@@ -168,11 +168,11 @@ export default function Home() {
                         <span className="text-primary">ang</span>
                     </h1>
                     <div className="flex flex-col gap-4 w-64">
-                        <Button size="lg" onClick={startGame} className="font-bold text-lg">
+                        <Button size="lg" onClick={startGame} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
                             <Gamepad2 className="mr-2" />
                             Play Game
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)} className="font-bold text-lg">
+                         <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)}>
                             <Settings className="mr-2" />
                             Settings
                         </Button>
@@ -200,7 +200,7 @@ export default function Home() {
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
                              <h2 className="text-6xl font-bold text-primary font-headline tracking-tighter mb-8">Paused</h2>
                              <div className="flex flex-col space-y-4 w-52">
-                                <Button size="lg" onClick={resumeGame} className="font-bold text-lg">
+                                <Button size="lg" onClick={resumeGame} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
                                     <Play className="mr-2" />
                                     Resume
                                 </Button>
@@ -230,7 +230,7 @@ export default function Home() {
                            <span>High Score: {highScore}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={quitToMenu} className="font-bold text-lg mt-4 w-64">
+                     <Button size="lg" onClick={quitToMenu} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>

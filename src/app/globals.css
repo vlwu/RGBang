@@ -66,3 +66,26 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer components {
+    .btn-gradient {
+        @apply text-white font-bold transition-all duration-300;
+        background-size: 200% 200%;
+    }
+    .btn-gradient:hover {
+        @apply shadow-lg shadow-primary/20;
+        transform: translateY(-2px);
+    }
+    .btn-gradient-1 {
+        background-image: linear-gradient(45deg, #ff9a9e 0%, #fad0c4 99%, #fad0c4 100%);
+    }
+    .btn-gradient-2 {
+       background-image: linear-gradient(to right, #a1c4fd 0%, #c2e9fb 51%, #a1c4fd 100%);
+    }
+    .btn-gradient-3 {
+        background-image: linear-gradient(to top, #c1dfc4 0%, #deecdd 100%);
+    }
+    .btn-gradient-4 {
+        background-image: linear-gradient(120deg, #f6d365 0%, #fda085 100%);
+    }
+}

@@ -94,12 +94,17 @@ export default {
                 opacity: "1",
                 transform: "translateY(0)"
             }
-        }
+        },
+        'gradient-shift': {
+          '0%, 100%': { 'background-position': '0% 50%' },
+          '50%': { 'background-position': '100% 50%' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         "fade-in": "fade-in 0.5s ease-out forwards",
+        'gradient-shift': 'gradient-shift 8s ease infinite',
       },
     },
   },
