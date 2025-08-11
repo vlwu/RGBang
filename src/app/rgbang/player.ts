@@ -20,7 +20,7 @@ export class Player {
     // Dash properties
     private isDashing = false;
     private dashTimer = 0;
-    private dashDuration = 8; // frames
+    private dashDuration = 12; // frames
     private dashSpeed = 12;
     private dashCooldown = 180; // frames
     private dashCooldownTimer = 0;
@@ -124,6 +124,8 @@ export class Player {
         // Draw dashing effect
         if (this.isDashing) {
             ctx.save();
+            ctx.shadowColor = 'white';
+            ctx.shadowBlur = 20;
             const dashProgress = this.dashTimer / this.dashDuration;
             ctx.fillStyle = `rgba(226, 232, 240, ${0.5 * dashProgress})`;
             ctx.beginPath();
