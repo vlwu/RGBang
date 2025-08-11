@@ -26,6 +26,7 @@ class InputHandler {
     public keys: Set<string> = new Set();
     public mousePos: Vec2 = new Vec2();
     public isMouseDown: boolean = false;
+    public wheelDeltaY: number = 0;
     private canvas: HTMLCanvasElement | null = null;
     public keybindings: Keybindings = defaultKeybindings;
 
@@ -55,12 +56,14 @@ class InputHandler {
             this.canvas.removeEventListener('mousedown', this.handleMouseDown);
             this.canvas.removeEventListener('mouseup', this.handleMouseUp);
             this.canvas.removeEventListener('contextmenu', this.preventContextMenu);
+            this.canvas.removeEventListener('wheel', this.handleWheel);
         }
         this.canvas = canvas;
         this.canvas.addEventListener('mousemove', this.handleMouseMove);
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
         this.canvas.addEventListener('mouseup', this.handleMouseUp);
         this.canvas.addEventListener('contextmenu', this.preventContextMenu);
+        this.canvas.addEventListener('wheel', this.handleWheel);
     }
     
     private preventContextMenu = (e: MouseEvent) => e.preventDefault();
@@ -96,6 +99,15 @@ class InputHandler {
             this.isMouseDown = false;
         }
     }
+    
+    private handleWheel = (e: WheelEvent) => {
+        e.preventDefault();
+        this.wheelDeltaY = e.deltaY;
+    }
+    
+    public resetScroll() {
+        this.wheelDeltaY = 0;
+    }
 
     public isKeyDown(key: string): boolean {
         return this.keys.has(key);
@@ -109,6 +121,7 @@ class InputHandler {
             this.canvas.removeEventListener('mousedown', this.handleMouseDown);
             this.canvas.removeEventListener('mouseup', this.handleMouseUp);
             this.canvas.removeEventListener('contextmenu', this.preventContextMenu);
+            this.canvas.removeEventListener('wheel', this.handleWheel);
         }
     }
 }

@@ -56,10 +56,24 @@ export class Player {
     }
     
     private handleColorSelection(input: InputHandler) {
+        // Keyboard selection
         if (input.isKeyDown(input.keybindings.primary1)) this.primaryColor = GameColor.RED;
         if (input.isKeyDown(input.keybindings.primary2)) this.primaryColor = GameColor.YELLOW;
         if (input.isKeyDown(input.keybindings.primary3)) this.primaryColor = GameColor.BLUE;
 
+        // Mouse wheel selection
+        if (input.wheelDeltaY !== 0) {
+            const currentIndex = PRIMARY_COLORS.indexOf(this.primaryColor);
+            let nextIndex;
+            if (input.wheelDeltaY > 0) { // Scroll down
+                nextIndex = (currentIndex + 1) % PRIMARY_COLORS.length;
+            } else { // Scroll up
+                nextIndex = (currentIndex - 1 + PRIMARY_COLORS.length) % PRIMARY_COLORS.length;
+            }
+            this.primaryColor = PRIMARY_COLORS[nextIndex];
+        }
+
+        // Color combination
         if (input.isKeyDown(input.keybindings.combine)) {
             if (input.isKeyDown(input.keybindings.primary1) && GameColor.RED !== this.primaryColor) this.secondaryColor = GameColor.RED;
             else if (input.isKeyDown(input.keybindings.primary2) && GameColor.YELLOW !== this.primaryColor) this.secondaryColor = GameColor.YELLOW;

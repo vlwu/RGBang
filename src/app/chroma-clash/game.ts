@@ -5,7 +5,7 @@ import { WaveManager } from './wave-manager';
 import { UI } from './ui';
 import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
-import { circleCollision } from './utils';
+import { circleCollision, Vec2 } from './utils';
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -69,6 +69,7 @@ export class Game {
 
     private update() {
         this.player.update(this.inputHandler, this.createBullet, this.canvas.width, this.canvas.height);
+        this.inputHandler.resetScroll();
         
         this.bullets = this.bullets.filter((bullet) => {
             bullet.update();
@@ -140,8 +141,7 @@ export class Game {
         const overlap = (enemy1.radius + enemy2.radius) - dist;
 
         if (overlap > 0) {
-            // Ensure distance is not zero to avoid division by zero
-            const resolveVec = dist > 0 ? distVec.normalize().scale(overlap / 2) : new this.player.pos.constructor(0.1, 0);
+            const resolveVec = dist > 0 ? distVec.normalize().scale(overlap / 2) : new Vec2(0.1, 0);
             enemy1.pos = enemy1.pos.add(resolveVec);
             enemy2.pos = enemy2.pos.sub(resolveVec);
         }

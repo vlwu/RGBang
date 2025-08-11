@@ -38,7 +38,3 @@ export function circleCollision(c1: { pos: Vec2, radius: number }, c2: { pos: Ve
 export function lerp(start: number, end: number, t: number): number {
     return start * (1 - t) + end * t;
 }
-
-export function getRandomElement<T>(arr: T[]): T {
-    return arr[Math.floor(Math.random() * arr.length)];
-}
