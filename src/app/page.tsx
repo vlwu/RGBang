@@ -151,9 +151,9 @@ export default function Home() {
                         inputHandler={inputHandlerRef.current}
                     />
                     {gameState === 'paused' && (
-                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-lg animate-fade-in">
-                             <h2 className="text-6xl font-bold text-accent font-headline mb-8">Paused</h2>
-                             <div className="flex flex-col space-y-4 w-48">
+                         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
+                             <h2 className="text-6xl font-bold text-primary font-headline tracking-tighter mb-8">Paused</h2>
+                             <div className="flex flex-col space-y-4 w-52">
                                 <Button size="lg" onClick={resumeGame} className="font-bold text-lg">
                                     <Play className="mr-2" />
                                     Resume
