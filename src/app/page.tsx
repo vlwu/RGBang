@@ -163,11 +163,8 @@ export default function Home() {
 
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
-                    <h1 className="text-7xl font-bold tracking-tighter text-primary font-headline">RGBang</h1>
-                    <p className="text-xl text-foreground/80 max-w-2xl">
-                        An intense arcade shooter where you must mix colors to survive. Use <kbd className="p-1 rounded bg-muted">1</kbd> <kbd className="p-1 rounded bg-muted">2</kbd> <kbd className="p-1 rounded bg-muted">3</kbd> to select primary colors and hold <kbd className="p-1 rounded bg-muted">Shift</kbd> to combine them.
-                    </p>
-                    <div className="flex gap-4">
+                    <h1 className="text-8xl font-bold tracking-tighter text-primary font-headline">RGBang</h1>
+                    <div className="flex flex-col gap-4 w-64">
                         <Button size="lg" onClick={startGame} className="font-bold text-lg">
                             <Gamepad2 className="mr-2" />
                             Play Game
@@ -177,7 +174,7 @@ export default function Home() {
                             Settings
                         </Button>
                     </div>
-                    <div className="flex gap-8 pt-4 text-lg">
+                    <div className="pt-4 text-lg font-semibold text-foreground/80">
                         <div className="flex items-center gap-2">
                             <Award className="text-accent" />
                             <span>High Score: {highScore}</span>
@@ -221,16 +218,16 @@ export default function Home() {
             {gameState === 'gameOver' && (
                 <div className="flex flex-col items-center text-center space-y-6 animate-fade-in">
                     <h2 className="text-6xl font-bold text-primary/80 font-headline">Game Over</h2>
-                    <div className="text-2xl space-y-2">
+                    <div className="text-3xl font-semibold space-y-2">
                         <p>Final Score: <span className="font-bold text-accent">{score}</span></p>
                     </div>
-                    <div className="flex gap-8 pt-4 text-lg">
-                        <div className="flex items-center gap-2">
+                    <div className="flex gap-8 pt-4 text-xl">
+                        <div className="flex items-center gap-2 font-semibold text-foreground/80">
                             <Award className="text-accent" />
                             <span>High Score: {highScore}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={quitToMenu} className="font-bold text-lg mt-4">
+                     <Button size="lg" onClick={quitToMenu} className="font-bold text-lg mt-4 w-64">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>
