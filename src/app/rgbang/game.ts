@@ -2,11 +2,12 @@
 import { Player } from './player';
 import { Bullet } from './bullet';
 import { Enemy } from './enemy';
+import { Boss } from './boss';
 import { UI } from './ui';
 import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
 import { circleCollision, Vec2 } from './utils';
-import { getRandomElement, PRIMARY_COLORS } from './color';
+import { getRandomElement, PRIMARY_COLORS, GameColor } from './color';
 
 class EnemySpawner {
     private spawnInterval = 120; // frames
@@ -60,12 +61,14 @@ export class Game {
     private player: Player;
     private bullets: Bullet[] = [];
     private enemies: Enemy[] = [];
+    private boss: Boss | null = null;
     private particles: ParticleSystem;
     private enemySpawner: EnemySpawner;
     private ui: UI;
     private inputHandler: InputHandler;
 
     private score = 0;
+    private lastBossSpawnScore = 0;
     public isRunning = false;
     private animationFrameId: number | null = null;
     
@@ -112,6 +115,20 @@ export class Game {
         enemy.onSplit = this.createEnemy; // Assign the callback here
         this.enemies.push(enemy);
     }
+    
+    private spawnBoss() {
+        if (this.boss) return;
+        const bossX = this.canvas.width / 2;
+        const bossY = 100;
+        this.boss = new Boss(
+            bossX,
+            bossY,
+            this.createBullet,
+            this.canvas.width,
+            this.canvas.height
+        );
+        this.lastBossSpawnScore = this.score;
+    }
 
     private update() {
         // 1. Update player, bullets, and enemies
@@ -120,6 +137,7 @@ export class Game {
         
         this.bullets.forEach(bullet => bullet.update());
         this.enemies.forEach(enemy => enemy.update(this.player));
+        this.boss?.update();
 
         // 2. Handle collisions
         this.handleCollisions();
@@ -130,8 +148,21 @@ export class Game {
         // 4. Remove dead entities and out-of-bounds bullets
         this.cleanupEntities();
 
-        // 5. Spawn new enemies
-        this.enemySpawner.update(this.enemies.length, this.createEnemy);
+        // 5. Spawn new enemies or boss
+        if (this.boss) {
+            if (!this.boss.isAlive) {
+                this.score += this.boss.points;
+                this.particles.add(this.boss.pos, this.boss.color, 100);
+                this.boss = null;
+            }
+        } else {
+            // No boss active, spawn regular enemies
+            this.enemySpawner.update(this.enemies.length, this.createEnemy);
+            // Check if it's time to spawn a boss
+            if (Math.floor(this.score / 100) > Math.floor(this.lastBossSpawnScore / 100)) {
+                this.spawnBoss();
+            }
+        }
         
         // 6. Check for game over condition
         if (!this.player.isAlive) {
@@ -145,6 +176,8 @@ export class Game {
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             let bulletRemoved = false;
+            
+            // Check collision with regular enemies
             for (let j = this.enemies.length - 1; j >= 0; j--) {
                 const enemy = this.enemies[j];
                 
@@ -157,22 +190,42 @@ export class Game {
                         this.score += enemy.points;
                     }
                     
-                    // Always remove bullet on hit
                     this.bullets.splice(i, 1);
                     bulletRemoved = true;
                     break; 
                 }
             }
             if (bulletRemoved) continue;
+            
+            // Check collision with boss
+            if (this.boss && this.boss.isAlive && !bullet.isFromBoss && circleCollision(bullet, this.boss)) {
+                this.particles.add(bullet.pos, bullet.color, 15);
+                this.boss.takeDamage(bullet.damage, bullet.color);
+                this.bullets.splice(i, 1);
+                continue;
+            }
+            
+            // Check collision with player
+            if (bullet.isFromBoss && this.player.isAlive && circleCollision(bullet, this.player)) {
+                this.player.takeDamage(bullet.damage);
+                this.particles.add(bullet.pos, bullet.color, 10);
+                this.bullets.splice(i, 1);
+            }
         }
 
         // Player-Enemy Collisions
         for (const enemy of this.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
-                this.player.takeDamage(enemy.damage); // Use enemy's damage property
+                this.player.takeDamage(enemy.damage);
                 enemy.isAlive = false; 
                 this.particles.add(enemy.pos, enemy.color, 10);
             }
+        }
+
+        // Player-Boss Collision
+        if (this.boss && this.boss.isAlive && this.player.isAlive && circleCollision(this.player, this.boss)) {
+            this.player.takeDamage(this.boss.damage);
+            // Boss doesn't die from collision, just damages player
         }
 
         // Enemy-Enemy Collisions for separation
@@ -223,11 +276,12 @@ export class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         this.particles.draw(this.ctx);
+        this.boss?.draw(this.ctx);
         this.enemies.forEach(e => e.draw(this.ctx));
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx, this.inputHandler);
         
-        this.ui.draw(this.player, this.score);
+        this.ui.draw(this.player, this.score, this.boss);
     }
 
     private gameLoop = () => {

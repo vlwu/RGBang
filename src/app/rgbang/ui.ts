@@ -1,5 +1,6 @@
 import { Player } from './player';
 import { GameColor, COLOR_DETAILS, PRIMARY_COLORS } from './color';
+import { Boss } from './boss';
 
 export class UI {
     private canvas: HTMLCanvasElement;
@@ -10,11 +11,14 @@ export class UI {
         this.ctx = canvas.getContext('2d')!;
     }
     
-    draw(player: Player, score: number) {
+    draw(player: Player, score: number, boss: Boss | null) {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScore(score);
         this.drawDashCooldown(player);
+        if (boss && boss.isAlive) {
+            this.drawBossHealthBar(boss);
+        }
     }
 
     private drawHealthBar(player: Player) {
@@ -39,6 +43,38 @@ export class UI {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText(`${Math.round(player.health)} / ${player.maxHealth}`, x + barWidth / 2, y + barHeight / 2);
+        this.ctx.restore();
+    }
+    
+    private drawBossHealthBar(boss: Boss) {
+        const barWidth = this.canvas.width * 0.6;
+        const barHeight = 25;
+        const x = (this.canvas.width - barWidth) / 2;
+        const y = 20;
+
+        this.ctx.save();
+        
+        // Background
+        this.ctx.fillStyle = '#333';
+        this.ctx.fillRect(x, y, barWidth, barHeight);
+
+        // Health
+        const healthPercentage = boss.health / boss.maxHealth;
+        this.ctx.fillStyle = COLOR_DETAILS[boss.color].hex;
+        this.ctx.fillRect(x, y, barWidth * healthPercentage, barHeight);
+        
+        // Border
+        this.ctx.strokeStyle = '#fff';
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeRect(x, y, barWidth, barHeight);
+        
+        // Text
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = 'bold 16px "Space Grotesk"';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.fillText('BOSS', x + barWidth / 2, y + barHeight / 2);
+
         this.ctx.restore();
     }
 

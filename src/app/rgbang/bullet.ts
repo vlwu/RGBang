@@ -8,12 +8,15 @@ export class Bullet {
     color: GameColor;
     hexColor: string;
     damage = 10;
+    isFromBoss: boolean;
     
-    constructor(pos: Vec2, direction: Vec2, color: GameColor) {
+    constructor(pos: Vec2, direction: Vec2, color: GameColor, isFromBoss = false) {
         this.pos = new Vec2(pos.x, pos.y);
-        this.vel = direction.normalize().scale(10);
+        this.vel = direction.normalize().scale(isFromBoss ? 4 : 10);
         this.color = color;
         this.hexColor = COLOR_DETAILS[color].hex;
+        this.isFromBoss = isFromBoss;
+        if(isFromBoss) this.radius = 8;
     }
 
     update() {
