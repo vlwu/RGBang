@@ -43,18 +43,18 @@ export default function Home() {
     const [bestWave, setBestWave] = useState(0);
 
     useEffect(() => {
-        setHighScore(parseInt(localStorage.getItem('chromaClashHighScore') || '0'));
-        setBestWave(parseInt(localStorage.getItem('chromaClashBestWave') || '0'));
+        setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
+        setBestWave(parseInt(localStorage.getItem('rgBangBestWave') || '0'));
     }, []);
 
     const handleGameOver = useCallback(() => {
         setGameState('gameOver');
         if (score > highScore) {
-            localStorage.setItem('chromaClashHighScore', score.toString());
+            localStorage.setItem('rgBangHighScore', score.toString());
             setHighScore(score);
         }
         if (wave > bestWave) {
-            localStorage.setItem('chromaClashBestWave', wave.toString());
+            localStorage.setItem('rgBangBestWave', wave.toString());
             setBestWave(wave);
         }
     }, [score, highScore, wave, bestWave]);
@@ -73,7 +73,7 @@ export default function Home() {
         <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
-                    <h1 className="text-7xl font-bold tracking-tighter text-primary font-headline">Chroma Clash</h1>
+                    <h1 className="text-7xl font-bold tracking-tighter text-primary font-headline">RGBang</h1>
                     <p className="text-xl text-foreground/80 max-w-2xl">
                         An intense arcade shooter where you must mix colors to survive. Use <kbd className="p-1 rounded bg-muted">1</kbd> <kbd className="p-1 rounded bg-muted">2</kbd> <kbd className="p-1 rounded bg-muted">3</kbd> to select primary colors and hold <kbd className="p-1 rounded bg-muted">Shift</kbd> to combine them.
                     </p>
@@ -81,12 +81,6 @@ export default function Home() {
                         <Button size="lg" onClick={startGame} className="font-bold text-lg">
                             <Gamepad2 className="mr-2" />
                             Play Game
-                        </Button>
-                        <Button size="lg" variant="outline" asChild>
-                            <a href="https://github.com/firebase/genkit/tree/main/studio/samples/chroma-clash" target="_blank" rel="noopener noreferrer">
-                                <Github className="mr-2" />
-                                View Source
-                            </a>
                         </Button>
                     </div>
                     <div className="flex gap-8 pt-4 text-lg">

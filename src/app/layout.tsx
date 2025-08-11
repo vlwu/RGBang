@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster"
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Chroma Clash',
+  title: 'RGBang',
   description: 'A vibrant, fast-paced arcade shooter built with Next.js and Canvas.',
 };
 
