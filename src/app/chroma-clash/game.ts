@@ -70,15 +70,13 @@ export class Game {
     private update() {
         this.player.update(this.inputHandler, this.createBullet, this.canvas.width, this.canvas.height);
         
-        this.bullets.forEach((bullet, index) => {
+        this.bullets = this.bullets.filter((bullet) => {
             bullet.update();
-            if (bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height) {
-                this.bullets.splice(index, 1);
-            }
+            return !(bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height);
         });
 
-        this.enemies.forEach((enemy, enemyIndex) => {
-            enemy.update(this.player, this.particles, this.createEnemy);
+        this.enemies.forEach((enemy) => {
+            enemy.update(this.player);
             if (circleCollision({pos: this.player.pos, radius: this.player.radius}, {pos: enemy.pos, radius: enemy.radius})) {
                 this.player.takeDamage(10);
                 enemy.isAlive = false;
@@ -107,8 +105,8 @@ export class Game {
                 const bullet = this.bullets[i];
                 const enemy = this.enemies[j];
                 
-                if (bullet && enemy && circleCollision({pos: bullet.pos, radius: bullet.radius}, {pos: enemy.pos, radius: enemy.radius})) {
-                    const pointsGained = enemy.takeDamage(bullet.damage, bullet.color, this.particles, this.createEnemy);
+                if (bullet && enemy && enemy.isAlive && circleCollision({pos: bullet.pos, radius: bullet.radius}, {pos: enemy.pos, radius: enemy.radius})) {
+                    const pointsGained = enemy.takeDamage(bullet.damage, bullet.color, this.particles);
                     if (pointsGained > 0) {
                         this.score += pointsGained;
                         this.setScore(this.score);
@@ -140,7 +138,7 @@ export class Game {
         if (this.enemies.length === 0 && waveTimer > 0) {
             // @ts-ignore
             const maxTime = this.waveManager.timeBetweenWaves;
-            this.ui.drawWaveAnnouncement(this.waveManager.currentWave, waveTimer, maxTime);
+            this.ui.drawWaveAnnouncement(this.waveManager.currentWave + 1, waveTimer, maxTime);
         }
     }
 

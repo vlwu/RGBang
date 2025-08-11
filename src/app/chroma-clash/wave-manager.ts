@@ -1,5 +1,4 @@
-import { Enemy, BaseEnemy, SplitterEnemy } from './enemy';
-import { GameColor, PRIMARY_COLORS } from './color';
+import { Enemy, BaseEnemy } from './enemy';
 
 export class WaveManager {
     currentWave = 0;
@@ -53,13 +52,7 @@ export class WaveManager {
                 y = Math.random() * this.canvasHeight;
             }
 
-            let enemy: Enemy;
-            const enemyTypeChance = Math.random();
-            if (this.currentWave > 2 && enemyTypeChance < 0.3) {
-                enemy = new SplitterEnemy(x, y);
-            } else {
-                enemy = new BaseEnemy(x, y);
-            }
+            const enemy = new BaseEnemy(x, y);
             createEnemy(enemy);
         }
     }

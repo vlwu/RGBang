@@ -1,6 +1,6 @@
 
-import { Vec2, distance, getRandomElement } from './utils';
-import { GameColor, COLOR_DETAILS, PRIMARY_COLORS } from './color';
+import { Vec2 } from './utils';
+import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
 import { Player } from './player';
 import { ParticleSystem } from './particle';
 
@@ -26,7 +26,7 @@ export abstract class Enemy {
         this.points = points;
     }
 
-    abstract update(player: Player, particles: ParticleSystem, createEnemy: (enemy: Enemy) => void): void;
+    abstract update(player: Player): void;
 
     draw(ctx: CanvasRenderingContext2D) {
         // Body
@@ -51,7 +51,7 @@ export abstract class Enemy {
         }
     }
     
-    takeDamage(amount: number, damageColor: GameColor, particles: ParticleSystem, createEnemy: (enemy: Enemy) => void): number {
+    takeDamage(amount: number, damageColor: GameColor, particles: ParticleSystem): number {
         if (!this.isAlive) return 0;
         
         if (damageColor === this.color) {
@@ -62,12 +62,12 @@ export abstract class Enemy {
                 return this.points;
             }
         } else {
-            this.onWrongHit(particles, createEnemy, damageColor);
+            this.onWrongHit(particles);
         }
         return 0;
     }
     
-    abstract onWrongHit(particles: ParticleSystem, createEnemy: (enemy: Enemy) => void, damageColor: GameColor): void;
+    abstract onWrongHit(particles: ParticleSystem): void;
 }
 
 export class BaseEnemy extends Enemy {
@@ -85,29 +85,5 @@ export class BaseEnemy extends Enemy {
     onWrongHit(particles: ParticleSystem) {
         particles.add(this.pos, GameColor.RED, 5); // show a "resist" effect
         this.speed *= 1.05; // becomes slightly faster
-    }
-}
-
-export class SplitterEnemy extends Enemy {
-    constructor(x: number, y: number) {
-        const color = getRandomElement([GameColor.ORANGE, GameColor.PURPLE, GameColor.GREEN]);
-        super(x, y, color, 25, 50, 1, 25);
-    }
-    
-    update(player: Player) {
-        if (!this.isAlive) return;
-        const direction = player.pos.sub(this.pos).normalize();
-        this.pos = this.pos.add(direction.scale(this.speed));
-    }
-
-    onWrongHit(particles: ParticleSystem, createEnemy: (enemy: Enemy) => void) {
-        if (!this.isAlive) return;
-        this.isAlive = false; // This enemy splits and is "dead"
-        particles.add(this.pos, this.color, 15);
-        const components = COLOR_DETAILS[this.color].components;
-        if (components) {
-            createEnemy(new BaseEnemy(this.pos.x - 20, this.pos.y, components[0]));
-            createEnemy(new BaseEnemy(this.pos.x + 20, this.pos.y, components[1]));
-        }
     }
 }

@@ -30,3 +30,7 @@ export function mixColors(color1: GameColor, color2: GameColor): GameColor | nul
     if (components[0] === GameColor.BLUE && components[1] === GameColor.YELLOW) return GameColor.GREEN;
     return null;
 }
+
+export function getRandomElement<T>(arr: T[]): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
