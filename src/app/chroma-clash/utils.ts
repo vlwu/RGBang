@@ -24,13 +24,13 @@ export class Vec2 {
     }
 }
 
-export function distance(p1: { x: number, y: number }, p2: { x: number, y: number }): number {
-    const dx = p1.x - p2.x;
-    const dy = p1.y - p2.y;
+export function distance(p1: { pos: Vec2 }, p2: { pos: Vec2 }): number {
+    const dx = p1.pos.x - p2.pos.x;
+    const dy = p1.pos.y - p2.pos.y;
     return Math.sqrt(dx * dx + dy * dy);
 }
 
-export function circleCollision(c1: { x: number, y: number, radius: number }, c2: { x: number, y: number, radius: number }): boolean {
+export function circleCollision(c1: { pos: Vec2, radius: number }, c2: { pos: Vec2, radius: number }): boolean {
     const dist = distance(c1, c2);
     return dist < c1.radius + c2.radius;
 }

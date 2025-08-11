@@ -5,7 +5,7 @@ import { WaveManager } from './wave-manager';
 import { UI } from './ui';
 import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
-import { circleCollision, distance } from './utils';
+import { circleCollision } from './utils';
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -77,9 +77,9 @@ export class Game {
             }
         });
 
-        this.enemies.forEach(enemy => {
+        this.enemies.forEach((enemy, enemyIndex) => {
             enemy.update(this.player, this.particles, this.createEnemy);
-            if (circleCollision(this.player, enemy)) {
+            if (circleCollision({pos: this.player.pos, radius: this.player.radius}, {pos: enemy.pos, radius: enemy.radius})) {
                 this.player.takeDamage(10);
                 enemy.isAlive = false;
                 this.particles.add(enemy.pos, enemy.color, 10);
@@ -107,10 +107,12 @@ export class Game {
                 const bullet = this.bullets[i];
                 const enemy = this.enemies[j];
                 
-                if (circleCollision(bullet, enemy)) {
+                if (bullet && enemy && circleCollision({pos: bullet.pos, radius: bullet.radius}, {pos: enemy.pos, radius: enemy.radius})) {
                     const pointsGained = enemy.takeDamage(bullet.damage, bullet.color, this.particles, this.createEnemy);
-                    this.score += pointsGained;
-                    this.setScore(this.score);
+                    if (pointsGained > 0) {
+                        this.score += pointsGained;
+                        this.setScore(this.score);
+                    }
                     
                     this.particles.add(bullet.pos, bullet.color, 10);
                     this.bullets.splice(i, 1);
