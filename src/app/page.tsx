@@ -2,16 +2,19 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Game } from './chroma-clash/game';
+import InputHandler from './chroma-clash/input-handler';
 import { Button } from '@/components/ui/button';
-import { Award, Gamepad2, Github, Waves } from 'lucide-react';
+import { Award, Gamepad2, Github, Waves, Pause, Play, LogOut } from 'lucide-react';
 
 const CANVAS_WIDTH = 1000;
 const CANVAS_HEIGHT = 700;
 
-function GameCanvas({ onGameOver, setScore, setWave }: { 
+function GameCanvas({ onGameOver, setScore, setWave, isPaused, inputHandler }: { 
     onGameOver: () => void, 
     setScore: (score: number) => void,
-    setWave: (wave: number) => void 
+    setWave: (wave: number) => void,
+    isPaused: boolean,
+    inputHandler: InputHandler
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const gameRef = useRef<Game | null>(null);
@@ -22,7 +25,7 @@ function GameCanvas({ onGameOver, setScore, setWave }: {
             canvas.width = CANVAS_WIDTH;
             canvas.height = CANVAS_HEIGHT;
             
-            const game = new Game(canvas, onGameOver, setScore, setWave);
+            const game = new Game(canvas, onGameOver, setScore, setWave, inputHandler);
             gameRef.current = game;
             game.start();
 
@@ -30,22 +33,46 @@ function GameCanvas({ onGameOver, setScore, setWave }: {
                 game.stop();
             };
         }
-    }, [onGameOver, setScore, setWave]);
+    }, [onGameOver, setScore, setWave, inputHandler]);
+
+    useEffect(() => {
+        if (gameRef.current) {
+            gameRef.current.isRunning = !isPaused;
+        }
+    }, [isPaused]);
+
 
     return <canvas ref={canvasRef} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
 }
 
 export default function Home() {
-    const [gameState, setGameState] = useState<'menu' | 'playing' | 'gameOver'>('menu');
+    const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver'>('menu');
     const [score, setScore] = useState(0);
     const [wave, setWave] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [bestWave, setBestWave] = useState(0);
+    const inputHandlerRef = useRef<InputHandler | null>(null);
 
     useEffect(() => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
         setBestWave(parseInt(localStorage.getItem('rgBangBestWave') || '0'));
     }, []);
+    
+    useEffect(() => {
+        const handleKeyPress = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                if (gameState === 'playing') {
+                    setGameState('paused');
+                } else if (gameState === 'paused') {
+                    setGameState('playing');
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyPress);
+        return () => window.removeEventListener('keydown', handleKeyPress);
+    }, [gameState]);
+
 
     const handleGameOver = useCallback(() => {
         setGameState('gameOver');
@@ -62,15 +89,23 @@ export default function Home() {
     const startGame = () => {
         setScore(0);
         setWave(0);
+        // This feels wrong, but we need a canvas to initialize it.
+        // A dummy canvas that's not in the DOM should work.
+        const dummyCanvas = document.createElement('canvas');
+        inputHandlerRef.current = InputHandler.getInstance(dummyCanvas);
         setGameState('playing');
     };
     
-    const restartGame = () => {
+    const quitToMenu = () => {
         setGameState('menu');
     };
 
+    const resumeGame = () => {
+        setGameState('playing');
+    };
+
     return (
-        <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4">
+        <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
                     <h1 className="text-7xl font-bold tracking-tighter text-primary font-headline">RGBang</h1>
@@ -96,8 +131,31 @@ export default function Home() {
                 </div>
             )}
 
-            {gameState === 'playing' && (
-                <GameCanvas onGameOver={handleGameOver} setScore={setScore} setWave={setWave} />
+            {(gameState === 'playing' || gameState === 'paused') && inputHandlerRef.current && (
+                <div className="relative">
+                    <GameCanvas 
+                        onGameOver={handleGameOver} 
+                        setScore={setScore} 
+                        setWave={setWave}
+                        isPaused={gameState === 'paused'}
+                        inputHandler={inputHandlerRef.current}
+                    />
+                    {gameState === 'paused' && (
+                         <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center rounded-lg animate-fade-in">
+                             <h2 className="text-6xl font-bold text-accent font-headline mb-8">Paused</h2>
+                             <div className="flex flex-col space-y-4 w-48">
+                                <Button size="lg" onClick={resumeGame} className="font-bold text-lg">
+                                    <Play className="mr-2" />
+                                    Resume
+                                </Button>
+                                <Button size="lg" onClick={quitToMenu} variant="destructive" className="font-bold text-lg">
+                                     <LogOut className="mr-2" />
+                                     Quit
+                                 </Button>
+                             </div>
+                         </div>
+                    )}
+                </div>
             )}
 
             {gameState === 'gameOver' && (
@@ -117,7 +175,7 @@ export default function Home() {
                             <span>Best Wave: {bestWave}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={restartGame} className="font-bold text-lg mt-4">
+                     <Button size="lg" onClick={quitToMenu} className="font-bold text-lg mt-4">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>

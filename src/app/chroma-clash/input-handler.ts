@@ -6,16 +6,33 @@ class InputHandler {
     public isMouseDown: boolean = false;
     private canvas: HTMLCanvasElement;
 
-    constructor(canvas: HTMLCanvasElement) {
+    private static instance: InputHandler;
+
+    // Make constructor private for singleton
+    private constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
-        window.addEventListener('keydown', this.handleKeyDown);
-        window.addEventListener('keyup', this.handleKeyUp);
-        canvas.addEventListener('mousemove', this.handleMouseMove);
-        canvas.addEventListener('mousedown', this.handleMouseDown);
-        canvas.addEventListener('mouseup', this.handleMouseUp);
-        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+        this.init();
+    }
+    
+    // Static method to get instance
+    public static getInstance(canvas?: HTMLCanvasElement): InputHandler {
+        if (!InputHandler.instance && canvas) {
+            InputHandler.instance = new InputHandler(canvas);
+        } else if (!InputHandler.instance && !canvas) {
+            throw new Error("InputHandler must be initialized with a canvas element first.");
+        }
+        return InputHandler.instance;
     }
 
+    private init() {
+        window.addEventListener('keydown', this.handleKeyDown);
+        window.addEventListener('keyup', this.handleKeyUp);
+        this.canvas.addEventListener('mousemove', this.handleMouseMove);
+        this.canvas.addEventListener('mousedown', this.handleMouseDown);
+        this.canvas.addEventListener('mouseup', this.handleMouseUp);
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
+    
     private handleKeyDown = (e: KeyboardEvent) => {
         this.keys.add(e.key.toLowerCase());
     }

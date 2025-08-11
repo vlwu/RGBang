@@ -19,7 +19,7 @@ export class Game {
     private inputHandler: InputHandler;
 
     private score = 0;
-    private isRunning = false;
+    public isRunning = false;
     private animationFrameId: number | null = null;
     
     private onGameOver: () => void;
@@ -30,18 +30,19 @@ export class Game {
         canvas: HTMLCanvasElement, 
         onGameOver: () => void,
         setScore: (score: number) => void,
-        setWave: (wave: number) => void
+        setWave: (wave: number) => void,
+        inputHandler: InputHandler
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
         this.setScore = setScore;
         this.setWave = setWave;
+        this.inputHandler = inputHandler;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2);
         this.waveManager = new WaveManager(canvas.width, canvas.height);
         this.ui = new UI(canvas);
-        this.inputHandler = new InputHandler(canvas);
         this.particles = new ParticleSystem();
     }
 
@@ -56,7 +57,6 @@ export class Game {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
         }
-        this.inputHandler.destroy();
     }
 
     private createBullet = (bullet: Bullet) => {
@@ -145,9 +145,13 @@ export class Game {
     }
 
     private gameLoop = () => {
-        if (!this.isRunning) return;
-        this.update();
-        this.draw();
+        if (!this.isRunning) {
+             // Still draw the last frame when paused
+             this.draw();
+        } else {
+            this.update();
+            this.draw();
+        }
         this.animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 }
