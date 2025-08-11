@@ -1,5 +1,5 @@
 
-import { Vec2 } from './utils';
+import { Vec2, drawShapeForColor } from './utils';
 import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
 import { Player } from './player';
 
@@ -48,11 +48,16 @@ export class Enemy {
 
     draw(ctx: CanvasRenderingContext2D) {
         if (!this.isAlive) return;
+        
+        ctx.save();
         // Body
         ctx.fillStyle = this.hexColor;
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
+
+        // Shape Overlay
+        drawShapeForColor(ctx, this.pos, this.radius, this.color, 'black');
         
         // Health bar
         if (this.health < this.maxHealth) {
@@ -71,7 +76,6 @@ export class Enemy {
         
         // Punishment Indicator
         if (this.activePunishment) {
-            ctx.save();
             ctx.font = 'bold 12px "Space Grotesk"';
             ctx.fillStyle = 'white';
             ctx.textAlign = 'center';
@@ -81,8 +85,8 @@ export class Enemy {
                 [PunishmentType.SPLIT]: "SPLIT"
             }[this.activePunishment];
             ctx.fillText(indicatorText, this.pos.x, this.pos.y - this.radius - 25);
-            ctx.restore();
         }
+        ctx.restore();
     }
     
     takeDamage(amount: number, damageColor: GameColor): boolean {

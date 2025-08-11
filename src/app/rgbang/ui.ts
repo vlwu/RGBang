@@ -1,7 +1,8 @@
 import { Player } from './player';
 import { GameColor, COLOR_DETAILS, PRIMARY_COLORS } from './color';
 import { Boss } from './boss';
-import { roundRect } from './utils';
+import { roundRect, drawShapeForColor } from './utils';
+import { Vec2 } from './utils';
 
 export class UI {
     private canvas: HTMLCanvasElement;
@@ -122,17 +123,15 @@ export class UI {
             const detail = COLOR_DETAILS[color];
             
             // Background box
-            this.ctx.fillStyle = 'rgba(30, 41, 59, 0.5)';
+            this.ctx.fillStyle = detail.hex;
+            this.ctx.globalAlpha = 0.8;
             this.ctx.beginPath();
             roundRect(this.ctx, x, y, boxSize, boxSize, borderRadius);
             this.ctx.fill();
-            
-            // Color indicator
-            this.ctx.fillStyle = detail.hex;
-            this.ctx.globalAlpha = 0.9;
-            this.ctx.beginPath();
-            roundRect(this.ctx, x + 3, y + 3, boxSize - 6, boxSize - 6, borderRadius-2);
-            this.ctx.fill();
+
+            // Draw shape inside the box
+            const shapePos = new Vec2(x + boxSize / 2, y + boxSize / 2);
+            drawShapeForColor(this.ctx, shapePos, boxSize * 0.4, color, 'black');
 
 
             // Selection highlight
@@ -158,7 +157,7 @@ export class UI {
             this.ctx.fillStyle = 'white';
             this.ctx.shadowColor = 'black';
             this.ctx.shadowBlur = 5;
-            this.ctx.fillText(detail.key, x + boxSize / 2, y + boxSize / 2 + 2);
+            this.ctx.fillText(detail.key, x + boxSize / 2, y + boxSize -10);
         });
         
         this.ctx.restore();
@@ -173,7 +172,7 @@ export class UI {
         this.ctx.shadowColor = 'black';
         this.ctx.shadowBlur = 5;
 
-        this.ctx.fillText(`Score: ${score}`, this.canvas.width - 20, 20);
+        this.ctx.fillText(`Score: ${score}`, this.canvas.width - 20, this.boss ? 60 : 20);
         this.ctx.restore();
     }
 }

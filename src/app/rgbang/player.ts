@@ -1,4 +1,4 @@
-import { Vec2 } from './utils';
+import { Vec2, drawShapeForColor } from './utils';
 import { Bullet } from './bullet';
 import InputHandler from './input-handler';
 import { GameColor, mixColors, COLOR_DETAILS, PRIMARY_COLORS } from './color';
@@ -147,15 +147,12 @@ export class Player {
 
         // Draw aiming reticle
         const aimDir = input.mousePos.sub(this.pos).normalize();
-        const reticlePos = this.pos.add(aimDir.scale(this.radius + 5));
+        const reticlePos = this.pos.add(aimDir.scale(this.radius + 10));
         ctx.strokeStyle = COLOR_DETAILS[this.currentColor].hex;
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(reticlePos.x - 5, reticlePos.y);
-        ctx.lineTo(reticlePos.x + 5, reticlePos.y);
-        ctx.moveTo(reticlePos.x, reticlePos.y - 5);
-        ctx.lineTo(reticlePos.x, reticlePos.y + 5);
-        ctx.stroke();
+        ctx.save();
+        drawShapeForColor(ctx, reticlePos, 10, this.currentColor, COLOR_DETAILS[this.currentColor].hex, true);
+        ctx.restore();
     }
     
      private drawDashIndicator(ctx: CanvasRenderingContext2D) {

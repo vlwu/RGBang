@@ -1,3 +1,5 @@
+import { GameColor, COLOR_DETAILS, Shape } from './color';
+
 export class Vec2 {
     constructor(public x: number = 0, public y: number = 0) {}
 
@@ -58,4 +60,79 @@ export function roundRect(
     ctx.arcTo(x, y + height, x, y, radius);
     ctx.arcTo(x, y, x + width, y, radius);
     ctx.closePath();
+}
+
+
+function drawTriangle(ctx: CanvasRenderingContext2D, pos: Vec2, size: number) {
+    const height = size * (Math.sqrt(3) / 2);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y - height / 2);
+    ctx.lineTo(pos.x - size / 2, pos.y + height / 2);
+    ctx.lineTo(pos.x + size / 2, pos.y + height / 2);
+    ctx.closePath();
+}
+
+function drawSquare(ctx: CanvasRenderingContext2D, pos: Vec2, size: number) {
+    ctx.beginPath();
+    ctx.rect(pos.x - size / 2, pos.y - size / 2, size, size);
+}
+
+function drawCircle(ctx: CanvasRenderingContext2D, pos: Vec2, size: number) {
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, size / 2, 0, Math.PI * 2);
+}
+
+function drawCross(ctx: CanvasRenderingContext2D, pos: Vec2, size: number) {
+    ctx.beginPath();
+    ctx.moveTo(pos.x - size / 2, pos.y);
+    ctx.lineTo(pos.x + size / 2, pos.y);
+    ctx.moveTo(pos.x, pos.y - size / 2);
+    ctx.lineTo(pos.x, pos.y + size / 2);
+}
+
+
+export function drawShape(ctx: CanvasRenderingContext2D, pos: Vec2, radius: number, shape: Shape, style: string, stroke = false) {
+    ctx.save();
+    const size = radius * 0.8;
+    if(stroke) {
+        ctx.strokeStyle = style;
+        ctx.lineWidth = 2;
+    } else {
+        ctx.fillStyle = style;
+    }
+
+    switch (shape) {
+        case 'circle':
+            drawCircle(ctx, pos, size);
+            break;
+        case 'triangle':
+            drawTriangle(ctx, pos, size);
+            break;
+        case 'square':
+            drawSquare(ctx, pos, size);
+            break;
+        case 'mixed':
+             // For mixed colors, we can draw a simple cross for now
+            drawCross(ctx, pos, size);
+            break;
+    }
+
+    if(stroke) ctx.stroke();
+    else ctx.fill();
+    ctx.restore();
+}
+
+export function drawShapeForColor(ctx: CanvasRenderingContext2D, pos: Vec2, radius: number, color: GameColor, style: string, stroke = false) {
+    const detail = COLOR_DETAILS[color];
+    if (detail.shape === 'mixed' && detail.components) {
+        // Draw two smaller shapes for mixed colors
+        const size = radius * 0.5;
+        const offset = size * 0.4;
+        const [comp1, comp2] = detail.components;
+        drawShape(ctx, pos.add(new Vec2(-offset, 0)), size, COLOR_DETAILS[comp1].shape, style, stroke);
+        drawShape(ctx, pos.add(new Vec2(offset, 0)), size, COLOR_DETAILS[comp2].shape, style, stroke);
+
+    } else {
+        drawShape(ctx, pos, radius, detail.shape, style, stroke);
+    }
 }

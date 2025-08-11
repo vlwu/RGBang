@@ -7,20 +7,23 @@ export enum GameColor {
     GREEN = 'GREEN',
 }
 
+export type Shape = 'circle' | 'triangle' | 'square' | 'mixed';
+
 export const PRIMARY_COLORS = [GameColor.RED, GameColor.YELLOW, GameColor.BLUE];
 
 export const COLOR_DETAILS: Record<GameColor, {
     name: string,
     hex: string,
     key: string,
+    shape: Shape,
     components?: [GameColor, GameColor]
 }> = {
-    [GameColor.RED]: { name: 'Red', hex: '#ff4d4d', key: '1' },
-    [GameColor.YELLOW]: { name: 'Yellow', hex: '#ffff66', key: '2' },
-    [GameColor.BLUE]: { name: 'Blue', hex: '#4d94ff', key: '3' },
-    [GameColor.ORANGE]: { name: 'Orange', hex: '#ffc266', key: '1+2', components: [GameColor.RED, GameColor.YELLOW] },
-    [GameColor.PURPLE]: { name: 'Purple', hex: '#d966ff', key: '1+3', components: [GameColor.RED, GameColor.BLUE] },
-    [GameColor.GREEN]: { name: 'Green', hex: '#66ff8c', key: '2+3', components: [GameColor.YELLOW, GameColor.BLUE] },
+    [GameColor.RED]: { name: 'Red', hex: '#ff4d4d', key: '1', shape: 'circle' },
+    [GameColor.YELLOW]: { name: 'Yellow', hex: '#ffff66', key: '2', shape: 'triangle' },
+    [GameColor.BLUE]: { name: 'Blue', hex: '#4d94ff', key: '3', shape: 'square' },
+    [GameColor.ORANGE]: { name: 'Orange', hex: '#ffc266', key: '1+2', shape: 'mixed', components: [GameColor.RED, GameColor.YELLOW] },
+    [GameColor.PURPLE]: { name: 'Purple', hex: '#d966ff', key: '1+3', shape: 'mixed', components: [GameColor.RED, GameColor.BLUE] },
+    [GameColor.GREEN]: { name: 'Green', hex: '#66ff8c', key: '2+3', shape: 'mixed', components: [GameColor.YELLOW, GameColor.BLUE] },
 };
 
 export function mixColors(color1: GameColor, color2: GameColor): GameColor | null {

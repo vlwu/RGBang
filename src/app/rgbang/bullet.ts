@@ -1,4 +1,4 @@
-import { Vec2 } from './utils';
+import { Vec2, drawShapeForColor } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 
 export class Bullet {
@@ -25,12 +25,18 @@ export class Bullet {
 
     draw(ctx: CanvasRenderingContext2D) {
         ctx.save();
+        
+        // Main bullet body
         ctx.fillStyle = this.hexColor;
         ctx.shadowColor = this.hexColor;
         ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Shape Overlay
+        drawShapeForColor(ctx, this.pos, this.radius, this.color, 'white');
+
         ctx.restore();
     }
 }
