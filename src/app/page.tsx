@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -7,13 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Award, Gamepad2, Github, Waves, Pause, Play, LogOut, Settings } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 
-const CANVAS_WIDTH = 1000;
-const CANVAS_HEIGHT = 700;
+const GAME_WIDTH = 1000;
+const GAME_HEIGHT = 700;
 
-function GameCanvas({ onGameOver, isPaused, inputHandler }: { 
+function GameCanvas({ onGameOver, isPaused, inputHandler, width, height }: { 
     onGameOver: (score: number) => void, 
     isPaused: boolean,
-    inputHandler: InputHandler
+    inputHandler: InputHandler,
+    width: number,
+    height: number
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const gameRef = useRef<Game | null>(null);
@@ -21,8 +24,9 @@ function GameCanvas({ onGameOver, isPaused, inputHandler }: {
     useEffect(() => {
         if (canvasRef.current) {
             const canvas = canvasRef.current;
-            canvas.width = CANVAS_WIDTH;
-            canvas.height = CANVAS_HEIGHT;
+            // Set the internal resolution
+            canvas.width = GAME_WIDTH;
+            canvas.height = GAME_HEIGHT;
             
             InputHandler.getInstance(canvas);
             
@@ -43,7 +47,7 @@ function GameCanvas({ onGameOver, isPaused, inputHandler }: {
     }, [isPaused]);
 
 
-    return <canvas ref={canvasRef} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
+    return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
 }
 
 export default function Home() {
@@ -53,21 +57,39 @@ export default function Home() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
     const inputHandlerRef = useRef<InputHandler | null>(null);
+    const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
+
+    const updateCanvasSize = useCallback(() => {
+        const windowWidth = window.innerWidth * 0.9;
+        const windowHeight = window.innerHeight * 0.9;
+        const aspectRatio = GAME_WIDTH / GAME_HEIGHT;
+
+        let newWidth = windowWidth;
+        let newHeight = newWidth / aspectRatio;
+
+        if (newHeight > windowHeight) {
+            newHeight = windowHeight;
+            newWidth = newHeight * aspectRatio;
+        }
+
+        setCanvasSize({ width: newWidth, height: newHeight });
+    }, []);
 
     useEffect(() => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
-        
-        // Initialize the singleton instance of InputHandler
         inputHandlerRef.current = InputHandler.getInstance();
-        
-        // Load saved keybindings or use defaults
         const savedKeybindings = localStorage.getItem('rgBangKeybindings');
         if (savedKeybindings) {
             setKeybindings(JSON.parse(savedKeybindings));
         } else {
             setKeybindings(defaultKeybindings);
         }
-    }, []);
+
+        window.addEventListener('resize', updateCanvasSize);
+        updateCanvasSize();
+
+        return () => window.removeEventListener('resize', updateCanvasSize);
+    }, [updateCanvasSize]);
 
     useEffect(() => {
         if(inputHandlerRef.current) {
@@ -156,6 +178,8 @@ export default function Home() {
                         onGameOver={handleGameOver} 
                         isPaused={gameState === 'paused'}
                         inputHandler={inputHandlerRef.current}
+                        width={canvasSize.width}
+                        height={canvasSize.height}
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
