@@ -47,7 +47,11 @@ function GameCanvas({ onGameOver, setScore, isPaused, inputHandler }: {
     return <canvas ref={canvasRef} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
 }
 
-export default function Home() {
+export default function Home({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver'>('menu');
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
@@ -58,15 +62,23 @@ export default function Home() {
     useEffect(() => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
         
+        // Initialize the singleton instance of InputHandler
         inputHandlerRef.current = InputHandler.getInstance();
-        inputHandlerRef.current.setKeybindings(keybindings);
-
+        
+        // Load saved keybindings or use defaults
+        const savedKeybindings = localStorage.getItem('rgBangKeybindings');
+        if (savedKeybindings) {
+            setKeybindings(JSON.parse(savedKeybindings));
+        } else {
+            setKeybindings(defaultKeybindings);
+        }
     }, []);
 
     useEffect(() => {
         if(inputHandlerRef.current) {
             inputHandlerRef.current.setKeybindings(keybindings);
         }
+        localStorage.setItem('rgBangKeybindings', JSON.stringify(keybindings));
     }, [keybindings]);
     
     useEffect(() => {

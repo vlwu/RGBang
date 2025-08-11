@@ -2,9 +2,8 @@
 import { Vec2 } from './utils';
 import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
 import { Player } from './player';
-import { ParticleSystem } from './particle';
 
-export abstract class Enemy {
+export class Enemy {
     pos: Vec2;
     radius: number;
     health: number;
@@ -26,10 +25,12 @@ export abstract class Enemy {
         this.points = points;
     }
 
-    abstract update(player: Player): void;
+    update(player: Player) {
+        const direction = player.pos.sub(this.pos).normalize();
+        this.pos = this.pos.add(direction.scale(this.speed));
+    }
 
     draw(ctx: CanvasRenderingContext2D) {
-        if (!this.isAlive) return;
         // Body
         ctx.fillStyle = this.hexColor;
         ctx.beginPath();
@@ -52,30 +53,16 @@ export abstract class Enemy {
         }
     }
     
-    takeDamage(amount: number, damageColor: GameColor): number {
-        if (!this.isAlive) return 0;
-        
-        if (damageColor === this.color) {
-            this.health -= amount;
-            if (this.health <= 0) {
-                this.health = 0;
-                this.isAlive = false;
-                return this.points;
-            }
+    takeDamage(amount: number, damageColor: GameColor): boolean {
+        if (damageColor !== this.color) {
+            return false;
         }
-        return 0;
-    }
-}
 
-export class BaseEnemy extends Enemy {
-    constructor(x: number, y: number, color?: GameColor) {
-        const c = color || getRandomElement(PRIMARY_COLORS);
-        super(x, y, c, 15, 30, 1.5, 10);
-    }
-    
-    update(player: Player) {
-        if (!this.isAlive) return;
-        const direction = player.pos.sub(this.pos).normalize();
-        this.pos = this.pos.add(direction.scale(this.speed));
+        this.health -= amount;
+        if (this.health <= 0) {
+            this.health = 0;
+            this.isAlive = false;
+        }
+        return true;
     }
 }

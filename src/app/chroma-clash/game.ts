@@ -1,7 +1,7 @@
 
 import { Player } from './player';
 import { Bullet } from './bullet';
-import { Enemy, BaseEnemy } from './enemy';
+import { Enemy } from './enemy';
 import { UI } from './ui';
 import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
@@ -45,7 +45,11 @@ class EnemySpawner {
         }
 
         const color = getRandomElement(PRIMARY_COLORS);
-        createEnemy(new BaseEnemy(x, y, color));
+        const radius = 15;
+        const health = 30;
+        const speed = 1.5;
+        const points = 10;
+        createEnemy(new Enemy(x, y, color, radius, health, speed, points));
     }
 }
 
@@ -107,40 +111,27 @@ export class Game {
     }
 
     private update() {
-        // 1. Update player and handle input
+        // 1. Update player, bullets, and enemies
         this.player.update(this.inputHandler, this.createBullet, this.canvas.width, this.canvas.height);
         this.inputHandler.resetScroll();
         
-        // 2. Update bullets and filter out-of-bounds bullets
         this.bullets.forEach(bullet => bullet.update());
+        this.enemies.forEach(enemy => enemy.update(this.player));
 
-        // 3. Update all enemies
-        this.enemies.forEach((enemy) => {
-            if (enemy.isAlive) {
-                enemy.update(this.player);
-            }
-        });
-
-        // 4. Handle collisions
+        // 2. Handle collisions
         this.handleCollisions();
-
-        // 5. Remove dead enemies and off-screen bullets
-        const deadEnemies = this.enemies.filter(e => !e.isAlive);
-        deadEnemies.forEach(enemy => this.particles.add(enemy.pos, enemy.color, 30));
-        this.enemies = this.enemies.filter(e => e.isAlive);
         
-        this.bullets = this.bullets.filter((bullet) => 
-            !(bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height)
-        );
+        // 3. Update particle effects
+        this.particles.update();
 
-        // 6. Spawn new enemies
+        // 4. Remove dead entities and out-of-bounds bullets
+        this.cleanupEntities();
+
+        // 5. Spawn new enemies
         this.enemySpawner.update(this.enemies.length, this.createEnemy);
         
-        // 7. Update particle effects
-        this.particles.update();
-        
-        // 8. Check for game over condition
-        if (this.player.health <= 0) {
+        // 6. Check for game over condition
+        if (!this.player.isAlive) {
             this.isRunning = false;
             this.onGameOver();
         }
@@ -155,24 +146,25 @@ export class Game {
                 const enemy = this.enemies[j];
                 
                 if (enemy.isAlive && circleCollision(bullet, enemy)) {
-                    const pointsGained = enemy.takeDamage(bullet.damage, bullet.color);
-                    if (pointsGained > 0) {
-                        this.score += pointsGained;
-                        this.setScore(this.score);
-                    }
-                    
                     this.particles.add(bullet.pos, bullet.color, 10);
                     this.bullets.splice(i, 1);
                     bulletRemoved = true;
-                    break; 
+                    
+                    if (enemy.takeDamage(bullet.damage, bullet.color)) {
+                        // Damage was of correct type
+                        if (!enemy.isAlive) {
+                            this.score += enemy.points;
+                            this.setScore(this.score);
+                        }
+                    }
+                    break;
                 }
             }
             if (bulletRemoved) continue;
         }
 
         // Player-Enemy Collisions
-        for (let i = this.enemies.length - 1; i >= 0; i--) {
-            const enemy = this.enemies[i];
+        for (const enemy of this.enemies) {
             if (enemy.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(10);
                 enemy.isAlive = false; 
@@ -180,7 +172,7 @@ export class Game {
             }
         }
 
-        // Enemy-Enemy Collisions
+        // Enemy-Enemy Collisions for separation
         for (let i = 0; i < this.enemies.length; i++) {
             for (let j = i + 1; j < this.enemies.length; j++) {
                 const enemy1 = this.enemies[i];
@@ -191,6 +183,20 @@ export class Game {
                 }
             }
         }
+    }
+    
+    private cleanupEntities() {
+         // Create particles for dead enemies before removing them
+        const deadEnemies = this.enemies.filter(e => !e.isAlive);
+        deadEnemies.forEach(enemy => this.particles.add(enemy.pos, enemy.color, 30));
+
+        // Remove dead enemies
+        this.enemies = this.enemies.filter(e => e.isAlive);
+        
+        // Remove off-screen bullets
+        this.bullets = this.bullets.filter((bullet) => 
+            !(bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height)
+        );
     }
 
     private resolveEnemyCollision(enemy1: Enemy, enemy2: Enemy) {

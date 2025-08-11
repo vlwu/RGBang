@@ -6,9 +6,10 @@ import { GameColor, mixColors, COLOR_DETAILS, PRIMARY_COLORS } from './color';
 export class Player {
     pos: Vec2;
     radius = 15;
-    speed = 3.2; // Reduced from 4
+    speed = 3.2;
     maxHealth = 100;
     health: number;
+    isAlive = true;
     
     primaryColor: GameColor = GameColor.RED;
     secondaryColor: GameColor | null = null;
@@ -38,16 +39,14 @@ export class Player {
     }
 
     update(input: InputHandler, createBullet: (bullet: Bullet) => void, canvasWidth: number, canvasHeight: number) {
+        if (!this.isAlive) return;
+
         this.handleMovement(input, canvasWidth, canvasHeight);
         this.handleColorSelection(input);
         this.handleShooting(input, createBullet);
         
-        if (this.shootTimer > 0) {
-            this.shootTimer--;
-        }
-        if (this.dashCooldownTimer > 0) {
-            this.dashCooldownTimer--;
-        }
+        if (this.shootTimer > 0) this.shootTimer--;
+        if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
     }
 
     private handleMovement(input: InputHandler, canvasWidth: number, canvasHeight: number) {
@@ -63,9 +62,8 @@ export class Player {
 
         if (this.isDashing) {
             currentSpeed = this.dashSpeed;
-            if (this.dashTimer > 0) {
-                this.dashTimer--;
-            } else {
+            this.dashTimer--;
+            if (this.dashTimer <= 0) {
                 this.isDashing = false;
             }
         }
@@ -156,7 +154,10 @@ export class Player {
     takeDamage(amount: number) {
         if (this.isDashing) return; // Invulnerable while dashing
         this.health -= amount;
-        if (this.health < 0) this.health = 0;
+        if (this.health <= 0) {
+            this.health = 0;
+            this.isAlive = false;
+        }
     }
 
     public getDashCooldownProgress(): number {

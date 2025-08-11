@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -37,19 +37,18 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         }
     }, [isOpen]);
 
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
         if (editingKey) {
             e.preventDefault();
             let newKey = e.key.toLowerCase();
-            if (newKey === ' ') newKey = 'space'; // Handle spacebar display
-
+            
             setLocalKeybindings(prev => ({
                 ...prev,
-                [editingKey]: e.key.toLowerCase(), // Store actual key
+                [editingKey]: newKey,
             }));
             setEditingKey(null);
         }
-    };
+    }, [editingKey]);
     
     useEffect(() => {
         if (editingKey) {
