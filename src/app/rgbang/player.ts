@@ -139,6 +139,11 @@ export class Player {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
+        
+        // Draw Dash Cooldown Indicator
+        if (this.dashCooldownTimer > 0) {
+            this.drawDashIndicator(ctx);
+        }
 
         // Draw aiming reticle
         const aimDir = input.mousePos.sub(this.pos).normalize();
@@ -151,6 +156,31 @@ export class Player {
         ctx.moveTo(reticlePos.x, reticlePos.y - 5);
         ctx.lineTo(reticlePos.x, reticlePos.y + 5);
         ctx.stroke();
+    }
+    
+     private drawDashIndicator(ctx: CanvasRenderingContext2D) {
+        ctx.save();
+        const indicatorWidth = 20;
+        const indicatorHeight = 4;
+        const indicatorX = this.pos.x - indicatorWidth / 2;
+        const indicatorY = this.pos.y - this.radius - 12;
+
+        const progress = 1 - (this.dashCooldownTimer / this.dashCooldown);
+
+        // Background
+        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.fillRect(indicatorX, indicatorY, indicatorWidth, indicatorHeight);
+        
+        // Cooldown Progress with Gradient
+        const gradient = ctx.createLinearGradient(indicatorX, indicatorY, indicatorX + (indicatorWidth * progress), indicatorY);
+        gradient.addColorStop(0, '#ff4d4d'); // Red
+        gradient.addColorStop(0.5, '#ffff66'); // Yellow
+        gradient.addColorStop(1, '#4d94ff'); // Blue
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(indicatorX, indicatorY, indicatorWidth * progress, indicatorHeight);
+
+        ctx.restore();
     }
     
     takeDamage(amount: number) {
