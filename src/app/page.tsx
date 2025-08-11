@@ -25,6 +25,9 @@ function GameCanvas({ onGameOver, setScore, setWave, isPaused, inputHandler }: {
             canvas.width = CANVAS_WIDTH;
             canvas.height = CANVAS_HEIGHT;
             
+            // Pass the canvas to the singleton instance
+            InputHandler.getInstance(canvas);
+            
             const game = new Game(canvas, onGameOver, setScore, setWave, inputHandler);
             gameRef.current = game;
             game.start();
@@ -56,6 +59,11 @@ export default function Home() {
     useEffect(() => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
         setBestWave(parseInt(localStorage.getItem('rgBangBestWave') || '0'));
+        
+        // Initialize input handler here but without a canvas initially
+        // The canvas will be provided when the GameCanvas mounts
+        inputHandlerRef.current = InputHandler.getInstance();
+
     }, []);
     
     useEffect(() => {
@@ -89,10 +97,6 @@ export default function Home() {
     const startGame = () => {
         setScore(0);
         setWave(0);
-        // This feels wrong, but we need a canvas to initialize it.
-        // A dummy canvas that's not in the DOM should work.
-        const dummyCanvas = document.createElement('canvas');
-        inputHandlerRef.current = InputHandler.getInstance(dummyCanvas);
         setGameState('playing');
     };
     
