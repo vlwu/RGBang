@@ -99,6 +99,10 @@ export class Game {
             cancelAnimationFrame(this.animationFrameId);
         }
     }
+    
+    public getCurrentScore(): number {
+        return this.score;
+    }
 
     private createBullet = (bullet: Bullet) => {
         this.bullets.push(bullet);
@@ -164,7 +168,7 @@ export class Game {
 
         // Player-Enemy Collisions
         for (const enemy of this.enemies) {
-            if (enemy.isAlive && circleCollision(this.player, enemy)) {
+            if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(enemy.damage); // Use enemy's damage property
                 enemy.isAlive = false; 
                 this.particles.add(enemy.pos, enemy.color, 10);
@@ -186,8 +190,11 @@ export class Game {
     
     private cleanupEntities() {
          // Create particles for dead enemies before removing them
-        const deadEnemies = this.enemies.filter(e => !e.isAlive);
-        deadEnemies.forEach(enemy => this.particles.add(enemy.pos, enemy.color, 30));
+        this.enemies.forEach(enemy => {
+            if (!enemy.isAlive) {
+                this.particles.add(enemy.pos, enemy.color, 30)
+            }
+        });
 
         // Remove dead enemies
         this.enemies = this.enemies.filter(e => e.isAlive);

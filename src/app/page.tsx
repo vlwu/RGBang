@@ -8,18 +8,18 @@ import { Button } from '@/components/ui/button';
 import { Award, Gamepad2, Github, Waves, Pause, Play, LogOut, Settings } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 
-const GAME_WIDTH = 1000;
-const GAME_HEIGHT = 700;
+const GAME_WIDTH = 1280;
+const GAME_HEIGHT = 720;
 
-function GameCanvas({ onGameOver, isPaused, inputHandler, width, height }: { 
+function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef }: { 
     onGameOver: (score: number) => void, 
     isPaused: boolean,
     inputHandler: InputHandler,
     width: number,
-    height: number
+    height: number,
+    gameRef: React.MutableRefObject<Game | null>
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const gameRef = useRef<Game | null>(null);
 
     useEffect(() => {
         if (canvasRef.current) {
@@ -38,7 +38,7 @@ function GameCanvas({ onGameOver, isPaused, inputHandler, width, height }: {
                 game.stop();
             };
         }
-    }, [onGameOver, inputHandler]);
+    }, [onGameOver, inputHandler, gameRef]);
 
     useEffect(() => {
         if (gameRef.current) {
@@ -57,6 +57,7 @@ export default function Home() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
     const inputHandlerRef = useRef<InputHandler | null>(null);
+    const gameRef = useRef<Game | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
 
     const updateCanvasSize = useCallback(() => {
@@ -70,6 +71,11 @@ export default function Home() {
         if (newHeight > windowHeight) {
             newHeight = windowHeight;
             newWidth = newHeight * aspectRatio;
+        }
+        
+        if(newWidth > GAME_WIDTH) {
+            newWidth = GAME_WIDTH;
+            newHeight = GAME_HEIGHT;
         }
 
         setCanvasSize({ width: newWidth, height: newHeight });
@@ -131,6 +137,14 @@ export default function Home() {
     };
     
     const quitToMenu = () => {
+        if (gameRef.current) {
+            const currentScore = gameRef.current.getCurrentScore();
+            if (currentScore > highScore) {
+                localStorage.setItem('rgBangHighScore', currentScore.toString());
+                setHighScore(currentScore);
+            }
+            setScore(currentScore);
+        }
         setGameState('menu');
     };
 
@@ -180,6 +194,7 @@ export default function Home() {
                         inputHandler={inputHandlerRef.current}
                         width={canvasSize.width}
                         height={canvasSize.height}
+                        gameRef={gameRef}
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
@@ -195,7 +210,7 @@ export default function Home() {
                                 </Button>
                                 <Button size="lg" onClick={quitToMenu} variant="destructive" className="font-bold text-lg">
                                      <LogOut className="mr-2" />
-                                     Quit
+                                     Save and Quit
                                  </Button>
                              </div>
                          </div>
