@@ -99,20 +99,6 @@ export class UI {
             this.ctx.fillStyle = 'black';
             this.ctx.fillText(detail.key, x + boxSize / 2, y + boxSize / 2 + 5);
         });
-
-        // Draw current color
-        const currentColor = player.currentColor;
-        const currentColorDetail = COLOR_DETAILS[currentColor];
-        const currentX = startX + totalWidth + spacing * 2;
-        
-        this.ctx.fillStyle = currentColorDetail.hex;
-        this.ctx.fillRect(currentX, y, boxSize * 1.5, boxSize);
-        this.ctx.strokeStyle = 'white';
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeRect(currentX, y, boxSize * 1.5, boxSize);
-        
-        this.ctx.fillStyle = 'black';
-        this.ctx.fillText('FIRE', currentX + (boxSize * 1.5) / 2, y + boxSize / 2 + 5);
         
         this.ctx.restore();
     }
