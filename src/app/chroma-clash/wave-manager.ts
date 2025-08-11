@@ -1,4 +1,5 @@
 import { Enemy, BaseEnemy } from './enemy';
+import { GameColor, PRIMARY_COLORS, getRandomElement } from './color';
 
 export class WaveManager {
     currentWave = 0;
@@ -14,13 +15,21 @@ export class WaveManager {
         this.canvasHeight = canvasHeight;
     }
     
+    public getWaveTimer() {
+        return this.waveTimer;
+    }
+
+    public getTimeBetweenWaves() {
+        return this.timeBetweenWaves;
+    }
+
     public startNextWave() {
         this.currentWave++;
         this.waveTimer = this.timeBetweenWaves;
     }
 
-    public update(enemies: Enemy[], createEnemy: (enemy: Enemy) => void) {
-        if (enemies.length === 0 && this.waveTimer === 0) {
+    public update(enemyCount: number, createEnemy: (enemy: Enemy) => void) {
+        if (enemyCount === 0 && this.waveTimer === 0) {
             this.startNextWave();
         }
 
@@ -52,7 +61,8 @@ export class WaveManager {
                 y = Math.random() * this.canvasHeight;
             }
 
-            const enemy = new BaseEnemy(x, y);
+            const color = getRandomElement(PRIMARY_COLORS);
+            const enemy = new BaseEnemy(x, y, color);
             createEnemy(enemy);
         }
     }

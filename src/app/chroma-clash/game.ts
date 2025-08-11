@@ -84,11 +84,12 @@ export class Game {
             }
         });
 
-        this.handleCollisions();
+        this.handleBulletCollisions();
+        this.handleEnemyCollisions();
         
         this.enemies = this.enemies.filter(e => e.isAlive);
 
-        this.waveManager.update(this.enemies, this.createEnemy);
+        this.waveManager.update(this.enemies.length, this.createEnemy);
         this.setWave(this.waveManager.currentWave);
         
         this.particles.update();
@@ -99,7 +100,7 @@ export class Game {
         }
     }
 
-    private handleCollisions() {
+    private handleBulletCollisions() {
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             for (let j = this.enemies.length - 1; j >= 0; j--) {
                 const bullet = this.bullets[i];
@@ -119,6 +120,32 @@ export class Game {
             }
         }
     }
+
+    private handleEnemyCollisions() {
+        for (let i = 0; i < this.enemies.length; i++) {
+            for (let j = i + 1; j < this.enemies.length; j++) {
+                const enemy1 = this.enemies[i];
+                const enemy2 = this.enemies[j];
+
+                if (circleCollision(enemy1, enemy2)) {
+                    this.resolveEnemyCollision(enemy1, enemy2);
+                }
+            }
+        }
+    }
+
+    private resolveEnemyCollision(enemy1: Enemy, enemy2: Enemy) {
+        const distVec = enemy1.pos.sub(enemy2.pos);
+        const dist = distVec.magnitude();
+        const overlap = (enemy1.radius + enemy2.radius) - dist;
+
+        if (overlap > 0) {
+            // Ensure distance is not zero to avoid division by zero
+            const resolveVec = dist > 0 ? distVec.normalize().scale(overlap / 2) : new this.player.pos.constructor(0.1, 0);
+            enemy1.pos = enemy1.pos.add(resolveVec);
+            enemy2.pos = enemy2.pos.sub(resolveVec);
+        }
+    }
     
     private draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -133,11 +160,9 @@ export class Game {
         this.ui.draw(this.player, this.score, this.waveManager.currentWave);
 
         // This is a bit of a hack to get the timer from wavemanager, should be refactored
-        // @ts-ignore
-        const waveTimer = this.waveManager.waveTimer;
+        const waveTimer = this.waveManager.getWaveTimer();
         if (this.enemies.length === 0 && waveTimer > 0) {
-            // @ts-ignore
-            const maxTime = this.waveManager.timeBetweenWaves;
+            const maxTime = this.waveManager.getTimeBetweenWaves();
             this.ui.drawWaveAnnouncement(this.waveManager.currentWave + 1, waveTimer, maxTime);
         }
     }
