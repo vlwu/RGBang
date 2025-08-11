@@ -14,6 +14,7 @@ export class UI {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScoreAndWave(score, wave);
+        this.drawDashCooldown(player);
     }
 
     private drawHealthBar(player: Player) {
@@ -38,6 +39,34 @@ export class UI {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
         this.ctx.fillText(`${Math.round(player.health)} / ${player.maxHealth}`, x + barWidth / 2, y + barHeight / 2);
+        this.ctx.restore();
+    }
+
+    private drawDashCooldown(player: Player) {
+        const x = 20;
+        const y = 50;
+        const height = 10;
+        const width = 200;
+
+        this.ctx.save();
+        this.ctx.fillStyle = '#374151'; // Gray 700
+        this.ctx.fillRect(x, y, width, height);
+
+        const progress = 1 - player.getDashCooldownProgress();
+        this.ctx.fillStyle = '#7DF9FF'; // Accent
+        this.ctx.fillRect(x, y, width * progress, height);
+        
+        this.ctx.strokeStyle = '#9CA3AF'; // Gray 400
+        this.ctx.strokeRect(x, y, width, height);
+        
+        if (progress >= 1) {
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = 'bold 10px "Space Grotesk"';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('DASH READY', x + width / 2, y + height / 2);
+        }
+        
         this.ctx.restore();
     }
 

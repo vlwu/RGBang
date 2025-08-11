@@ -9,6 +9,7 @@ export interface Keybindings {
     primary2: string;
     primary3: string;
     combine: string;
+    dash: string;
 }
 
 export const defaultKeybindings: Keybindings = {
@@ -20,6 +21,7 @@ export const defaultKeybindings: Keybindings = {
     primary2: '2',
     primary3: '3',
     combine: 'shift',
+    dash: ' ',
 }
 
 class InputHandler {

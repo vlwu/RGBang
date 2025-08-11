@@ -45,7 +45,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
 
             setLocalKeybindings(prev => ({
                 ...prev,
-                [editingKey]: newKey,
+                [editingKey]: e.key.toLowerCase(), // Store actual key
             }));
             setEditingKey(null);
         }
@@ -58,7 +58,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         }
-    }, [editingKey]);
+    }, [editingKey, handleKeyDown]);
 
     const handleSave = () => {
         onKeybindingsChange(localKeybindings);
@@ -78,8 +78,14 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         primary1: "Select Red",
         primary2: "Select Yellow",
         primary3: "Select Blue",
-        combine: "Combine Colors"
+        combine: "Combine Colors",
+        dash: "Dash"
     };
+
+    const getKeyDisplay = (key: string) => {
+        if (key === ' ') return 'SPACE';
+        return key.toUpperCase();
+    }
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -101,7 +107,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
                                 className="col-span-3"
                                 onClick={() => setEditingKey(action as KeybindingAction)}
                             >
-                               {editingKey === action ? 'Press a key...' : localKeybindings[action as KeybindingAction].toUpperCase()}
+                               {editingKey === action ? 'Press a key...' : getKeyDisplay(localKeybindings[action as KeybindingAction])}
                             </Button>
                         </div>
                     ))}

@@ -6,7 +6,7 @@ import { GameColor, mixColors, COLOR_DETAILS, PRIMARY_COLORS } from './color';
 export class Player {
     pos: Vec2;
     radius = 15;
-    speed = 4;
+    speed = 3.2; // Reduced from 4
     maxHealth = 100;
     health: number;
     
@@ -15,6 +15,14 @@ export class Player {
     
     private shootCooldown = 10; // frames
     private shootTimer = 0;
+
+    // Dash properties
+    private isDashing = false;
+    private dashTimer = 0;
+    private dashDuration = 8; // frames
+    private dashSpeed = 12;
+    private dashCooldown = 60; // frames
+    private dashCooldownTimer = 0;
 
     constructor(x: number, y: number) {
         this.pos = new Vec2(x, y);
@@ -37,17 +45,38 @@ export class Player {
         if (this.shootTimer > 0) {
             this.shootTimer--;
         }
+        if (this.dashCooldownTimer > 0) {
+            this.dashCooldownTimer--;
+        }
     }
 
     private handleMovement(input: InputHandler, canvasWidth: number, canvasHeight: number) {
+        // Dash activation
+        if (input.isKeyDown(input.keybindings.dash) && this.dashCooldownTimer === 0) {
+            this.isDashing = true;
+            this.dashTimer = this.dashDuration;
+            this.dashCooldownTimer = this.dashCooldown;
+        }
+        
+        let currentSpeed = this.speed;
         let moveDir = new Vec2(0, 0);
+
+        if (this.isDashing) {
+            currentSpeed = this.dashSpeed;
+            if (this.dashTimer > 0) {
+                this.dashTimer--;
+            } else {
+                this.isDashing = false;
+            }
+        }
+        
         if (input.isKeyDown(input.keybindings.up)) moveDir.y -= 1;
         if (input.isKeyDown(input.keybindings.down)) moveDir.y += 1;
         if (input.isKeyDown(input.keybindings.left)) moveDir.x -= 1;
         if (input.isKeyDown(input.keybindings.right)) moveDir.x += 1;
 
         if (moveDir.magnitude() > 0) {
-            this.pos = this.pos.add(moveDir.normalize().scale(this.speed));
+            this.pos = this.pos.add(moveDir.normalize().scale(currentSpeed));
         }
 
         // Boundary checks
@@ -94,6 +123,17 @@ export class Player {
     }
 
     draw(ctx: CanvasRenderingContext2D, input: InputHandler) {
+        // Draw dashing effect
+        if (this.isDashing) {
+            ctx.save();
+            const dashProgress = this.dashTimer / this.dashDuration;
+            ctx.fillStyle = `rgba(226, 232, 240, ${0.5 * dashProgress})`;
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, this.radius + 5 * (1 - dashProgress), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
         // Draw player body
         ctx.fillStyle = '#E2E8F0';
         ctx.beginPath();
@@ -114,7 +154,12 @@ export class Player {
     }
     
     takeDamage(amount: number) {
+        if (this.isDashing) return; // Invulnerable while dashing
         this.health -= amount;
         if (this.health < 0) this.health = 0;
+    }
+
+    public getDashCooldownProgress(): number {
+        return this.dashCooldownTimer / this.dashCooldown;
     }
 }
