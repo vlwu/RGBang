@@ -97,12 +97,14 @@ export class SplitterEnemy extends Enemy {
     }
 
     onWrongHit(particles: ParticleSystem, createEnemy: (enemy: Enemy) => void) {
-        this.isAlive = false;
-        particles.add(this.pos, this.color, 15);
-        const components = COLOR_DETAILS[this.color].components;
-        if (components) {
-            createEnemy(new BaseEnemy(this.pos.x - 20, this.pos.y, components[0]));
-            createEnemy(new BaseEnemy(this.pos.x + 20, this.pos.y, components[1]));
+        if (this.isAlive) {
+            this.isAlive = false;
+            particles.add(this.pos, this.color, 15);
+            const components = COLOR_DETAILS[this.color].components;
+            if (components) {
+                createEnemy(new BaseEnemy(this.pos.x - 20, this.pos.y, components[0]));
+                createEnemy(new BaseEnemy(this.pos.x + 20, this.pos.y, components[1]));
+            }
         }
     }
 }
