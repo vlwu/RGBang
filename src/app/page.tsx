@@ -44,7 +44,7 @@ function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef
         if (gameRef.current) {
             gameRef.current.isRunning = !isPaused;
         }
-    }, [isPaused]);
+    }, [isPaused, gameRef]);
 
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
@@ -139,7 +139,7 @@ export default function Home() {
     const quitToMenu = () => {
         if (gameRef.current) {
             const currentScore = gameRef.current.getCurrentScore();
-            if (currentScore > highScore) {
+             if (currentScore > highScore) {
                 localStorage.setItem('rgBangHighScore', currentScore.toString());
                 setHighScore(currentScore);
             }
@@ -163,7 +163,10 @@ export default function Home() {
 
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
-                    <h1 className="text-8xl font-bold tracking-tighter text-primary font-headline">RGBang</h1>
+                    <h1 className="text-8xl font-bold tracking-tighter font-headline">
+                        <span className="bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 bg-clip-text text-transparent">RGB</span>
+                        <span className="text-primary">ang</span>
+                    </h1>
                     <div className="flex flex-col gap-4 w-64">
                         <Button size="lg" onClick={startGame} className="font-bold text-lg">
                             <Gamepad2 className="mr-2" />
@@ -174,8 +177,8 @@ export default function Home() {
                             Settings
                         </Button>
                     </div>
-                    <div className="pt-4 text-lg font-semibold text-foreground/80">
-                        <div className="flex items-center gap-2">
+                     <div className="pt-4 text-xl font-semibold text-foreground/80">
+                        <div className="flex items-center justify-center gap-2">
                             <Award className="text-accent" />
                             <span>High Score: {highScore}</span>
                         </div>
@@ -216,15 +219,15 @@ export default function Home() {
             )}
 
             {gameState === 'gameOver' && (
-                <div className="flex flex-col items-center text-center space-y-6 animate-fade-in">
-                    <h2 className="text-6xl font-bold text-primary/80 font-headline">Game Over</h2>
-                    <div className="text-3xl font-semibold space-y-2">
-                        <p>Final Score: <span className="font-bold text-accent">{score}</span></p>
-                    </div>
-                    <div className="flex gap-8 pt-4 text-xl">
-                        <div className="flex items-center gap-2 font-semibold text-foreground/80">
-                            <Award className="text-accent" />
-                            <span>High Score: {highScore}</span>
+                 <div className="flex flex-col items-center text-center space-y-6 animate-fade-in">
+                    <h2 className="text-7xl font-bold text-primary/80 font-headline">Game Over</h2>
+                    <p className="text-4xl font-semibold">
+                        Final Score: <span className="font-bold text-accent">{score}</span>
+                    </p>
+                    <div className="pt-4 text-2xl font-semibold text-foreground/80">
+                        <div className="flex items-center gap-2">
+                           <Award className="text-accent" />
+                           <span>High Score: {highScore}</span>
                         </div>
                     </div>
                      <Button size="lg" onClick={quitToMenu} className="font-bold text-lg mt-4 w-64">
