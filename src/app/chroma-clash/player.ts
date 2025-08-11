@@ -21,7 +21,7 @@ export class Player {
     private dashTimer = 0;
     private dashDuration = 8; // frames
     private dashSpeed = 12;
-    private dashCooldown = 60; // frames
+    private dashCooldown = 180; // frames
     private dashCooldownTimer = 0;
 
     constructor(x: number, y: number) {
