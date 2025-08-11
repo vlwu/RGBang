@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Game } from './chroma-clash/game';
-import InputHandler, { Keybindings, defaultKeybindings } from './chroma-clash/input-handler';
+import { Game } from './rgbang/game';
+import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
 import { Button } from '@/components/ui/button';
 import { Award, Gamepad2, Github, Waves, Pause, Play, LogOut, Settings } from 'lucide-react';
-import { SettingsModal } from './chroma-clash/settings-modal';
+import { SettingsModal } from './rgbang/settings-modal';
 
 const CANVAS_WIDTH = 1000;
 const CANVAS_HEIGHT = 700;
