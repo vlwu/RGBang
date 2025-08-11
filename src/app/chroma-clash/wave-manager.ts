@@ -27,14 +27,10 @@ export class WaveManager {
 
         if (this.waveTimer > 0) {
             this.waveTimer--;
-            if (this.waveTimer === 0) {
+            if (this.waveTimer === 0 && this.currentWave > 0) {
                 this.spawnWave(createEnemy);
             }
         }
-    }
-    
-    public isWaveClear(enemies: Enemy[]): boolean {
-        return enemies.length === 0 && this.waveTimer === 0;
     }
     
     private spawnWave(createEnemy: (enemy: Enemy) => void) {

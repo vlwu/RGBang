@@ -134,13 +134,13 @@ export class Game {
         
         this.ui.draw(this.player, this.score, this.waveManager.currentWave);
 
-        if (this.waveManager.isWaveClear(this.enemies) && this.waveManager.currentWave > 0) {
-            // This is a bit of a hack to get the timer from wavemanager, should be refactored
-            // @ts-ignore
-            const timer = this.waveManager.waveTimer;
+        // This is a bit of a hack to get the timer from wavemanager, should be refactored
+        // @ts-ignore
+        const waveTimer = this.waveManager.waveTimer;
+        if (this.enemies.length === 0 && waveTimer > 0) {
             // @ts-ignore
             const maxTime = this.waveManager.timeBetweenWaves;
-            this.ui.drawWaveAnnouncement(this.waveManager.currentWave, timer, maxTime);
+            this.ui.drawWaveAnnouncement(this.waveManager.currentWave, waveTimer, maxTime);
         }
     }
 
