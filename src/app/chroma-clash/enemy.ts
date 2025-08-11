@@ -1,3 +1,4 @@
+
 import { Vec2, distance, getRandomElement } from './utils';
 import { GameColor, COLOR_DETAILS, PRIMARY_COLORS } from './color';
 import { Player } from './player';
