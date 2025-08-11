@@ -86,8 +86,13 @@ class InputHandler {
     private handleMouseMove = (e: MouseEvent) => {
         if (!this.canvas) return;
         const rect = this.canvas.getBoundingClientRect();
-        this.mousePos.x = e.clientX - rect.left;
-        this.mousePos.y = e.clientY - rect.top;
+        
+        // Scale mouse coordinates to match the canvas's internal resolution
+        const scaleX = this.canvas.width / rect.width;
+        const scaleY = this.canvas.height / rect.height;
+
+        this.mousePos.x = (e.clientX - rect.left) * scaleX;
+        this.mousePos.y = (e.clientY - rect.top) * scaleY;
     }
 
     private handleMouseDown = (e: MouseEvent) => {
