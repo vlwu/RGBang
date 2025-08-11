@@ -107,32 +107,36 @@ export class Game {
     }
 
     private update() {
+        // 1. Update player and input
         this.player.update(this.inputHandler, this.createBullet, this.canvas.width, this.canvas.height);
         this.inputHandler.resetScroll();
         
+        // 2. Update bullets and filter out-of-bounds bullets
         this.bullets = this.bullets.filter((bullet) => {
             bullet.update();
             return !(bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height);
         });
 
+        // 3. Update all enemies
         this.enemies.forEach((enemy) => {
             enemy.update(this.player);
-            if (enemy.isAlive && circleCollision({pos: this.player.pos, radius: this.player.radius}, {pos: enemy.pos, radius: enemy.radius})) {
-                this.player.takeDamage(10);
-                enemy.isAlive = false;
-                this.particles.add(enemy.pos, enemy.color, 10);
-            }
         });
 
+        // 4. Handle collisions
         this.handleBulletCollisions();
+        this.handlePlayerEnemyCollisions();
         this.handleEnemyCollisions();
         
+        // 5. Remove dead enemies from the game
         this.enemies = this.enemies.filter(e => e.isAlive);
 
+        // 6. Spawn new enemies
         this.enemySpawner.update(this.enemies.length, this.createEnemy);
         
+        // 7. Update particle effects
         this.particles.update();
         
+        // 8. Check for game over condition
         if (this.player.health <= 0) {
             this.isRunning = false;
             this.onGameOver();
@@ -145,6 +149,7 @@ export class Game {
                 const bullet = this.bullets[i];
                 const enemy = this.enemies[j];
                 
+                // Only check collisions if both bullet and enemy exist and enemy is alive
                 if (bullet && enemy && enemy.isAlive && circleCollision({pos: bullet.pos, radius: bullet.radius}, {pos: enemy.pos, radius: enemy.radius})) {
                     const pointsGained = enemy.takeDamage(bullet.damage, bullet.color, this.particles);
                     if (pointsGained > 0) {
@@ -153,12 +158,26 @@ export class Game {
                     }
                     
                     this.particles.add(bullet.pos, bullet.color, 10);
+                    // Remove bullet after collision
                     this.bullets.splice(i, 1);
+                    // A bullet can only hit one enemy, so we break to the next bullet
                     break; 
                 }
             }
         }
     }
+    
+    private handlePlayerEnemyCollisions() {
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+            const enemy = this.enemies[i];
+            if (enemy.isAlive && circleCollision({pos: this.player.pos, radius: this.player.radius}, {pos: enemy.pos, radius: enemy.radius})) {
+                this.player.takeDamage(10);
+                enemy.isAlive = false; // Destroy enemy on collision with player
+                this.particles.add(enemy.pos, enemy.color, 10);
+            }
+        }
+    }
+
 
     private handleEnemyCollisions() {
         for (let i = 0; i < this.enemies.length; i++) {
@@ -190,10 +209,10 @@ export class Game {
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        this.player.draw(this.ctx, this.inputHandler);
-        this.bullets.forEach(b => b.draw(this.ctx));
-        this.enemies.forEach(e => e.draw(this.ctx));
         this.particles.draw(this.ctx);
+        this.enemies.forEach(e => e.draw(this.ctx));
+        this.bullets.forEach(b => b.draw(this.ctx));
+        this.player.draw(this.ctx, this.inputHandler);
         
         this.ui.draw(this.player, this.score);
     }
