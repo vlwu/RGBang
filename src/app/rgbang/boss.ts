@@ -1,4 +1,4 @@
-import { Vec2 } from './utils';
+import { Vec2, lerp, drawShapeForColor } from './utils';
 import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
 import { Bullet } from './bullet';
 
@@ -9,7 +9,7 @@ export class Boss {
     maxHealth = 1000;
     color: GameColor;
     isAlive = true;
-    points = 500;
+    points = 0; // Boss no longer gives points
     damage = 30; // Collision damage
 
     private canvasWidth: number;
@@ -19,8 +19,10 @@ export class Boss {
     private colorChangeTimer = 0;
     private readonly colorChangeInterval = 300; // 5 seconds
 
-    private teleportTimer = 0;
-    private readonly teleportInterval = 180; // 3 seconds
+    private moveTimer = 0;
+    private readonly moveInterval = 240; // 4 seconds
+    private targetPos: Vec2;
+    private moveSpeed = 0.02;
 
     private attackTimer = 0;
     private readonly attackInterval = 120; // 2 seconds
@@ -35,6 +37,7 @@ export class Boss {
         canvasHeight: number
     ) {
         this.pos = new Vec2(x, y);
+        this.targetPos = new Vec2(x, y);
         this.health = this.maxHealth;
         this.color = getRandomElement(PRIMARY_COLORS);
         this.createBullet = createBullet;
@@ -47,11 +50,12 @@ export class Boss {
 
         this.updateTimers();
         this.handleActions();
+        this.move();
     }
     
     private updateTimers() {
         this.colorChangeTimer--;
-        this.teleportTimer--;
+        this.moveTimer--;
         this.attackTimer--;
     }
 
@@ -60,14 +64,19 @@ export class Boss {
             this.changeColor();
             this.colorChangeTimer = this.colorChangeInterval;
         }
-        if (this.teleportTimer <= 0) {
-            this.teleport();
-            this.teleportTimer = this.teleportInterval;
+        if (this.moveTimer <= 0) {
+            this.setNewTargetPosition();
+            this.moveTimer = this.moveInterval;
         }
         if (this.attackTimer <= 0) {
             this.attack();
             this.attackTimer = this.attackInterval;
         }
+    }
+    
+    private move() {
+        this.pos.x = lerp(this.pos.x, this.targetPos.x, this.moveSpeed);
+        this.pos.y = lerp(this.pos.y, this.targetPos.y, this.moveSpeed);
     }
 
     private changeColor() {
@@ -75,10 +84,10 @@ export class Boss {
         this.color = getRandomElement(otherColors);
     }
 
-    private teleport() {
+    private setNewTargetPosition() {
         const padding = 100;
-        this.pos.x = Math.random() * (this.canvasWidth - padding * 2) + padding;
-        this.pos.y = Math.random() * (this.canvasHeight / 2 - padding) + padding; // Teleport in top half
+        this.targetPos.x = Math.random() * (this.canvasWidth - padding * 2) + padding;
+        this.targetPos.y = Math.random() * (this.canvasHeight / 2 - padding) + padding; // Move in top half
     }
     
     private attack() {
@@ -117,13 +126,10 @@ export class Boss {
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
-
-        // Inner core
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-        ctx.beginPath();
-        ctx.arc(this.pos.x, this.pos.y, this.radius * 0.5, 0, Math.PI * 2);
-        ctx.fill();
         
+        // Shape Overlay
+        drawShapeForColor(ctx, this.pos, this.radius, this.color, 'black');
+
         ctx.restore();
     }
 }

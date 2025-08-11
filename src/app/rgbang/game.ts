@@ -159,7 +159,7 @@ export class Game {
             // No boss active, spawn regular enemies
             this.enemySpawner.update(this.enemies.length, this.createEnemy);
             // Check if it's time to spawn a boss
-            if (Math.floor(this.score / 100) > Math.floor(this.lastBossSpawnScore / 100)) {
+            if (this.score > 0 && Math.floor(this.score / 100) > Math.floor(this.lastBossSpawnScore / 100)) {
                 this.spawnBoss();
             }
         }
