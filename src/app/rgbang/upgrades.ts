@@ -14,51 +14,99 @@ export interface Upgrade {
     description: string;
     type: UpgradeType;
     color: GameColor | null;
-    apply: (player: Player) => void;
+    apply: (player: Player, level: number) => void;
+    getValue: (level: number) => number;
+    getMaxLevel: () => number;
 }
 
 export const ALL_UPGRADES: Upgrade[] = [
-    // Player Stat Upgrades (from White/Boss Fragments)
+    // --- PLAYER_STAT Upgrades (from White/Boss Fragments) ---
     {
         id: 'max-health',
         name: 'Vitality Boost',
-        description: 'Increases maximum health by 25.',
+        description: 'Increases maximum health by 20 per level.',
         type: UpgradeType.PLAYER_STAT,
         color: null,
-        apply: (player) => {
-            player.maxHealth += 25;
-            player.health += 25; // Heal for the same amount
+        getMaxLevel: () => 5,
+        getValue: (level) => 20 * level,
+        apply: (player, level) => {
+            player.flatHealthIncrease += 20; // This is additive
+            player.health += 20; // Heal for the same amount
         }
     },
     {
         id: 'dash-cooldown',
         name: 'Quick Dash',
-        description: 'Reduces dash cooldown by 15%.',
+        description: 'Reduces dash cooldown by 8% per level.',
         type: UpgradeType.PLAYER_STAT,
         color: null,
-        apply: (player) => {
-            player.dashCooldownModifier *= 0.85;
+        getMaxLevel: () => 5,
+        getValue: (level) => 1 - (0.08 * level),
+        apply: (player, level) => {
+            player.dashCooldownModifier *= 0.92;
         }
     },
-     // General Upgrades (Can appear for any color)
-    {
-        id: 'bullet-damage',
-        name: 'Power Shot',
-        description: 'Increases bullet damage by 20%.',
-        type: UpgradeType.GENERAL,
-        color: null, // can be applied to any
-        apply: (player) => { 
-            player.bulletDamageMultiplier *= 1.2;
+     {
+        id: 'movement-speed',
+        name: 'Agility',
+        description: 'Increases movement speed by 5% per level.',
+        type: UpgradeType.PLAYER_STAT,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => 1 + (0.05 * level),
+        apply: (player, level) => {
+            player.movementSpeedMultiplier *= 1.05;
         }
     },
 
-    // Gun-Specific Upgrades
+    // --- GENERAL Upgrades (Can appear for any color) ---
+    {
+        id: 'bullet-damage',
+        name: 'Power Shot',
+        description: 'Increases all bullet damage by 10% per level.',
+        type: UpgradeType.GENERAL,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => 1 + (0.1 * level),
+        apply: (player, level) => { 
+            player.bulletDamageMultiplier *= 1.10;
+        }
+    },
+    {
+        id: 'faster-reload',
+        name: 'Quick Hands',
+        description: 'Increases fire rate by 10% per level.',
+        type: UpgradeType.GENERAL,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => 1 - (0.1 * level),
+        apply: (player, level) => {
+            player.shootCooldownModifier *= 0.9;
+        }
+    },
+    {
+        id: 'prism-exp-gain',
+        name: 'Prism Magnetism',
+        description: 'Increases EXP gained from fragments by 20% per level.',
+        type: UpgradeType.GENERAL,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => 1 + (0.2 * level),
+        apply: (player, level) => {
+            player.expGainMultiplier *= 1.2;
+        }
+    },
+
+
+    // --- GUN-Specific Upgrades ---
     {
         id: 'ice-spiker',
         name: 'Ice Spiker',
         description: 'Blue bullets have a chance to briefly freeze enemies.',
         type: UpgradeType.GUN,
         color: GameColor.BLUE,
+        getMaxLevel: () => 1,
+        getValue: () => 1,
         apply: (player) => { console.log('ice spiker active'); }
     },
     {
@@ -67,14 +115,20 @@ export const ALL_UPGRADES: Upgrade[] = [
         description: 'Yellow bullets chain to nearby enemies on hit.',
         type: UpgradeType.GUN,
         color: GameColor.YELLOW,
+        getMaxLevel: () => 1,
+        getValue: () => 1,
         apply: (player) => { console.log('chain lightning active'); }
     },
     {
-        id: 'explosive-rounds',
-        name: 'Explosive Rounds',
-        description: 'Red bullets explode on impact, damaging nearby enemies.',
+        id: 'ignite',
+        name: 'Ignite',
+        description: 'Red bullets set enemies on fire, dealing damage over time.',
         type: UpgradeType.GUN,
         color: GameColor.RED,
-        apply: (player) => { console.log('explosive rounds active'); }
+        getMaxLevel: () => 1,
+        getValue: () => 1,
+        apply: (player) => { console.log('ignite active'); }
     }
 ];
+
+    

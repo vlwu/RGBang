@@ -13,7 +13,8 @@ export interface PlayerUpgradeData {
 
 const UPGRADE_DATA_KEY = 'rgBangUpgradeData';
 
-const EXP_THRESHOLDS = [0, 100, 250, 500, 1000]; // EXP needed to reach level 1, 2, 3, 4, 5
+// EXP needed to reach level 2, 3, 4, 5. Level 1 is 0 EXP.
+const EXP_THRESHOLDS = [0, 100, 250, 500, 1000];
 
 // Helper to convert Maps and Sets to JSON
 const replacer = (key: string, value: any) => {
@@ -85,9 +86,9 @@ export async function addExpAndLevelUp(upgradeId: string, expToAdd: number): Pro
         progress = { level: 1, exp: 0 };
     }
     
-    // Cap level at 5
-    if (progress.level >= 5) {
-        progress.exp = EXP_THRESHOLDS[4];
+    // Cap level
+    if (progress.level >= EXP_THRESHOLDS.length) {
+        progress.exp = EXP_THRESHOLDS[EXP_THRESHOLDS.length - 1];
         data.upgradeProgress.set(upgradeId, progress);
         await savePlayerUpgradeData(data);
         return data;
@@ -96,7 +97,7 @@ export async function addExpAndLevelUp(upgradeId: string, expToAdd: number): Pro
     progress.exp += expToAdd;
     
     // Check for level up
-    while (progress.level < 5 && progress.exp >= EXP_THRESHOLDS[progress.level]) {
+    while (progress.level < EXP_THRESHOLDS.length && progress.exp >= EXP_THRESHOLDS[progress.level]) {
         progress.level++;
         // Do not carry over "extra" exp for simplicity
     }

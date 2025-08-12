@@ -11,7 +11,7 @@ import { Upgrade } from './upgrades';
 export class Player {
     pos: Vec2;
     radius = 15;
-    speed = 3.2;
+    baseSpeed = 3.2;
     maxHealth = 100;
     health: number;
     isAlive = true;
@@ -21,10 +21,16 @@ export class Player {
     private radialMenu: RadialMenu;
     public upgradeManager: UpgradeManager;
     
-    // Upgradeable Stats
+    // --- Upgradeable Stats ---
+    // These are multipliers applied to base values
+    public movementSpeedMultiplier = 1;
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
     public shootCooldownModifier = 1;
+    public expGainMultiplier = 1;
+
+    // Direct stat boosts
+    public flatHealthIncrease = 0;
 
 
     private shootCooldown = 10; // frames
@@ -34,8 +40,8 @@ export class Player {
     private isDashing = false;
     private dashTimer = 0;
     private dashDuration = 12; // frames
-    private dashSpeed = 12;
-    private dashCooldown = 180; // frames
+    private baseDashSpeed = 12;
+    private baseDashCooldown = 180; // frames
     private dashCooldownTimer = 0;
 
     constructor(x: number, y: number, initialColor: GameColor) {
@@ -79,14 +85,14 @@ export class Player {
         if (input.isKeyDown(input.keybindings.dash) && this.dashCooldownTimer === 0) {
             this.isDashing = true;
             this.dashTimer = this.dashDuration;
-            this.dashCooldownTimer = this.dashCooldown * this.dashCooldownModifier;
+            this.dashCooldownTimer = this.getDashCooldown();
         }
         
-        let currentSpeed = this.speed;
+        let currentSpeed = this.getSpeed();
         let moveDir = new Vec2(0, 0);
 
         if (this.isDashing) {
-            currentSpeed = this.dashSpeed;
+            currentSpeed = this.baseDashSpeed; // Dash speed isn't currently upgradeable, but could be
             this.dashTimer--;
             if (this.dashTimer <= 0) {
                 this.isDashing = false;
@@ -151,20 +157,26 @@ export class Player {
                 this.updateAvailableColors(selectedColor);
                 const direction = input.mousePos.sub(this.pos);
                 const bullet = new Bullet(this.pos, direction, this.currentColor);
+                this.applyBulletUpgrades(bullet);
                 createBullet(bullet);
-                this.shootTimer = this.shootCooldown * this.shootCooldownModifier;
+                this.shootTimer = this.getShootCooldown();
             }
             this.radialMenu.close();
         }
+    }
+
+    private applyBulletUpgrades(bullet: Bullet) {
+        bullet.damage *= this.bulletDamageMultiplier;
+        // More complex effects like ignite would be applied here too
     }
 
     private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void) {
         if (input.isShooting() && this.shootTimer === 0 && !this.radialMenu.active) {
             const direction = input.mousePos.sub(this.pos);
             const bullet = new Bullet(this.pos, direction, this.currentColor);
-            bullet.damage *= this.bulletDamageMultiplier;
+            this.applyBulletUpgrades(bullet);
             createBullet(bullet);
-            this.shootTimer = this.shootCooldown * this.shootCooldownModifier;
+            this.shootTimer = this.getShootCooldown();
         }
     }
 
@@ -214,7 +226,7 @@ export class Player {
         const indicatorX = this.pos.x - indicatorWidth / 2;
         const indicatorY = this.pos.y - this.radius - 12;
 
-        const progress = 1 - (this.dashCooldownTimer / (this.dashCooldown * this.dashCooldownModifier));
+        const progress = 1 - (this.dashCooldownTimer / this.getDashCooldown());
 
         // Background
         ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
@@ -242,10 +254,28 @@ export class Player {
     }
     
     applyUpgrade(upgrade: Upgrade) {
-        this.upgradeManager.apply(upgrade);
+        this.upgradeManager.apply(upgrade, 1); // For now, assume level 1 on pickup
+    }
+
+    public getMaxHealth(): number {
+        return this.maxHealth + this.flatHealthIncrease;
+    }
+
+    public getSpeed(): number {
+        return this.baseSpeed * this.movementSpeedMultiplier;
+    }
+
+    public getDashCooldown(): number {
+        return this.baseDashCooldown * this.dashCooldownModifier;
+    }
+
+    public getShootCooldown(): number {
+        return this.shootCooldown * this.shootCooldownModifier;
     }
 
     public getDashCooldownProgress(): number {
-        return this.dashCooldownTimer / (this.dashCooldown * this.dashCooldownModifier);
+        return this.dashCooldownTimer / this.getDashCooldown();
     }
 }
+
+    

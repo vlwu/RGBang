@@ -6,7 +6,7 @@ import { PlayerUpgradeData } from './upgrade-data';
 
 export class UpgradeManager {
     private player: Player;
-    public activeUpgrades: Set<string> = new Set();
+    public activeUpgrades: Map<string, { upgrade: Upgrade, level: number }> = new Map();
     
     constructor(player: Player) {
         this.player = player;
@@ -23,8 +23,11 @@ export class UpgradeManager {
             pool = [...colorUpgrades, ...generalUpgrades];
         }
 
-        // Filter out upgrades the player already has in the current run
-        const availablePool = pool.filter(u => !this.activeUpgrades.has(u.id));
+        // Filter out upgrades the player already has at max level in the current run
+        const availablePool = pool.filter(u => {
+            const active = this.activeUpgrades.get(u.id);
+            return !active || active.level < u.getMaxLevel();
+        });
 
         // Separate into seen and unseen upgrades
         const seenUpgrades = availablePool.filter(u => upgradeData.unlockedUpgradeIds.has(u.id));
@@ -51,10 +54,16 @@ export class UpgradeManager {
 
         // Fill the rest of the options
         while (options.length < 3) {
-            if (unseenUpgrades.length > 0) {
-                options.push(unseenUpgrades.pop()!);
-            } else if (seenUpgrades.length > 0) {
-                options.push(seenUpgrades.pop()!);
+            if (seenUpgrades.length > 0) {
+                 const next = seenUpgrades.pop()!;
+                 if (!options.some(opt => opt.id === next.id)) {
+                    options.push(next);
+                 }
+            } else if (unseenUpgrades.length > 0) {
+                const next = unseenUpgrades.pop()!;
+                if (!options.some(opt => opt.id === next.id)) {
+                   options.push(next);
+                }
             } else {
                 break; // No more upgrades to offer
             }
@@ -63,14 +72,47 @@ export class UpgradeManager {
         return options;
     }
 
-    apply(upgrade: Upgrade) {
-        if (!this.activeUpgrades.has(upgrade.id)) {
-            this.activeUpgrades.add(upgrade.id);
-            upgrade.apply(this.player);
+    apply(upgrade: Upgrade, level: number) {
+        if (this.activeUpgrades.has(upgrade.id)) {
+            // If it exists, we are just re-applying based on a level up,
+            // so we don't need to re-add, just let the player stats recalculate.
+            const existing = this.activeUpgrades.get(upgrade.id)!;
+            existing.level = level;
+
+        } else {
+            this.activeUpgrades.set(upgrade.id, { upgrade, level });
         }
+        
+        // Re-calculate all stats based on active upgrades
+        this.recalculatePlayerStats();
+    }
+
+    recalculatePlayerStats() {
+        // Reset all modifiers to base values
+        this.player.movementSpeedMultiplier = 1;
+        this.player.bulletDamageMultiplier = 1;
+        this.player.dashCooldownModifier = 1;
+        this.player.shootCooldownModifier = 1;
+        this.player.expGainMultiplier = 1;
+        this.player.flatHealthIncrease = 0;
+        this.player.maxHealth = 100;
+        
+        // Apply all active upgrades
+        this.activeUpgrades.forEach(({ upgrade, level }) => {
+            upgrade.apply(this.player, level);
+        });
+
+        // Recalculate max health
+        this.player.maxHealth += this.player.flatHealthIncrease;
+    }
+
+    getUpgradeLevel(upgradeId: string): number {
+        return this.activeUpgrades.get(upgradeId)?.level || 0;
     }
 
     getActiveUpgradeDetails(): Upgrade[] {
-        return ALL_UPGRADES.filter(u => this.activeUpgrades.has(u.id));
+        return Array.from(this.activeUpgrades.values()).map(item => item.upgrade);
     }
 }
+
+    

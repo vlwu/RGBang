@@ -5,13 +5,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Game } from './rgbang/game';
 import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
 import { Button } from '@/components/ui/button';
-import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings } from 'lucide-react';
+import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2 } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade } from './rgbang/upgrades';
-import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, addExpAndLevelUp } from './rgbang/upgrade-data';
+import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, addExpAndLevelUp, resetAllUpgradeData } from './rgbang/upgrade-data';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -101,29 +101,30 @@ export default function Home() {
         setCanvasSize({ width: newWidth, height: newHeight });
     }, []);
 
+    const loadInitialData = useCallback(async () => {
+        setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
+        setLastSelectedColor(localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED);
+        
+        const data = await getPlayerUpgradeData();
+        setUpgradeData(data);
+        upgradeDataRef.current = data; // Also update the ref here
+
+        inputHandlerRef.current = InputHandler.getInstance();
+        const savedKeybindings = localStorage.getItem('rgBangKeybindings');
+        if (savedKeybindings) {
+            setKeybindings(JSON.parse(savedKeybindings));
+        } else {
+            setKeybindings(defaultKeybindings);
+        }
+    }, []);
+
     useEffect(() => {
-        const loadInitialData = async () => {
-            setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
-            setLastSelectedColor(localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED);
-            
-            const data = await getPlayerUpgradeData();
-            setUpgradeData(data);
-
-            inputHandlerRef.current = InputHandler.getInstance();
-            const savedKeybindings = localStorage.getItem('rgBangKeybindings');
-            if (savedKeybindings) {
-                setKeybindings(JSON.parse(savedKeybindings));
-            } else {
-                setKeybindings(defaultKeybindings);
-            }
-        };
-
         loadInitialData();
         window.addEventListener('resize', updateCanvasSize);
         updateCanvasSize();
 
         return () => window.removeEventListener('resize', updateCanvasSize);
-    }, [updateCanvasSize]);
+    }, [loadInitialData, updateCanvasSize]);
 
     useEffect(() => {
         if(inputHandlerRef.current) {
@@ -153,22 +154,20 @@ export default function Home() {
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
-            // Access the latest upgradeData via the ref
             const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, upgradeDataRef.current);
             setUpgradeOptions(options);
             setGameState('upgrading');
             setIsUpgradeModalOpen(true);
         }
-    }, []); // Empty dependency array prevents this from being recreated
+    }, []);
     
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         if (gameRef.current) {
             gameRef.current.player.applyUpgrade(upgrade);
         }
         
-        // No need to await unlockUpgrade here if it's not critical for the next step
-        unlockUpgrade(upgrade.id); 
-        const finalData = await addExpAndLevelUp(upgrade.id, 25); // Grant 25 EXP per pickup for now
+        await unlockUpgrade(upgrade.id); 
+        const finalData = await addExpAndLevelUp(upgrade.id, 25);
         setUpgradeData(finalData);
 
         setIsUpgradeModalOpen(false);
@@ -212,6 +211,13 @@ export default function Home() {
         setGameState('playing');
     };
 
+    const handleResetData = async () => {
+        await resetAllUpgradeData();
+        localStorage.removeItem('rgBangHighScore');
+        localStorage.removeItem('rgBangLastColor');
+        await loadInitialData();
+    }
+
     return (
         <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
              <SettingsModal 
@@ -228,6 +234,7 @@ export default function Home() {
                 isOpen={isUpgradeModalOpen}
                 options={upgradeOptions}
                 onSelect={handleUpgradeSelected}
+                upgradeData={upgradeData}
             />
 
             {gameState === 'menu' && (
@@ -248,6 +255,10 @@ export default function Home() {
                          <Button size="lg" variant="secondary" onClick={() => setIsInfoOpen(true)}>
                             <Info className="mr-2" />
                             How to Play
+                        </Button>
+                        <Button size="lg" variant="destructive" onClick={handleResetData}>
+                            <Trash2 className="mr-2" />
+                            Reset Progress
                         </Button>
                     </div>
                      <div className="pt-4 text-xl font-semibold text-foreground/80">
@@ -314,5 +325,7 @@ export default function Home() {
         </main>
     );
 }
+
+    
 
     
