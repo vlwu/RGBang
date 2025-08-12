@@ -8,6 +8,7 @@ import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
 import { circleCollision, Vec2 } from './utils';
 import { getRandomElement, PRIMARY_COLORS, GameColor } from './color';
+import { Prism } from './prism';
 
 class EnemySpawner {
     private spawnInterval = 120; // frames
@@ -62,6 +63,7 @@ export class Game {
     private bullets: Bullet[] = [];
     private enemies: Enemy[] = [];
     private boss: Boss | null = null;
+    private prisms: Prism[] = [];
     private particles: ParticleSystem;
     private enemySpawner: EnemySpawner;
     private ui: UI;
@@ -131,12 +133,13 @@ export class Game {
     }
 
     private update() {
-        // 1. Update player, bullets, and enemies
+        // 1. Update entities
         this.player.update(this.inputHandler, this.createBullet, this.canvas.width, this.canvas.height);
         this.inputHandler.resetScroll();
         
         this.bullets.forEach(bullet => bullet.update());
         this.enemies.forEach(enemy => enemy.update(this.player));
+        this.prisms.forEach(prism => prism.update());
         this.boss?.update();
 
         // 2. Handle collisions
@@ -151,8 +154,8 @@ export class Game {
         // 5. Spawn new enemies or boss
         if (this.boss) {
             if (!this.boss.isAlive) {
-                this.score += this.boss.points;
                 this.particles.add(this.boss.pos, this.boss.color, 100);
+                this.prisms.push(new Prism(this.boss.pos.x, this.boss.pos.y));
                 this.boss = null;
             }
         } else {
@@ -228,6 +231,17 @@ export class Game {
             // Boss doesn't die from collision, just damages player
         }
 
+        // Player-Prism Collision
+        for (let i = this.prisms.length - 1; i >= 0; i--) {
+            const prism = this.prisms[i];
+            if (prism.isAlive && this.player.isAlive && circleCollision(this.player, prism)) {
+                this.player.refillHealth();
+                prism.isAlive = false;
+                this.prisms.splice(i, 1);
+                this.particles.add(this.player.pos, GameColor.GREEN, 50); // Health particle effect
+            }
+        }
+
         // Enemy-Enemy Collisions for separation
         for (let i = 0; i < this.enemies.length; i++) {
             for (let j = i + 1; j < this.enemies.length; j++) {
@@ -278,6 +292,7 @@ export class Game {
         this.particles.draw(this.ctx);
         this.boss?.draw(this.ctx);
         this.enemies.forEach(e => e.draw(this.ctx));
+        this.prisms.forEach(p => p.draw(this.ctx));
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx, this.inputHandler);
         

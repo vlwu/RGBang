@@ -189,6 +189,10 @@ export class Player {
         }
     }
 
+    refillHealth() {
+        this.health = this.maxHealth;
+    }
+
     public getDashCooldownProgress(): number {
         return this.dashCooldownTimer / this.dashCooldown;
     }
