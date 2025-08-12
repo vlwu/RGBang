@@ -3,7 +3,7 @@
   "name": "RGBang",
   "version": "1.0",
   "description": "A vibrant, fast-paced arcade shooter.",
-  "browser_action": {
+  "action": {
     "default_popup": "index.html",
     "default_icon": {
       "16": "favicon.ico",
