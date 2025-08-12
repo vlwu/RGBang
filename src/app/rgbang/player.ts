@@ -145,7 +145,7 @@ export class Player {
 
         // Open radial menu
         if (input.isKeyDown(input.keybindings.comboRadial)) {
-            this.radialMenu.active = true;
+            this.radialMenu.open();
             return;
         }
 
@@ -194,7 +194,7 @@ export class Player {
         }
     }
 
-    draw(ctx: CanvasRenderingContext2D, input: InputHandler) {
+    draw(ctx: CanvasRenderingContext2D) {
         // Draw dashing effect
         if (this.isDashing) {
             ctx.save();
@@ -223,6 +223,7 @@ export class Player {
             this.radialMenu.draw(ctx);
         } else {
             // Draw aiming reticle only when radial menu is closed
+            const input = InputHandler.getInstance();
             const aimDir = input.mousePos.sub(this.pos).normalize();
             const reticlePos = this.pos.add(aimDir.scale(this.radius + 10));
             ctx.strokeStyle = COLOR_DETAILS[this.currentColor].hex;

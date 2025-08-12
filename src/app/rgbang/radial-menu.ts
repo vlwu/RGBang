@@ -88,6 +88,10 @@ export class RadialMenu {
         }
         return null;
     }
+    
+    open() {
+        this.active = true;
+    }
 
     close() {
         this.active = false;

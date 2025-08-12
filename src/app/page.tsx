@@ -21,35 +21,48 @@ const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
 
 
-function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, width, height, gameRef, initialGameState }: { 
+function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, gameRef, initialGameState }: { 
     onGameOver: (score: number) => void, 
     onFragmentCollected: (color: GameColor | null) => void,
     isPaused: boolean,
-    inputHandler: InputHandler,
     width: number,
     height: number,
     gameRef: React.MutableRefObject<Game | null>,
     initialGameState: SavedGameState
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const animationFrameId = useRef<number | null>(null);
+    const inputHandlerRef = useRef<InputHandler | null>(null);
 
     useEffect(() => {
-        if (canvasRef.current) {
-            const canvas = canvasRef.current;
-            canvas.width = GAME_WIDTH;
-            canvas.height = GAME_HEIGHT;
-            
-            InputHandler.getInstance(canvas); // Ensure handler is always linked to the current canvas
-            
-            const game = new Game(canvas, onGameOver, onFragmentCollected, inputHandler, initialGameState);
-            gameRef.current = game;
-            game.start();
+        if (!canvasRef.current) return;
 
-            return () => {
-                game.stop();
-            };
-        }
-    }, [onGameOver, onFragmentCollected, inputHandler, gameRef, initialGameState]);
+        const canvas = canvasRef.current;
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+        
+        inputHandlerRef.current = InputHandler.getInstance(canvas);
+        
+        const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState);
+        gameRef.current = game;
+        game.start();
+
+        const gameLoop = () => {
+            if (gameRef.current && gameRef.current.isRunning && inputHandlerRef.current) {
+                gameRef.current.update(inputHandlerRef.current);
+                gameRef.current.draw();
+                inputHandlerRef.current.resetEvents();
+            }
+            animationFrameId.current = requestAnimationFrame(gameLoop);
+        };
+        
+        gameLoop();
+
+        return () => {
+            if(animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
+            game.stop();
+        };
+    }, [onGameOver, onFragmentCollected, initialGameState, gameRef]);
 
     useEffect(() => {
         if (gameRef.current) {
@@ -77,7 +90,6 @@ export default function Home() {
     const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
     
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
-    const inputHandlerRef = useRef<InputHandler | null>(null);
     const gameRef = useRef<Game | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
     const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE);
@@ -123,13 +135,10 @@ export default function Home() {
         setUpgradeData(data);
         upgradeDataRef.current = data;
 
-        inputHandlerRef.current = InputHandler.getInstance();
         const savedKeybindings = localStorage.getItem('rgBangKeybindings');
-        if (savedKeybindings) {
-            setKeybindings(JSON.parse(savedKeybindings));
-        } else {
-            setKeybindings(defaultKeybindings);
-        }
+        const currentKeybindings = savedKeybindings ? JSON.parse(savedKeybindings) : defaultKeybindings;
+        setKeybindings(currentKeybindings);
+        InputHandler.getInstance().setKeybindings(currentKeybindings);
     }, []);
 
     useEffect(() => {
@@ -155,9 +164,7 @@ export default function Home() {
     }, [loadInitialData, updateCanvasSize]);
 
     useEffect(() => {
-        if(inputHandlerRef.current) {
-            inputHandlerRef.current.setKeybindings(keybindings);
-        }
+        InputHandler.getInstance().setKeybindings(keybindings);
         localStorage.setItem('rgBangKeybindings', JSON.stringify(keybindings));
     }, [keybindings]);
     
@@ -208,8 +215,7 @@ export default function Home() {
     }, []);
     
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
-        if (gameRef.current && inputHandlerRef.current) {
-            
+        if (gameRef.current) {
             const addScoreCallback = (amount: number) => {
                 if (gameRef.current) {
                     gameRef.current.addScore(amount);
@@ -222,8 +228,9 @@ export default function Home() {
                  gameRef.current.player.applyUpgrade(upgrade);
             }
 
-             // Clear the mouse down state to prevent auto-firing
-            inputHandlerRef.current.keys.delete('mouse0');
+            const inputHandler = InputHandler.getInstance();
+            inputHandler.keys.delete('mouse0');
+            inputHandler.keys.delete('mouse2');
         }
         
         // Only level up real upgrades, not fallbacks
@@ -394,14 +401,13 @@ export default function Home() {
             )}
 
 
-            {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && inputHandlerRef.current && (
+            {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && (
                 <div className="relative">
                     <GameCanvas
                         key={runId} 
                         onGameOver={handleGameOver} 
                         onFragmentCollected={handleFragmentCollected}
                         isPaused={gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen}
-                        inputHandler={inputHandlerRef.current}
                         width={canvasSize.width}
                         height={canvasSize.height}
                         gameRef={gameRef}
@@ -450,5 +456,3 @@ export default function Home() {
         </main>
     );
 }
-
-    

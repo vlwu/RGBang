@@ -75,12 +75,10 @@ export class Game {
     private particles: ParticleSystem;
     private enemySpawner: EnemySpawner;
     private ui: UI;
-    private inputHandler: InputHandler;
 
     private score = 0;
     private nextBossScoreThreshold = 150;
     public isRunning = false;
-    private animationFrameId: number | null = null;
     
     private onGameOver: (finalScore: number) => void;
     private onFragmentCollected: (color: GameColor | null) => void;
@@ -89,14 +87,12 @@ export class Game {
         canvas: HTMLCanvasElement, 
         onGameOver: (finalScore: number) => void,
         onFragmentCollected: (color: GameColor | null) => void,
-        inputHandler: InputHandler,
         initialState: SavedGameState,
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
         this.onFragmentCollected = onFragmentCollected;
-        this.inputHandler = inputHandler;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor);
         this.enemySpawner = new EnemySpawner(canvas.width, canvas.height);
@@ -115,14 +111,10 @@ export class Game {
     public start() {
         if (this.isRunning) return;
         this.isRunning = true;
-        this.gameLoop();
     }
 
     public stop() {
         this.isRunning = false;
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-        }
     }
     
     public getCurrentState(): SavedGameState {
@@ -162,12 +154,9 @@ export class Game {
         this.enemies = []; // Clear existing enemies
     }
 
-    private update() {
-        // Reset single-frame events at the start of the loop
-        this.inputHandler.resetEvents();
-        
+    public update(inputHandler: InputHandler) {
         // 1. Update entities
-        this.player.update(this.inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
+        this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
         
         this.bullets.forEach(bullet => bullet.update());
         this.enemies.forEach(enemy => enemy.update(this.player));
@@ -363,7 +352,7 @@ export class Game {
         }
     }
     
-    private draw() {
+    public draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -373,18 +362,8 @@ export class Game {
         this.enemies.forEach(e => e.draw(this.ctx));
         this.fragments.forEach(p => p.draw(this.ctx));
         this.bullets.forEach(b => b.draw(this.ctx));
-        this.player.draw(this.ctx, this.inputHandler);
+        this.player.draw(this.ctx);
         
         this.ui.draw(this.player, this.score, this.boss);
-    }
-
-    private gameLoop = () => {
-        if (!this.isRunning) {
-             this.draw();
-        } else {
-            this.update();
-            this.draw();
-        }
-        this.animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 }
