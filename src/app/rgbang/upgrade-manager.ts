@@ -30,10 +30,21 @@ export class UpgradeManager {
             const maxLevel = u.getMaxLevel();
             return !progress || progress.level < maxLevel;
         });
+        
+        const options: Upgrade[] = [];
 
-        // Separate into seen and unseen upgrades
-        const seenUpgrades = availablePool.filter(u => upgradeData.unlockedUpgradeIds.has(u.id));
-        const unseenUpgrades = availablePool.filter(u => !upgradeData.unlockedUpgradeIds.has(u.id));
+        // Special handling for unique gun upgrades to ensure they appear
+        const gunUpgrades = availablePool.filter(u => u.type === UpgradeType.GUN);
+        if (gunUpgrades.length > 0) {
+            options.push(gunUpgrades[0]); // Add the specific gun upgrade if available
+        }
+
+        // Filter out the gun upgrades from the main pool to avoid duplication
+        const remainingPool = availablePool.filter(u => u.type !== UpgradeType.GUN);
+
+        // Separate into seen and unseen upgrades from the remaining pool
+        const seenUpgrades = remainingPool.filter(u => upgradeData.unlockedUpgradeIds.has(u.id));
+        const unseenUpgrades = remainingPool.filter(u => !upgradeData.unlockedUpgradeIds.has(u.id));
 
         // Fisher-Yates shuffle for both pools
         const shuffle = (arr: Upgrade[]) => {
@@ -46,11 +57,9 @@ export class UpgradeManager {
 
         shuffle(seenUpgrades);
         shuffle(unseenUpgrades);
-
-        const options: Upgrade[] = [];
         
         // Prioritize showing at least one new upgrade
-        if (unseenUpgrades.length > 0) {
+        if (unseenUpgrades.length > 0 && options.length < 3) {
             options.push(unseenUpgrades.pop()!);
         }
 
@@ -111,7 +120,7 @@ export class UpgradeManager {
         }
 
 
-        return options;
+        return shuffle(options);
     }
 
     apply(upgrade: Upgrade, level: number) {
