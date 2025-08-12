@@ -57,6 +57,31 @@ npm run build
 
 This command will build the Next.js application and then automatically package the necessary files into a `dist.zip` archive, ready for distribution (e.g., uploading to the Chrome Web Store).
 
+### Testing as a Chrome Extension
+
+You can easily test the game as a Chrome Extension without needing to zip it up first.
+
+1.  **Build the project**:
+    ```bash
+    npm run build
+    ```
+    This will generate a static version of your app in a folder named `out`.
+
+2.  **Open Chrome Extensions**:
+    -   Navigate to `chrome://extensions` in your Chrome browser.
+
+3.  **Enable Developer Mode**:
+    -   In the top right corner of the Extensions page, toggle "Developer mode" on.
+
+4.  **Load the Extension**:
+    -   Click the "Load unpacked" button that appears.
+    -   In the file dialog, navigate to your project directory and select the `out` folder.
+    -   Click "Select Folder".
+
+5.  **Launch the Game**:
+    -   The RGBang extension should now appear in your list of extensions.
+    -   Click the Extensions icon (puzzle piece) in your Chrome toolbar, find RGBang, and click it to launch the game in a popup!
+
 ## Tech Stack
 
 -   **Framework**: [Next.js](https://nextjs.org/) (React)
@@ -65,4 +90,3 @@ This command will build the Next.js application and then automatically package t
 -   **Language**: TypeScript
 -   **AI Development**: [Firebase Genkit](https://firebase.google.com/docs/genkit)
 -   **Build Tooling**: Node.js, `archiver` for ZIP packaging
-

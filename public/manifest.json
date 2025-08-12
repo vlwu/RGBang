@@ -5,9 +5,15 @@
     "description": "A vibrant, fast-paced arcade shooter built with Next.js and Canvas.",
     "action": {
         "default_popup": "index.html",
-        "default_icon": "favicon.ico"
+        "default_icon": {
+            "16": "icon16.png",
+            "48": "icon48.png",
+            "128": "icon128.png"
+        }
     },
-    "background": {
-        "service_worker": "background.js"
+    "icons": {
+        "16": "icon16.png",
+        "48": "icon48.png",
+        "128": "icon128.png"
     }
 }
