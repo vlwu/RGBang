@@ -24,7 +24,7 @@ export const defaultKeybindings: Keybindings = {
     primary3: '3',
     comboRadial: 'mouse2', // Right-click
     dash: ' ',
-    viewUpgrades: 'tab',
+    viewUpgrades: 'shift',
 }
 
 class InputHandler {
