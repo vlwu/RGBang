@@ -3,49 +3,87 @@ const archiver = require('archiver');
 const path = require('path');
 
 const outDir = path.join(__dirname, '..', 'out');
-const zipFile = path.join(__dirname, '..', 'dist.zip');
 
-// Create a file to stream archive data to.
-const output = fs.createWriteStream(zipFile);
-const archive = archiver('zip', {
-  zlib: { level: 9 } // Sets the compression level.
-});
+function fixNext() {
+    const oldDir = path.join(outDir, '_next');
+    const newDir = path.join(outDir, 'next-assets');
 
-// Listen for all archive data to be written
-// 'close' event is fired only when a file descriptor is involved
-output.on('close', function() {
-  console.log(archive.pointer() + ' total bytes');
-  console.log('archiver has been finalized and the output file descriptor has closed.');
-});
+    if (!fs.existsSync(oldDir)) {
+        console.log('Build output "out/_next" not found, skipping fix.');
+        return;
+    }
 
-// This event is fired when the data source is drained no matter what was the data source.
-// It is not part of this library but rather from the NodeJS Stream API.
-// @see: https://nodejs.org/api/stream.html#stream_event_end
-output.on('end', function() {
-  console.log('Data has been drained');
-});
+    console.log('Fixing build for Chrome Extension...');
+    
+    // 1. Rename _next to next-assets
+    fs.renameSync(oldDir, newDir);
 
-// Good practice to catch warnings (ie stat failures and other non-blocking errors)
-archive.on('warning', function(err) {
-  if (err.code === 'ENOENT') {
-    // log warning
-  } else {
-    // throw error
+    // 2. Find and replace all occurrences of /_next/ with /next-assets/
+    const walk = (dir) => {
+        let results = [];
+        const list = fs.readdirSync(dir);
+        list.forEach(function(file) {
+            file = path.join(dir, file);
+            const stat = fs.statSync(file);
+            if (stat && stat.isDirectory()) { 
+                results = results.concat(walk(file));
+            } else { 
+                results.push(file);
+            }
+        });
+        return results;
+    }
+
+    const files = walk(outDir);
+    for (const file of files) {
+        if (file.endsWith('.html') || file.endsWith('.js') || file.endsWith('.css')) {
+            const data = fs.readFileSync(file, 'utf8');
+            // Use a regex to replace all occurrences
+            const result = data.replace(/\/_next\//g, '/next-assets/');
+            fs.writeFileSync(file, result, 'utf8');
+        }
+    }
+    console.log('Successfully fixed build for Chrome Extension.');
+}
+
+function zip() {
+  const zipFile = path.join(__dirname, '..', 'dist.zip');
+  const output = fs.createWriteStream(zipFile);
+  const archive = archiver('zip', {
+    zlib: { level: 9 }
+  });
+
+  output.on('close', function() {
+    console.log(archive.pointer() + ' total bytes');
+    console.log('archiver has been finalized and the output file descriptor has closed.');
+  });
+
+  output.on('end', function() {
+    console.log('Data has been drained');
+  });
+
+  archive.on('warning', function(err) {
+    if (err.code === 'ENOENT') {
+      // log warning
+    } else {
+      throw err;
+    }
+  });
+
+  archive.on('error', function(err) {
     throw err;
-  }
-});
+  });
 
-// Good practice to catch this error explicitly
-archive.on('error', function(err) {
-  throw err;
-});
+  archive.pipe(output);
+  archive.directory(outDir, false);
+  archive.finalize();
+}
 
-// Pipe archive data to the file
-archive.pipe(output);
+// Export the fix function to be used in package.json
+module.exports.fixNext = fixNext;
 
-// Append files from the 'out' directory
-archive.directory(outDir, false);
-
-// finalize the archive (ie we are done appending files but streams have to finish yet)
-// 'close', 'end' or 'finish' may be fired right after calling this method so register to them beforehand
-archive.finalize();
+// If the script is run directly, just zip the directory.
+// This assumes the `build` script has already been run and fixed the contents.
+if (require.main === module) {
+    zip();
+}
