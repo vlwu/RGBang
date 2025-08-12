@@ -12,11 +12,13 @@ export class UpgradeManager {
         this.player = player;
     }
 
-    getUpgradeOptions(color: GameColor | null, upgradeData: PlayerUpgradeData): Upgrade[] {
+    getUpgradeOptions(color: GameColor | null, upgradeData: PlayerUpgradeData, addScoreCallback: (amount: number) => void): Upgrade[] {
         let pool: Upgrade[];
 
         if (color === null) { // Boss/white fragment
-            pool = ALL_UPGRADES.filter(u => u.type === UpgradeType.PLAYER_STAT);
+            const gunUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GUN);
+            const playerStatUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.PLAYER_STAT);
+            pool = [...gunUpgrades, ...playerStatUpgrades];
         } else {
             const gunUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GUN && u.color === color);
             const generalUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GENERAL);
@@ -54,7 +56,7 @@ export class UpgradeManager {
         }
 
         // Fill the rest of the options
-        while (options.length < 3) {
+        while (options.length < 3 && (seenUpgrades.length > 0 || unseenUpgrades.length > 0)) {
             if (seenUpgrades.length > 0) {
                  const next = seenUpgrades.pop()!;
                  if (!options.some(opt => opt.id === next.id)) {
@@ -70,13 +72,55 @@ export class UpgradeManager {
             }
         }
         
+        // If there are still no options, it means everything is maxed out.
+        // Provide fallback options.
+        if (options.length === 0) {
+            const healUpgrade: Upgrade = {
+                id: 'fallback-heal',
+                name: 'First Aid',
+                description: 'Instantly recover 25 HP.',
+                type: UpgradeType.GENERAL,
+                color: null,
+                apply: (player) => {
+                    player.health = Math.min(player.getMaxHealth(), player.health + 25);
+                },
+                getValue: () => 25,
+                getMaxLevel: () => 1
+            };
+
+            const scoreUpgrade: Upgrade = {
+                id: 'fallback-score',
+                name: 'Bonus Points',
+                description: 'Instantly gain 500 score.',
+                type: UpgradeType.GENERAL,
+                color: null,
+                apply: (player, level, addScore) => {
+                    if (addScore) {
+                        addScore(500);
+                    }
+                },
+                getValue: () => 500,
+                getMaxLevel: () => 1
+            };
+            
+            // Pass the callback to the apply function
+            scoreUpgrade.apply = scoreUpgrade.apply.bind(null, this.player, 1, addScoreCallback);
+
+            return [healUpgrade, scoreUpgrade];
+        }
+
+
         return options;
     }
 
     apply(upgrade: Upgrade, level: number) {
+        if (upgrade.id.startsWith('fallback-')) {
+             // Fallback upgrades have their apply logic defined on creation.
+            upgrade.apply(this.player, level);
+            return;
+        }
+
         if (this.activeUpgrades.has(upgrade.id)) {
-            // If it exists, we are just re-applying based on a level up,
-            // so we don't need to re-add, just let the player stats recalculate.
             const existing = this.activeUpgrades.get(upgrade.id)!;
             existing.level = level;
 
@@ -84,7 +128,6 @@ export class UpgradeManager {
             this.activeUpgrades.set(upgrade.id, { upgrade, level });
         }
         
-        // Re-calculate all stats based on active upgrades
         this.recalculatePlayerStats();
     }
 

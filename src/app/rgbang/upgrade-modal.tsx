@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Upgrade } from "./upgrades";
 import { GameColor, COLOR_DETAILS } from './color';
 import { PlayerUpgradeData, UpgradeProgress } from './upgrade-data';
-import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair } from "lucide-react";
+import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair, Award } from "lucide-react";
 
 interface UpgradeModalProps {
     isOpen: boolean;
@@ -32,6 +32,9 @@ export const iconMap: { [key: string]: React.ElementType } = {
     'faster-reload': Gauge,
     'prism-exp-gain': Star,
     'accuracy': Crosshair,
+    'ice-spiker': Star,
+    'fallback-heal': PlusCircle,
+    'fallback-score': Award,
 };
 
 
@@ -40,6 +43,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSele
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
     
     const level = progress?.level || 0;
+    const isFallback = upgrade.id.startsWith('fallback-');
 
     return (
         <Card 
@@ -55,16 +59,18 @@ const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSele
             </CardHeader>
             <CardContent className="flex-grow flex flex-col justify-between">
                 <CardDescription className="mb-4">{upgrade.description}</CardDescription>
-                <div>
-                    <div className="flex justify-center items-center mb-2">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                            <Star key={i} className={`w-5 h-5 ${i < level ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
-                        ))}
+                {!isFallback && (
+                    <div>
+                        <div className="flex justify-center items-center mb-2">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <Star key={i} className={`w-5 h-5 ${i < level ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
+                            ))}
+                        </div>
+                         {level >= 5 && (
+                            <p className="text-sm font-bold text-yellow-400">MAX LEVEL</p>
+                        )}
                     </div>
-                     {level >= 5 && (
-                        <p className="text-sm font-bold text-yellow-400">MAX LEVEL</p>
-                    )}
-                </div>
+                )}
             </CardContent>
         </Card>
     )

@@ -119,6 +119,10 @@ export class Game {
     public getCurrentScore(): number {
         return this.score;
     }
+    
+    public addScore(amount: number) {
+        this.score += amount;
+    }
 
     private createBullet = (bullet: Bullet) => {
         this.bullets.push(bullet);

@@ -154,7 +154,12 @@ export default function Home() {
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
-            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, upgradeDataRef.current);
+            const addScoreCallback = (amount: number) => {
+                if (gameRef.current) {
+                    gameRef.current.addScore(amount);
+                }
+            };
+            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, upgradeDataRef.current, addScoreCallback);
             setUpgradeOptions(options);
             setGameState('upgrading');
             setIsUpgradeModalOpen(true);
@@ -168,9 +173,12 @@ export default function Home() {
             inputHandlerRef.current.keys.delete('mouse0');
         }
         
-        await unlockUpgrade(upgrade.id); 
-        const finalData = await levelUpUpgrade(upgrade.id);
-        setUpgradeData(finalData);
+        // Only level up real upgrades, not fallbacks
+        if (!upgrade.id.startsWith('fallback-')) {
+            await unlockUpgrade(upgrade.id); 
+            const finalData = await levelUpUpgrade(upgrade.id);
+            setUpgradeData(finalData);
+        }
 
         setIsUpgradeModalOpen(false);
         setGameState('playing');

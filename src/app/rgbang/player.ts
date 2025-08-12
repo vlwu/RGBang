@@ -264,7 +264,7 @@ export class Player {
     }
     
     applyUpgrade(upgrade: Upgrade) {
-        this.upgradeManager.apply(upgrade, 1); // For now, assume level 1 on pickup
+        this.upgradeManager.apply(upgrade, 1); // Level isn't used by the new fallback system directly, but good to pass.
     }
 
     public getMaxHealth(): number {

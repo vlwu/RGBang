@@ -14,7 +14,7 @@ export interface Upgrade {
     description: string;
     type: UpgradeType;
     color: GameColor | null;
-    apply: (player: Player, level: number) => void;
+    apply: (player: Player, level: number, addScore?: (amount: number) => void) => void;
     getValue: (level: number) => number;
     getMaxLevel: () => number;
 }
