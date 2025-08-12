@@ -30,9 +30,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, 
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const inputHandlerRef = useRef(InputHandler.getInstance());
-    const animationFrameId = useRef<number | null>(null);
     
-    // This effect handles the game loop itself
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
@@ -42,26 +40,28 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, 
         gameRef.current = game;
         game.start();
 
+        let animationFrameId: number | null = null;
+        
         const gameLoop = () => {
              if (gameRef.current) {
-                const isActuallyPaused = isPaused || gameRef.current.player.isRadialMenuOpen;
-                gameRef.current.update(inputHandlerRef.current, isActuallyPaused);
+                gameRef.current.update(inputHandlerRef.current, isPaused);
              }
-             animationFrameId.current = requestAnimationFrame(gameLoop);
+             inputHandlerRef.current.resetEvents();
+             animationFrameId = requestAnimationFrame(gameLoop);
         };
         
         gameLoop();
 
         return () => {
-            if (animationFrameId.current) {
-                cancelAnimationFrame(animationFrameId.current);
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
             }
             game.stop();
             gameRef.current = null;
         };
-    }, [onGameOver, onFragmentCollected, initialGameState, gameRef, isPaused]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialGameState]);
     
-    // This effect only handles resizing the canvas element
     useEffect(() => {
         if (!canvasRef.current) return;
         canvasRef.current.width = GAME_WIDTH;
@@ -73,7 +73,6 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, 
 
 export default function Home() {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'continuePrompt'>('menu');
-    const [runId, setRunId] = useState(0); // Used to force remount of GameCanvas
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
@@ -258,7 +257,6 @@ export default function Home() {
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
         setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor });
         setScore(0);
-        setRunId(id => id + 1); // Increment runId to force remount
         setGameState('playing');
     };
     
@@ -275,7 +273,6 @@ export default function Home() {
         const savedRun = await loadGameState();
         if (savedRun) {
             setInitialGameState(savedRun);
-            setRunId(id => id + 1); // Increment runId to force remount
             setGameState('playing');
         } else {
             // Failsafe in case saved data disappears
@@ -402,7 +399,7 @@ export default function Home() {
             {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && (
                 <div className="relative">
                     <GameCanvas
-                        key={runId} 
+                        key={initialGameState.score + initialGameState.playerHealth} 
                         onGameOver={handleGameOver} 
                         onFragmentCollected={handleFragmentCollected}
                         isPaused={gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen}
