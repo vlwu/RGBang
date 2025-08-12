@@ -18,9 +18,9 @@ export class UpgradeManager {
         if (color === null) { // Boss/white fragment
             pool = ALL_UPGRADES.filter(u => u.type === UpgradeType.PLAYER_STAT);
         } else {
-            const colorUpgrades = ALL_UPGRADES.filter(u => u.color === color);
+            const gunUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GUN && u.color === color);
             const generalUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GENERAL);
-            pool = [...colorUpgrades, ...generalUpgrades];
+            pool = [...gunUpgrades, ...generalUpgrades];
         }
 
         // Filter out upgrades the player has at max level
