@@ -149,7 +149,7 @@ export class Player {
     }
 
     private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void) {
-        if (input.isMouseDown && this.shootTimer === 0 && !this.radialMenu.active) {
+        if (input.isShooting() && this.shootTimer === 0 && !this.radialMenu.active) {
             const direction = input.mousePos.sub(this.pos);
             const bullet = new Bullet(this.pos, direction, this.currentColor);
             createBullet(bullet);

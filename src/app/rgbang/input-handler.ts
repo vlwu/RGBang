@@ -21,7 +21,7 @@ export const defaultKeybindings: Keybindings = {
     primary1: '1',
     primary2: '2',
     primary3: '3',
-    comboRadial: 'q',
+    comboRadial: 'mouse2',
     dash: ' ',
 }
 
@@ -29,7 +29,6 @@ class InputHandler {
     public keys: Set<string> = new Set();
     public keysUp: Set<string> = new Set();
     public mousePos: Vec2 = new Vec2();
-    public isMouseDown: boolean = false;
     public wheelDeltaY: number = 0;
     private canvas: HTMLCanvasElement | null = null;
     public keybindings: Keybindings = defaultKeybindings;
@@ -70,7 +69,12 @@ class InputHandler {
         this.canvas.addEventListener('wheel', this.handleWheel);
     }
     
-    private preventContextMenu = (e: MouseEvent) => e.preventDefault();
+    private preventContextMenu = (e: MouseEvent) => {
+        // Allow context menu only if the target is not the canvas, to allow for dev tools.
+        if (e.target === this.canvas) {
+            e.preventDefault();
+        }
+    };
 
     private init() {
         window.addEventListener('keydown', this.handleKeyDown);
@@ -91,7 +95,6 @@ class InputHandler {
         if (!this.canvas) return;
         const rect = this.canvas.getBoundingClientRect();
         
-        // Scale mouse coordinates to match the canvas's internal resolution
         const scaleX = this.canvas.width / rect.width;
         const scaleY = this.canvas.height / rect.height;
 
@@ -100,15 +103,14 @@ class InputHandler {
     }
 
     private handleMouseDown = (e: MouseEvent) => {
-        if (e.button === 0) { // Left click
-            this.isMouseDown = true;
-        }
+        const key = `mouse${e.button}`;
+        this.keys.add(key);
     }
     
     private handleMouseUp = (e: MouseEvent) => {
-        if (e.button === 0) {
-            this.isMouseDown = false;
-        }
+        const key = `mouse${e.button}`;
+        this.keys.delete(key);
+        this.keysUp.add(key);
     }
     
     private handleWheel = (e: WheelEvent) => {
@@ -123,6 +125,11 @@ class InputHandler {
 
     public isKeyDown(key: string): boolean {
         return this.keys.has(key);
+    }
+    
+    // specifically for left-click shooting
+    public isShooting(): boolean {
+        return this.keys.has('mouse0');
     }
 
     public wasKeyReleased(key: string): boolean {

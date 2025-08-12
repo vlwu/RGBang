@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { Keybindings } from "./input-handler";
 
 interface SettingsModalProps {
@@ -38,11 +37,8 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         }
     }, [isOpen]);
 
-    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    const handleSetBinding = useCallback((newKey: string) => {
         if (editingKey) {
-            e.preventDefault();
-            let newKey = e.key.toLowerCase();
-            
             setLocalKeybindings(prev => ({
                 ...prev,
                 [editingKey]: newKey,
@@ -50,15 +46,27 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
             setEditingKey(null);
         }
     }, [editingKey]);
+
+    const handleKeyDown = useCallback((e: KeyboardEvent) => {
+        e.preventDefault();
+        handleSetBinding(e.key.toLowerCase());
+    }, [handleSetBinding]);
+
+    const handleMouseDown = useCallback((e: MouseEvent) => {
+        e.preventDefault();
+        handleSetBinding(`mouse${e.button}`);
+    }, [handleSetBinding]);
     
     useEffect(() => {
         if (editingKey) {
             window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('mousedown', handleMouseDown);
         }
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('mousedown', handleMouseDown);
         }
-    }, [editingKey, handleKeyDown]);
+    }, [editingKey, handleKeyDown, handleMouseDown]);
 
     const handleSave = () => {
         onKeybindingsChange(localKeybindings);
@@ -85,6 +93,11 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
     const getKeyDisplay = (key: string) => {
         if (!key) return '';
         if (key === ' ') return 'SPACE';
+        if (key === 'mouse0') return 'LMB';
+        if (key === 'mouse1') return 'MMB';
+        if (key === 'mouse2') return 'RMB';
+        // Add more for other mouse buttons if needed
+        if (key.startsWith('mouse')) return `MOUSE ${parseInt(key.slice(5)) + 1}`;
         return key.toUpperCase();
     }
 
@@ -94,7 +107,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
                 <DialogHeader>
                     <DialogTitle className="text-primary">Settings</DialogTitle>
                     <DialogDescription>
-                        Customize your controls. Click on a button and press any key to rebind.
+                        Customize your controls. Click a button and press any key or mouse button to rebind.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
