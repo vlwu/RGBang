@@ -38,7 +38,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSele
     const Icon = iconMap[upgrade.id] || iconMap['default'];
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
     
-    const level = progress?.level || 1;
+    const level = progress?.level || 0;
 
     return (
         <Card 

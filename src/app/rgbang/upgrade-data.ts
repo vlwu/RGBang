@@ -93,10 +93,7 @@ export async function unlockUpgrade(upgradeId: string): Promise<PlayerUpgradeDat
     const data = await getPlayerUpgradeData();
     if (!data.unlockedUpgradeIds.has(upgradeId)) {
         data.unlockedUpgradeIds.add(upgradeId);
-        // Initialize progress when an upgrade is first unlocked
-        if (!data.upgradeProgress.has(upgradeId)) {
-            data.upgradeProgress.set(upgradeId, { level: 1 });
-        }
+        // Do not set initial level here, levelUp will handle it.
         await savePlayerUpgradeData(data);
     }
     return data;
