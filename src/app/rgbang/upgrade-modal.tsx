@@ -1,6 +1,7 @@
 
 "use client"
 
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -38,17 +39,28 @@ export const iconMap: { [key: string]: React.ElementType } = {
 };
 
 
-const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSelect: (upgrade: Upgrade) => void, progress?: UpgradeProgress }) => {
+const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable }: { upgrade: Upgrade, onSelect: (upgrade: Upgrade) => void, progress?: UpgradeProgress, isSelectable: boolean }) => {
     const Icon = iconMap[upgrade.id] || iconMap['default'];
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
     
     const level = progress?.level || 0;
     const isFallback = upgrade.id.startsWith('fallback-');
 
+    const cardClasses = cn(
+        "text-center bg-card/80 backdrop-blur-sm border-border flex flex-col transition-all duration-300",
+        isSelectable
+            ? "cursor-pointer hover:border-primary hover:bg-card hover:-translate-y-2 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
+            : "opacity-60 cursor-not-allowed"
+    );
+
     return (
         <Card 
-            className="text-center bg-card/80 backdrop-blur-sm border-border hover:border-primary hover:bg-card transition-all cursor-pointer flex flex-col hover:-translate-y-2 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
-            onClick={() => onSelect(upgrade)}
+            className={cardClasses}
+            onClick={() => {
+                if (isSelectable) {
+                    onSelect(upgrade);
+                }
+            }}
             style={{ '--card-glow-color': colorHex } as React.CSSProperties}
         >
             <CardHeader className="items-center pb-4">
@@ -77,6 +89,19 @@ const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSele
 }
 
 export function UpgradeModal({ isOpen, options, onSelect, upgradeData }: UpgradeModalProps) {
+    const [isSelectable, setIsSelectable] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setIsSelectable(false);
+            const timer = setTimeout(() => {
+                setIsSelectable(true);
+            }, 1000); // 1-second delay
+
+            return () => clearTimeout(timer); // Cleanup on close
+        }
+    }, [isOpen]);
+
     return (
         <Dialog open={isOpen}>
             <DialogContent 
@@ -96,6 +121,7 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData }: Upgrade
                             upgrade={opt} 
                             onSelect={onSelect}
                             progress={upgradeData.upgradeProgress.get(opt.id)}
+                            isSelectable={isSelectable}
                         />
                     ))}
                 </div>
