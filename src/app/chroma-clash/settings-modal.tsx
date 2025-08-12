@@ -90,7 +90,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[425px] bg-background text-foreground">
                 <DialogHeader>
-                    <DialogTitle className="text-primary">Settings</DialogTitle>
+                    <DialogTitle>Settings</DialogTitle>
                     <DialogDescription>
                         Customize your controls. Click on a button and press any key to rebind.
                     </DialogDescription>

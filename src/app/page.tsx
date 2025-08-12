@@ -48,7 +48,7 @@ function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef
     }, [isPaused, gameRef]);
 
 
-    return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-primary/20 border-2 border-primary/20" />;
+    return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
 
 export default function Home() {
@@ -174,7 +174,7 @@ export default function Home() {
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
                     <h1 className="text-8xl font-bold tracking-tighter font-headline">
                         <span className="bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 bg-clip-text text-transparent">RGB</span>
-                        <span className="text-primary">ang</span>
+                        <span>ang</span>
                     </h1>
                     <div className="flex flex-col gap-4 w-64">
                         <Button size="lg" onClick={startGame} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
@@ -211,7 +211,7 @@ export default function Home() {
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
-                             <h2 className="text-6xl font-bold text-primary font-headline tracking-tighter mb-8">Paused</h2>
+                             <h2 className="text-6xl font-bold font-headline tracking-tighter mb-8 text-glow">Paused</h2>
                              <div className="flex flex-col space-y-4 w-52">
                                 <Button size="lg" onClick={resumeGame} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
                                     <Play className="mr-2" />
@@ -233,7 +233,7 @@ export default function Home() {
 
             {gameState === 'gameOver' && (
                  <div className="flex flex-col items-center text-center space-y-6 animate-fade-in">
-                    <h2 className="text-7xl font-bold text-primary/80 font-headline">Game Over</h2>
+                    <h2 className="text-7xl font-bold font-headline text-glow">Game Over</h2>
                     <p className="text-4xl font-semibold">
                         Final Score: <span className="font-bold text-accent">{score}</span>
                     </p>
