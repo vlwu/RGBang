@@ -114,22 +114,22 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'ice-spiker',
         name: 'Ice Spiker',
-        description: 'Blue bullets have a chance to briefly freeze enemies.',
+        description: 'Blue bullets briefly freeze enemies on hit.',
         type: UpgradeType.GUN,
         color: GameColor.BLUE,
         getMaxLevel: () => 1,
         getValue: () => 1,
-        apply: (player) => { console.log('ice spiker active'); }
+        apply: (player) => { player.hasIceSpiker = true; }
     },
     {
         id: 'chain-lightning',
         name: 'Chain Lightning',
-        description: 'Yellow bullets chain to nearby enemies on hit.',
+        description: 'Yellow bullets chain to a nearby enemy on hit.',
         type: UpgradeType.GUN,
         color: GameColor.YELLOW,
         getMaxLevel: () => 1,
         getValue: () => 1,
-        apply: (player) => { console.log('chain lightning active'); }
+        apply: (player) => { player.hasChainLightning = true; }
     },
     {
         id: 'ignite',
@@ -139,6 +139,6 @@ export const ALL_UPGRADES: Upgrade[] = [
         color: GameColor.RED,
         getMaxLevel: () => 1,
         getValue: () => 1,
-        apply: (player) => { console.log('ignite active'); }
+        apply: (player) => { player.hasIgnite = true; }
     }
 ];

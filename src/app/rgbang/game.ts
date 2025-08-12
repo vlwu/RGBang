@@ -6,7 +6,7 @@ import { Boss } from './boss';
 import { UI } from './ui';
 import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
-import { circleCollision, Vec2 } from './utils';
+import { circleCollision, Vec2, distance } from './utils';
 import { getRandomElement, PRIMARY_COLORS, GameColor } from './color';
 import { PrismFragment } from './prism-fragment';
 
@@ -188,6 +188,41 @@ export class Game {
             this.onGameOver(this.score);
         }
     }
+    
+    private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
+        if (this.player.hasIgnite && bullet.color === GameColor.RED) {
+            enemy.applyIgnite(2, 180); // 2 damage, 3 seconds
+        }
+        if (this.player.hasIceSpiker && bullet.color === GameColor.BLUE) {
+            enemy.applyFreeze(90); // 1.5 seconds
+        }
+        if (this.player.hasChainLightning && bullet.color === GameColor.YELLOW) {
+            this.handleChainLightning(enemy);
+        }
+    }
+    
+    private handleChainLightning(hitEnemy: Enemy) {
+        const chainRange = 150;
+        const chainDamage = 5;
+        let closestEnemy: Enemy | null = null;
+        let minDistance = Infinity;
+
+        for (const otherEnemy of this.enemies) {
+            if (otherEnemy === hitEnemy || !otherEnemy.isAlive) continue;
+
+            const d = distance(hitEnemy, otherEnemy);
+            if (d < chainRange && d < minDistance) {
+                minDistance = d;
+                closestEnemy = otherEnemy;
+            }
+        }
+
+        if (closestEnemy) {
+            this.particles.addLightning(hitEnemy.pos, closestEnemy.pos);
+            closestEnemy.takeDamage(chainDamage, GameColor.YELLOW);
+        }
+    }
+
 
     private handleCollisions() {
         // Bullet-Enemy Collisions
@@ -213,9 +248,12 @@ export class Game {
                     
                     const hitSuccess = enemy.takeDamage(bullet.damage, bullet.color);
                     
-                    if (hitSuccess && !enemy.isAlive) {
-                        this.score += enemy.points;
-                        this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
+                    if (hitSuccess) {
+                        this.applySpecialEffects(bullet, enemy);
+                        if (!enemy.isAlive) {
+                           this.score += enemy.points;
+                           this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
+                        }
                     }
                     
                     this.bullets.splice(i, 1);
@@ -278,6 +316,9 @@ export class Game {
         this.enemies.forEach(enemy => {
             if (!enemy.isAlive) {
                 this.particles.add(enemy.pos, enemy.color, 30);
+                if (enemy.isIgnited) {
+                   this.particles.add(enemy.pos, GameColor.RED, 15);
+                }
             }
         });
 

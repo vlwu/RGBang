@@ -26,7 +26,8 @@ export class UpgradeManager {
         // Filter out upgrades the player has at max level
         const availablePool = pool.filter(u => {
             const progress = upgradeData.upgradeProgress.get(u.id);
-            return !progress || progress.level < 5;
+            const maxLevel = u.getMaxLevel();
+            return !progress || progress.level < maxLevel;
         });
 
         // Separate into seen and unseen upgrades
@@ -97,6 +98,11 @@ export class UpgradeManager {
         this.player.accuracyModifier = 1;
         this.player.flatHealthIncrease = 0;
         this.player.maxHealth = 100;
+
+        // Reset gun-specific effects
+        this.player.hasChainLightning = false;
+        this.player.hasIgnite = false;
+        this.player.hasIceSpiker = false;
         
         // Apply all active upgrades
         this.activeUpgrades.forEach(({ upgrade, level }) => {

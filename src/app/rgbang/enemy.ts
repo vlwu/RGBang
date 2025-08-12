@@ -22,6 +22,14 @@ export class Enemy {
     isAlive = true;
     damage = 10;
     
+    // Status Effects
+    isIgnited = false;
+    igniteDamage = 0;
+    igniteTimer = 0;
+    
+    isFrozen = false;
+    frozenTimer = 0;
+
     private wrongHitCounter = 0;
     private activePunishment: PunishmentType | null = null;
     
@@ -42,6 +50,30 @@ export class Enemy {
 
     update(player: Player) {
         if (!this.isAlive) return;
+        
+        // Handle status effects
+        if (this.isFrozen) {
+            this.frozenTimer--;
+            if (this.frozenTimer <= 0) {
+                this.isFrozen = false;
+            }
+            // Don't move if frozen
+            return; 
+        }
+
+        if (this.isIgnited) {
+            this.igniteTimer--;
+            if (this.igniteTimer % 30 === 0) { // Damage every half second
+                this.health -= this.igniteDamage;
+                if (this.health <= 0) {
+                    this.isAlive = false;
+                }
+            }
+            if (this.igniteTimer <= 0) {
+                this.isIgnited = false;
+            }
+        }
+
         const direction = player.pos.sub(this.pos).normalize();
         this.pos = this.pos.add(direction.scale(this.speed));
     }
@@ -50,6 +82,13 @@ export class Enemy {
         if (!this.isAlive) return;
         
         ctx.save();
+        
+        // Status effect visuals
+        if (this.isFrozen) {
+            ctx.shadowColor = '#4d94ff';
+            ctx.shadowBlur = 15;
+        }
+        
         // Body
         ctx.fillStyle = this.hexColor;
         ctx.beginPath();
@@ -59,6 +98,14 @@ export class Enemy {
         // Shape Overlay
         drawShapeForColor(ctx, this.pos, this.radius, this.color, 'black');
         
+        if (this.isFrozen) {
+            ctx.strokeStyle = "rgba(173, 216, 230, 0.8)"; // Light blue
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
+        
+        ctx.restore(); // Restore before drawing overlays to not affect them
+
         // Health bar
         if (this.health < this.maxHealth) {
             const barWidth = this.radius * 2;
@@ -70,7 +117,7 @@ export class Enemy {
             ctx.fillRect(barX, barY, barWidth, barHeight);
             
             const healthPercentage = this.health / this.maxHealth;
-            ctx.fillStyle = 'red';
+            ctx.fillStyle = this.isIgnited ? '#ffc266' : 'red';
             ctx.fillRect(barX, barY, barWidth * healthPercentage, barHeight);
         }
         
@@ -86,7 +133,6 @@ export class Enemy {
             }[this.activePunishment];
             ctx.fillText(indicatorText, this.pos.x, this.pos.y - this.radius - 25);
         }
-        ctx.restore();
     }
     
     takeDamage(amount: number, damageColor: GameColor): boolean {
@@ -113,6 +159,18 @@ export class Enemy {
             return false;
         }
     }
+    
+    applyIgnite(damage: number, duration: number) {
+        this.isIgnited = true;
+        this.igniteDamage = damage;
+        this.igniteTimer = duration;
+    }
+
+    applyFreeze(duration: number) {
+        this.isFrozen = true;
+        this.frozenTimer = duration;
+    }
+
 
     private applyPunishment() {
         if (this.activePunishment) return; // Don't stack punishments

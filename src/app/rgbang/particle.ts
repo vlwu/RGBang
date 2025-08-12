@@ -46,6 +46,44 @@ class Particle implements IParticle {
     }
 }
 
+
+class LightningParticle implements IParticle {
+    pos: Vec2;
+    vel: Vec2; // Not used, but needed for interface
+    lifespan: number;
+    radius: number; // Not used
+    private endPos: Vec2;
+
+    constructor(startPos: Vec2, endPos: Vec2) {
+        this.pos = startPos;
+        this.endPos = endPos;
+        this.lifespan = 20; // Short-lived effect
+        this.vel = new Vec2(0, 0);
+        this.radius = 0;
+    }
+
+    update() {
+        this.lifespan--;
+    }
+
+    draw(ctx: CanvasRenderingContext2D) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.lifespan / 20);
+        ctx.strokeStyle = '#ffff66'; // Yellow
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#ffff66';
+        ctx.shadowBlur = 10;
+        
+        ctx.beginPath();
+        ctx.moveTo(this.pos.x, this.pos.y);
+        ctx.lineTo(this.endPos.x, this.endPos.y);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+}
+
+
 class FragmentParticle implements IParticle {
     pos: Vec2;
     vel: Vec2;
@@ -198,5 +236,9 @@ export class ParticleSystem {
         for (let i = 0; i < 20; i++) {
             this.particles.push(new PickupParticle(pos, hexColor));
         }
+    }
+    
+    addLightning(startPos: Vec2, endPos: Vec2) {
+        this.particles.push(new LightningParticle(startPos, endPos));
     }
 }
