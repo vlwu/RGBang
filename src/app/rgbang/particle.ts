@@ -1,7 +1,18 @@
+
 import { Vec2 } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 
-class Particle {
+interface IParticle {
+    pos: Vec2;
+    vel: Vec2;
+    lifespan: number;
+    radius: number;
+    update(): void;
+    draw(ctx: CanvasRenderingContext2D): void;
+}
+
+
+class Particle implements IParticle {
     pos: Vec2;
     vel: Vec2;
     lifespan: number;
@@ -26,7 +37,7 @@ class Particle {
 
     draw(ctx: CanvasRenderingContext2D) {
         ctx.save();
-        ctx.globalAlpha = this.lifespan / 60;
+        ctx.globalAlpha = Math.max(0, this.lifespan / 60);
         ctx.fillStyle = this.color;
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
@@ -35,8 +46,49 @@ class Particle {
     }
 }
 
+class DashParticle implements IParticle {
+    pos: Vec2;
+    vel: Vec2;
+    lifespan: number;
+    maxLifespan: number;
+    radius: number;
+    private color: string = '#FF0000';
+
+    constructor(pos: Vec2) {
+        this.pos = new Vec2(pos.x, pos.y);
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 2 + 0.5;
+        this.vel = new Vec2(Math.cos(angle) * speed, Math.sin(angle) * speed);
+        this.maxLifespan = this.lifespan = Math.random() * 40 + 20; // smaller lifespan
+        this.radius = Math.random() * 2 + 1;
+    }
+
+    update() {
+        this.pos = this.pos.add(this.vel);
+        this.lifespan--;
+        
+        // Color cycling logic
+        const lifeRatio = this.lifespan / this.maxLifespan;
+        const hue = (1 - lifeRatio) * 360;
+        this.color = `hsl(${hue}, 100%, 50%)`;
+    }
+
+    draw(ctx: CanvasRenderingContext2D) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.lifespan / this.maxLifespan);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+
 export class ParticleSystem {
-    particles: Particle[] = [];
+    particles: IParticle[] = [];
 
     update() {
         for (let i = this.particles.length - 1; i >= 0; i--) {
@@ -55,5 +107,9 @@ export class ParticleSystem {
         for (let i = 0; i < count; i++) {
             this.particles.push(new Particle(pos, color));
         }
+    }
+    
+    addDashParticle(pos: Vec2) {
+        this.particles.push(new DashParticle(pos));
     }
 }

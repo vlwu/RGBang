@@ -135,7 +135,7 @@ export class Game {
 
     private update() {
         // 1. Update entities
-        this.player.update(this.inputHandler, this.createBullet, this.canvas.width, this.canvas.height);
+        this.player.update(this.inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
         this.inputHandler.resetEvents();
         
         this.bullets.forEach(bullet => bullet.update());

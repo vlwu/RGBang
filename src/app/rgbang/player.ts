@@ -4,6 +4,7 @@ import { Bullet } from './bullet';
 import InputHandler from './input-handler';
 import { GameColor, COLOR_DETAILS, ALL_COLORS, SECONDARY_COLORS } from './color';
 import { RadialMenu } from './radial-menu';
+import { ParticleSystem } from './particle';
 
 export class Player {
     pos: Vec2;
@@ -34,10 +35,10 @@ export class Player {
         this.radialMenu = new RadialMenu();
     }
     
-    update(input: InputHandler, createBullet: (bullet: Bullet) => void, canvasWidth: number, canvasHeight: number) {
+    update(input: InputHandler, createBullet: (bullet: Bullet) => void, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
         if (!this.isAlive) return;
 
-        this.handleMovement(input, canvasWidth, canvasHeight);
+        this.handleMovement(input, particleSystem, canvasWidth, canvasHeight);
         this.handleColorSelection(input, createBullet);
         this.handleShooting(input, createBullet);
         
@@ -45,7 +46,7 @@ export class Player {
         if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
     }
 
-    private handleMovement(input: InputHandler, canvasWidth: number, canvasHeight: number) {
+    private handleMovement(input: InputHandler, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
         // Dash activation
         if (input.isKeyDown(input.keybindings.dash) && this.dashCooldownTimer === 0) {
             this.isDashing = true;
@@ -62,6 +63,9 @@ export class Player {
             if (this.dashTimer <= 0) {
                 this.isDashing = false;
             }
+             // Add dash particles
+            particleSystem.addDashParticle(this.pos);
+
         }
         
         if (input.isKeyDown(input.keybindings.up)) moveDir.y -= 1;
