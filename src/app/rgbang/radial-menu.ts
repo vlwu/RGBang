@@ -11,27 +11,10 @@ export class RadialMenu {
     private highlightedSegment: number | null = null;
     private availableColors: Set<GameColor> = new Set();
     
-    // Timer properties
-    private timer = 0;
-    private readonly maxTime = 180; // 3 seconds at 60fps
-    private onTimerEnd: (() => void) | null = null;
-
     update(playerPos: Vec2, mousePos: Vec2, availableColors: Set<GameColor>) {
         if (!this.active) return;
         this.center = playerPos;
         this.availableColors = availableColors;
-
-        // Update timer
-        if (this.timer > 0) {
-            this.timer--;
-            if (this.timer <= 0) {
-                if (this.onTimerEnd) {
-                    this.onTimerEnd();
-                }
-                this.close();
-                return;
-            }
-        }
         
         const relativeMousePos = mousePos.sub(this.center);
         const dist = relativeMousePos.magnitude();
@@ -93,13 +76,12 @@ export class RadialMenu {
 
         });
 
-        // Draw timer
-        const timerProgress = this.timer / this.maxTime;
-        const timerRadius = this.radius + 10;
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 4;
+        // Draw an indicator that the menu is open, instead of the timer
+        const indicatorRadius = this.radius + 10;
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.arc(this.center.x, this.center.y, timerRadius, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * timerProgress));
+        ctx.arc(this.center.x, this.center.y, indicatorRadius, 0, Math.PI * 2);
         ctx.stroke();
         
         ctx.restore();
@@ -115,16 +97,12 @@ export class RadialMenu {
         return null;
     }
     
-    open(onTimerEnd: () => void) {
+    open() {
         this.active = true;
-        this.timer = this.maxTime;
-        this.onTimerEnd = onTimerEnd;
     }
 
     close() {
         this.active = false;
         this.highlightedSegment = null;
-        this.timer = 0;
-        this.onTimerEnd = null;
     }
 }

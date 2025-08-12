@@ -65,13 +65,14 @@ export class Player {
     update(input: InputHandler, createBullet: (bullet: Bullet) => void, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
         if (!this.isAlive) return;
         
+        this.handleColorSelection(input, createBullet);
+
         if (this.isRadialMenuOpen) {
             this.radialMenu.update(this.pos, input.mousePos, this.availableColors);
             return;
         }
 
         this.handleMovement(input, particleSystem, canvasWidth, canvasHeight);
-        this.handleColorSelection(input, createBullet);
         this.handleShooting(input, createBullet);
         
         if (this.shootTimer > 0) this.shootTimer--;
@@ -149,11 +150,11 @@ export class Player {
         // Open radial menu
         if (input.isKeyDown(input.keybindings.comboRadial) && !this.radialMenu.active) {
             this.isRadialMenuOpen = true;
-            this.radialMenu.open(() => {
-                this.isRadialMenuOpen = false; // Callback for when timer ends
-            });
+            this.radialMenu.open();
             return;
         }
+
+        if (this.isRadialMenuOpen) return;
 
         const trySelectColor = (color: GameColor) => {
             if (this.availableColors.has(color)) {
