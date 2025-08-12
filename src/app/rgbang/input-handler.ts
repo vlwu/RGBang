@@ -73,6 +73,7 @@ class InputHandler {
     };
 
     private init() {
+        if (typeof window === 'undefined') return;
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
     }
@@ -133,6 +134,7 @@ class InputHandler {
     }
     
     public destroy() {
+        if (typeof window === 'undefined') return;
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
         if (this.canvas) {

@@ -64,28 +64,6 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
         canvasRef.current.height = GAME_HEIGHT;
     }, []);
 
-    // Main Game Loop
-    useEffect(() => {
-        let animationFrameId: number | null = null;
-        
-        const gameLoop = () => {
-             if (gameRef.current) {
-                gameRef.current.update(inputHandler, isPaused);
-                inputHandler.resetEvents();
-             }
-             animationFrameId = requestAnimationFrame(gameLoop);
-        };
-        
-        animationFrameId = requestAnimationFrame(gameLoop);
-
-        return () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-        };
-    }, [isPaused]);
-
-
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
 
@@ -120,6 +98,8 @@ export default function Home() {
     useEffect(() => {
         keybindingsRef.current = keybindings;
     }, [keybindings]);
+    
+    const inputHandlerRef = useRef(InputHandler.getInstance());
 
     const updateCanvasSize = useCallback(() => {
         const windowWidth = window.innerWidth * 0.9;
@@ -159,7 +139,7 @@ export default function Home() {
         const savedKeybindings = localStorage.getItem('rgBangKeybindings');
         const currentKeybindings = savedKeybindings ? JSON.parse(savedKeybindings) : defaultKeybindings;
         setKeybindings(currentKeybindings);
-        InputHandler.getInstance().setKeybindings(currentKeybindings);
+        inputHandlerRef.current.setKeybindings(currentKeybindings);
     }, []);
 
     useEffect(() => {
@@ -185,10 +165,34 @@ export default function Home() {
     }, [loadInitialData, updateCanvasSize]);
 
     useEffect(() => {
-        InputHandler.getInstance().setKeybindings(keybindings);
+        inputHandlerRef.current.setKeybindings(keybindings);
         localStorage.setItem('rgBangKeybindings', JSON.stringify(keybindings));
     }, [keybindings]);
     
+    // Main Game Loop
+    useEffect(() => {
+        let animationFrameId: number | null = null;
+        const gameLoop = () => {
+            if (gameRef.current) {
+                const isPaused = gameState === 'paused' 
+                    || gameState === 'upgrading' 
+                    || isUpgradeOverviewOpen 
+                    || (gameRef.current?.player.isRadialMenuOpen ?? false);
+
+                gameRef.current.update(inputHandlerRef.current, isPaused);
+                inputHandlerRef.current.resetEvents();
+            }
+            animationFrameId = requestAnimationFrame(gameLoop);
+        };
+        animationFrameId = requestAnimationFrame(gameLoop);
+        return () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -242,8 +246,10 @@ export default function Home() {
                     gameRef.current.addScore(amount);
                 }
             };
+            
+            const isFallback = upgrade.id.startsWith('fallback-');
 
-            if (upgrade.id === 'fallback-score' || upgrade.id === 'fallback-heal') {
+            if (isFallback) {
                 upgrade.apply(gameRef.current.player, 1, addScoreCallback);
             } else {
                  gameRef.current.player.applyUpgrade(upgrade);
@@ -253,6 +259,7 @@ export default function Home() {
         }
         
         if (!upgrade.id.startsWith('fallback-')) {
+            await unlockUpgrade(upgrade.id);
             const finalData = await levelUpUpgrade(upgrade.id);
             setUpgradeData(finalData); // Update permanent data state
             upgradeDataRef.current = finalData;
@@ -521,5 +528,3 @@ export default function Home() {
         </main>
     );
 }
-
-    

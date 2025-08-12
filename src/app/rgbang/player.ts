@@ -34,10 +34,10 @@ export class Player {
     // Direct stat boosts
     public flatHealthIncrease = 0;
     
-    // Gun-specific effect flags
-    public hasChainLightning = false;
-    public hasIgnite = false;
-    public hasIceSpiker = false;
+    // Gun-specific effect levels
+    public chainLightningLevel = 0;
+    public igniteLevel = 0;
+    public iceSpikerLevel = 0;
 
     private baseBulletSpread = 0.15; // in radians
 

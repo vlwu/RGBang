@@ -24,11 +24,11 @@ export class UpgradeManager {
             pool = [...gunUpgrades, ...generalUpgrades];
         }
 
-        // Filter out upgrades the player has at max level
+        // Filter out upgrades the player has at max level for this run
         const availablePool = pool.filter(u => {
-            const progress = upgradeData.upgradeProgress.get(u.id);
+            const runLevel = this.getUpgradeLevel(u.id);
             const maxLevel = u.getMaxLevel();
-            return !progress || progress.level < maxLevel;
+            return runLevel < maxLevel;
         });
         
         const options: Upgrade[] = [];
@@ -36,7 +36,10 @@ export class UpgradeManager {
         // Special handling for unique gun upgrades to ensure they appear
         const gunUpgrades = availablePool.filter(u => u.type === UpgradeType.GUN);
         if (gunUpgrades.length > 0) {
-            options.push(gunUpgrades[0]); // Add the specific gun upgrade if available
+            // Only add if not already in options
+            if (!options.some(opt => opt.id === gunUpgrades[0].id)) {
+                options.push(gunUpgrades[0]);
+            }
         }
 
         // Filter out the gun upgrades from the main pool to avoid duplication
@@ -124,19 +127,23 @@ export class UpgradeManager {
     }
 
     apply(upgrade: Upgrade, level: number) {
+        const currentLevel = this.getUpgradeLevel(upgrade.id);
+
         if (upgrade.id.startsWith('fallback-')) {
-            upgrade.apply(this.player, level);
+            upgrade.apply(this.player, 1);
             return;
         }
         
-        this.activeUpgrades.set(upgrade.id, { upgrade, level });
+        this.activeUpgrades.set(upgrade.id, { upgrade, level: currentLevel + 1 });
         this.recalculatePlayerStats();
     }
     
     applyById(upgradeId: string, level: number) {
         const upgrade = ALL_UPGRADES.find(u => u.id === upgradeId);
         if (upgrade) {
-            this.apply(upgrade, level);
+            // This is for loading from save state, so we set the level directly
+            this.activeUpgrades.set(upgradeId, { upgrade, level });
+            this.recalculatePlayerStats();
         }
     }
 
@@ -152,13 +159,17 @@ export class UpgradeManager {
         this.player.maxHealth = 100;
 
         // Reset gun-specific effects
-        this.player.hasChainLightning = false;
-        this.player.hasIgnite = false;
-        this.player.hasIceSpiker = false;
+        this.player.chainLightningLevel = 0;
+        this.player.igniteLevel = 0;
+        this.player.iceSpikerLevel = 0;
         
         // Apply all active upgrades
         this.activeUpgrades.forEach(({ upgrade, level }) => {
-            upgrade.apply(this.player, level);
+            // The apply function in upgrades.ts should handle the logic based on the new total level.
+            // We call apply with the level to ensure stats are recalculated correctly based on the new total level.
+             for(let i = 0; i < level; i++) {
+                upgrade.apply(this.player, i + 1);
+            }
         });
 
         // Recalculate max health

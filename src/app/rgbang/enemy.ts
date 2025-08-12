@@ -1,7 +1,8 @@
 
-import { Vec2, drawShapeForColor } from './utils';
+import { Vec2, drawShapeForColor, distance } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 import { Player } from './player';
+import { ParticleSystem } from './particle';
 
 export enum PunishmentType {
     SPEED_BOOST = 'SPEED_BOOST',
@@ -30,6 +31,8 @@ export class Enemy {
     
     isFrozen = false;
     frozenTimer = 0;
+    
+    chainHit = false; // Flag to prevent being hit multiple times by the same chain lightning
 
     private wrongHitCounter = 0;
     private activePunishment: PunishmentType | null = null;
@@ -49,7 +52,7 @@ export class Enemy {
         this.points = points;
     }
 
-    update(player: Player) {
+    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem) {
         if (!this.isAlive) return;
         
         // Handle status effects
@@ -74,6 +77,12 @@ export class Enemy {
                 this.isIgnited = false;
             }
         }
+        
+        if (this.chainHit) {
+            this.applyChainLightning(this.chainHitMaxChains, this.chainHitDamage, this.chainHitRange, allEnemies, particles, this);
+            this.chainHit = false; // Reset after processing
+        }
+
 
         const direction = player.pos.sub(this.pos).normalize();
         this.pos = this.pos.add(direction.scale(this.speed));
@@ -170,6 +179,39 @@ export class Enemy {
     applyFreeze(duration: number) {
         this.isFrozen = true;
         this.frozenTimer = duration;
+    }
+
+    // Temporary storage for chain lightning parameters
+    private chainHitMaxChains = 0;
+    private chainHitDamage = 0;
+    private chainHitRange = 0;
+    
+    applyChainLightning(maxChains: number, damage: number, range: number, allEnemies: Enemy[], particles: ParticleSystem, originEnemy: Enemy) {
+        if (maxChains <= 0) return;
+
+        let closestEnemy: Enemy | null = null;
+        let minDistance = Infinity;
+
+        for (const otherEnemy of allEnemies) {
+            if (otherEnemy === originEnemy || !otherEnemy.isAlive || otherEnemy.chainHit) continue;
+
+            const d = distance(originEnemy, otherEnemy);
+            if (d < range && d < minDistance) {
+                minDistance = d;
+                closestEnemy = otherEnemy;
+            }
+        }
+
+        if (closestEnemy) {
+            particles.addLightning(originEnemy.pos, closestEnemy.pos);
+            closestEnemy.takeDamage(damage, GameColor.YELLOW);
+            
+            // Mark the enemy to continue the chain in its own update loop
+            closestEnemy.chainHit = true;
+            closestEnemy.chainHitMaxChains = maxChains - 1;
+            closestEnemy.chainHitDamage = damage;
+            closestEnemy.chainHitRange = range;
+        }
     }
 
 

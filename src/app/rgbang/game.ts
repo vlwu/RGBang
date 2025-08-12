@@ -170,7 +170,7 @@ export class Game {
             this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
             
             this.bullets.forEach(bullet => bullet.update());
-            this.enemies.forEach(enemy => enemy.update(this.player));
+            this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
             this.fragments.forEach(fragment => fragment.update(this.player));
             this.boss?.update();
 
@@ -219,39 +219,22 @@ export class Game {
     }
     
     private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
-        if (this.player.hasIgnite && bullet.color === GameColor.RED) {
-            enemy.applyIgnite(2, 180); // 2 damage, 3 seconds
+        if (this.player.igniteLevel > 0 && bullet.color === GameColor.RED) {
+            const igniteDamage = 1 + this.player.igniteLevel;
+            const igniteDuration = 120 + this.player.igniteLevel * 30; // 2s + 0.5s per level
+            enemy.applyIgnite(igniteDamage, igniteDuration);
         }
-        if (this.player.hasIceSpiker && bullet.color === GameColor.BLUE) {
-            enemy.applyFreeze(90); // 1.5 seconds
+        if (this.player.iceSpikerLevel > 0 && bullet.color === GameColor.BLUE) {
+            const freezeDuration = 60 + this.player.iceSpikerLevel * 15; // 1s + 0.25s per level
+            enemy.applyFreeze(freezeDuration);
         }
-        if (this.player.hasChainLightning && bullet.color === GameColor.YELLOW) {
-            this.handleChainLightning(enemy);
-        }
-    }
-    
-    private handleChainLightning(hitEnemy: Enemy) {
-        const chainRange = 150;
-        const chainDamage = 5;
-        let closestEnemy: Enemy | null = null;
-        let minDistance = Infinity;
-
-        for (const otherEnemy of this.enemies) {
-            if (otherEnemy === hitEnemy || !otherEnemy.isAlive) continue;
-
-            const d = distance(hitEnemy, otherEnemy);
-            if (d < chainRange && d < minDistance) {
-                minDistance = d;
-                closestEnemy = otherEnemy;
-            }
-        }
-
-        if (closestEnemy) {
-            this.particles.addLightning(hitEnemy.pos, closestEnemy.pos);
-            closestEnemy.takeDamage(chainDamage, GameColor.YELLOW);
+        if (this.player.chainLightningLevel > 0 && bullet.color === GameColor.YELLOW) {
+            const maxChains = this.player.chainLightningLevel;
+            const chainDamage = 5 + this.player.chainLightningLevel;
+            const chainRange = 100 + this.player.chainLightningLevel * 10;
+            enemy.applyChainLightning(maxChains, chainDamage, chainRange);
         }
     }
-
 
     private handleCollisions() {
         // Bullet-Enemy Collisions
@@ -388,5 +371,3 @@ export class Game {
         this.ui.draw(this.player, this.score, this.boss);
     }
 }
-
-    
