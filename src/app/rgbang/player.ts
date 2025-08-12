@@ -1,7 +1,9 @@
+
 import { Vec2, drawShapeForColor } from './utils';
 import { Bullet } from './bullet';
 import InputHandler from './input-handler';
-import { GameColor, mixColors, COLOR_DETAILS, PRIMARY_COLORS } from './color';
+import { GameColor, COLOR_DETAILS, ALL_COLORS, SECONDARY_COLORS } from './color';
+import { RadialMenu } from './radial-menu';
 
 export class Player {
     pos: Vec2;
@@ -11,8 +13,8 @@ export class Player {
     health: number;
     isAlive = true;
     
-    primaryColor: GameColor = GameColor.RED;
-    secondaryColor: GameColor | null = null;
+    public currentColor: GameColor;
+    private radialMenu: RadialMenu;
     
     private shootCooldown = 10; // frames
     private shootTimer = 0;
@@ -25,24 +27,18 @@ export class Player {
     private dashCooldown = 180; // frames
     private dashCooldownTimer = 0;
 
-    constructor(x: number, y: number) {
+    constructor(x: number, y: number, initialColor: GameColor) {
         this.pos = new Vec2(x, y);
         this.health = this.maxHealth;
+        this.currentColor = initialColor;
+        this.radialMenu = new RadialMenu();
     }
     
-    get currentColor(): GameColor {
-        if (this.secondaryColor) {
-            const mixed = mixColors(this.primaryColor, this.secondaryColor);
-            if (mixed) return mixed;
-        }
-        return this.primaryColor;
-    }
-
     update(input: InputHandler, createBullet: (bullet: Bullet) => void, canvasWidth: number, canvasHeight: number) {
         if (!this.isAlive) return;
 
         this.handleMovement(input, canvasWidth, canvasHeight);
-        this.handleColorSelection(input);
+        this.handleColorSelection(input, createBullet);
         this.handleShooting(input, createBullet);
         
         if (this.shootTimer > 0) this.shootTimer--;
@@ -82,37 +78,46 @@ export class Player {
         this.pos.y = Math.max(this.radius, Math.min(canvasHeight - this.radius, this.pos.y));
     }
     
-    private handleColorSelection(input: InputHandler) {
-        // Keyboard selection
-        if (input.isKeyDown(input.keybindings.primary1)) this.primaryColor = GameColor.RED;
-        if (input.isKeyDown(input.keybindings.primary2)) this.primaryColor = GameColor.YELLOW;
-        if (input.isKeyDown(input.keybindings.primary3)) this.primaryColor = GameColor.BLUE;
+    private handleColorSelection(input: InputHandler, createBullet: (bullet: Bullet) => void) {
+        // Keyboard primary selection
+        if (input.isKeyDown(input.keybindings.primary1)) this.currentColor = GameColor.RED;
+        if (input.isKeyDown(input.keybindings.primary2)) this.currentColor = GameColor.YELLOW;
+        if (input.isKeyDown(input.keybindings.primary3)) this.currentColor = GameColor.BLUE;
 
         // Mouse wheel selection
         if (input.wheelDeltaY !== 0) {
-            const currentIndex = PRIMARY_COLORS.indexOf(this.primaryColor);
+            const currentIndex = ALL_COLORS.indexOf(this.currentColor);
             let nextIndex;
             if (input.wheelDeltaY > 0) { // Scroll down
-                nextIndex = (currentIndex + 1) % PRIMARY_COLORS.length;
+                nextIndex = (currentIndex + 1) % ALL_COLORS.length;
             } else { // Scroll up
-                nextIndex = (currentIndex - 1 + PRIMARY_COLORS.length) % PRIMARY_COLORS.length;
+                nextIndex = (currentIndex - 1 + ALL_COLORS.length) % ALL_COLORS.length;
             }
-            this.primaryColor = PRIMARY_COLORS[nextIndex];
+            this.currentColor = ALL_COLORS[nextIndex];
         }
 
-        // Color combination
-        if (input.isKeyDown(input.keybindings.combine)) {
-            if (input.isKeyDown(input.keybindings.primary1) && GameColor.RED !== this.primaryColor) this.secondaryColor = GameColor.RED;
-            else if (input.isKeyDown(input.keybindings.primary2) && GameColor.YELLOW !== this.primaryColor) this.secondaryColor = GameColor.YELLOW;
-            else if (input.isKeyDown(input.keybindings.primary3) && GameColor.BLUE !== this.primaryColor) this.secondaryColor = GameColor.BLUE;
-            else this.secondaryColor = null;
+        // Radial menu for secondary colors
+        if (input.isKeyDown(input.keybindings.comboRadial)) {
+            this.radialMenu.active = true;
+            this.radialMenu.update(this.pos, input.mousePos);
         } else {
-            this.secondaryColor = null;
+            this.radialMenu.active = false;
+        }
+
+        if (input.wasKeyReleased(input.keybindings.comboRadial)) {
+            const selectedColor = this.radialMenu.getSelectedColor();
+            if(selectedColor) {
+                const direction = input.mousePos.sub(this.pos);
+                const bullet = new Bullet(this.pos, direction, selectedColor);
+                createBullet(bullet);
+                this.shootTimer = this.shootCooldown;
+            }
+            this.radialMenu.close();
         }
     }
 
     private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void) {
-        if (input.isMouseDown && this.shootTimer === 0) {
+        if (input.isMouseDown && this.shootTimer === 0 && !this.radialMenu.active) {
             const direction = input.mousePos.sub(this.pos);
             const bullet = new Bullet(this.pos, direction, this.currentColor);
             createBullet(bullet);
@@ -145,14 +150,18 @@ export class Player {
             this.drawDashIndicator(ctx);
         }
 
-        // Draw aiming reticle
-        const aimDir = input.mousePos.sub(this.pos).normalize();
-        const reticlePos = this.pos.add(aimDir.scale(this.radius + 10));
-        ctx.strokeStyle = COLOR_DETAILS[this.currentColor].hex;
-        ctx.lineWidth = 2;
-        ctx.save();
-        drawShapeForColor(ctx, reticlePos, 10, this.currentColor, COLOR_DETAILS[this.currentColor].hex, true);
-        ctx.restore();
+        if (this.radialMenu.active) {
+            this.radialMenu.draw(ctx);
+        } else {
+            // Draw aiming reticle only when radial menu is closed
+            const aimDir = input.mousePos.sub(this.pos).normalize();
+            const reticlePos = this.pos.add(aimDir.scale(this.radius + 10));
+            ctx.strokeStyle = COLOR_DETAILS[this.currentColor].hex;
+            ctx.lineWidth = 2;
+            ctx.save();
+            drawShapeForColor(ctx, reticlePos, 10, this.currentColor, COLOR_DETAILS[this.currentColor].hex, true);
+            ctx.restore();
+        }
     }
     
      private drawDashIndicator(ctx: CanvasRenderingContext2D) {

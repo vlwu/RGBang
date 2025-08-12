@@ -1,3 +1,4 @@
+
 import { Vec2 } from './utils';
 
 export interface Keybindings {
@@ -8,7 +9,7 @@ export interface Keybindings {
     primary1: string;
     primary2: string;
     primary3: string;
-    combine: string;
+    comboRadial: string;
     dash: string;
 }
 
@@ -20,12 +21,13 @@ export const defaultKeybindings: Keybindings = {
     primary1: '1',
     primary2: '2',
     primary3: '3',
-    combine: 'shift',
+    comboRadial: 'q',
     dash: ' ',
 }
 
 class InputHandler {
     public keys: Set<string> = new Set();
+    public keysUp: Set<string> = new Set();
     public mousePos: Vec2 = new Vec2();
     public isMouseDown: boolean = false;
     public wheelDeltaY: number = 0;
@@ -80,7 +82,9 @@ class InputHandler {
     }
 
     private handleKeyUp = (e: KeyboardEvent) => {
-        this.keys.delete(e.key.toLowerCase());
+        const key = e.key.toLowerCase();
+        this.keys.delete(key);
+        this.keysUp.add(key);
     }
 
     private handleMouseMove = (e: MouseEvent) => {
@@ -112,12 +116,17 @@ class InputHandler {
         this.wheelDeltaY = e.deltaY;
     }
     
-    public resetScroll() {
+    public resetEvents() {
         this.wheelDeltaY = 0;
+        this.keysUp.clear();
     }
 
     public isKeyDown(key: string): boolean {
         return this.keys.has(key);
+    }
+
+    public wasKeyReleased(key: string): boolean {
+        return this.keysUp.has(key);
     }
     
     public destroy() {

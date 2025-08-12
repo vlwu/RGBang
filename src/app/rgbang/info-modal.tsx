@@ -50,8 +50,10 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
                          <p>To damage an enemy, you must match your bullet's color and shape to the enemy's.</p>
                         <ul className="list-disc list-inside space-y-1">
                             <li>There are 3 primary colors: <span className="text-[#ff4d4d] font-bold">Red (Circle)</span>, <span className="text-[#ffff66] font-bold">Yellow (Triangle)</span>, and <span className="text-[#4d94ff] font-bold">Blue (Square)</span>.</li>
-                            <li>Select a primary color with keys <KeyDisplay>1</KeyDisplay> <KeyDisplay>2</KeyDisplay> <KeyDisplay>3</KeyDisplay> or by using the <KeyDisplay>Mouse Wheel</KeyDisplay>.</li>
-                            <li>Combine colors by holding <KeyDisplay>Shift</KeyDisplay> and pressing a different primary color key. For example, hold <KeyDisplay>Shift</KeyDisplay> + <KeyDisplay>2</KeyDisplay> while your main color is Red to create <span className="text-[#ffc266] font-bold">Orange</span>.</li>
+                             <li>Select a primary color with keys <KeyDisplay>1</KeyDisplay> <KeyDisplay>2</KeyDisplay> <KeyDisplay>3</KeyDisplay>.</li>
+                             <li>Cycle through all available colors with the <KeyDisplay>Mouse Wheel</KeyDisplay>.</li>
+                            <li>Hold <KeyDisplay>Q</KeyDisplay> to open a radial menu for secondary colors. Move your mouse to select one and release <KeyDisplay>Q</KeyDisplay> to fire.</li>
+                            <li>Secondary colors are combinations of two primaries (e.g., Red + Yellow = <span className="text-[#ffc266] font-bold">Orange</span>).</li>
                             <li>Shooting the wrong color will eventually trigger a punishment, making the enemy stronger!</li>
                         </ul>
                     </div>
@@ -61,7 +63,7 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
                         <ul className="list-disc list-inside space-y-1">
                             <li>Enemies will spawn continuously from the edges of the screen.</li>
                             <li>For every <span className="font-bold text-accent">100 points</span>, a powerful Boss will spawn.</li>
-                            <li>Defeat the Boss to return to the normal wave of enemies.</li>
+                            <li>Defeat the Boss to earn a health prism, which restores all your health.</li>
                             <li>Survive as long as you can and set a new high score!</li>
                         </ul>
                     </div>
@@ -73,4 +75,3 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
         </Dialog>
     );
 }
-

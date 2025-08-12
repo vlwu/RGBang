@@ -59,7 +59,7 @@ class EnemySpawner {
 export class Game {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
-    private player: Player;
+    public player: Player;
     private bullets: Bullet[] = [];
     private enemies: Enemy[] = [];
     private boss: Boss | null = null;
@@ -79,14 +79,15 @@ export class Game {
     constructor(
         canvas: HTMLCanvasElement, 
         onGameOver: (finalScore: number) => void,
-        inputHandler: InputHandler
+        inputHandler: InputHandler,
+        initialColor: GameColor,
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
         this.inputHandler = inputHandler;
 
-        this.player = new Player(canvas.width / 2, canvas.height / 2);
+        this.player = new Player(canvas.width / 2, canvas.height / 2, initialColor);
         this.enemySpawner = new EnemySpawner(canvas.width, canvas.height);
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();

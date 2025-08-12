@@ -1,5 +1,6 @@
+
 import { Player } from './player';
-import { GameColor, COLOR_DETAILS, PRIMARY_COLORS } from './color';
+import { GameColor, COLOR_DETAILS, ALL_COLORS } from './color';
 import { Boss } from './boss';
 import { roundRect, drawShapeForColor } from './utils';
 import { Vec2 } from './utils';
@@ -108,7 +109,7 @@ export class UI {
     private drawHotbar(player: Player) {
         const boxSize = 45;
         const spacing = 10;
-        const totalWidth = (boxSize + spacing) * PRIMARY_COLORS.length - spacing;
+        const totalWidth = (boxSize + spacing) * ALL_COLORS.length - spacing;
         const startX = (this.canvas.width - totalWidth) / 2;
         const y = this.canvas.height - boxSize - 20;
         const borderRadius = 8;
@@ -118,7 +119,7 @@ export class UI {
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
 
-        PRIMARY_COLORS.forEach((color, index) => {
+        ALL_COLORS.forEach((color, index) => {
             const x = startX + index * (boxSize + spacing);
             const detail = COLOR_DETAILS[color];
             
@@ -133,9 +134,8 @@ export class UI {
             const shapePos = new Vec2(x + boxSize / 2, y + boxSize / 2);
             drawShapeForColor(this.ctx, shapePos, boxSize * 0.4, color, 'black');
 
-
             // Selection highlight
-            if (player.primaryColor === color || player.secondaryColor === color) {
+            if (player.currentColor === color) {
                 this.ctx.strokeStyle = '#7DF9FF'; // Accent color
                 this.ctx.lineWidth = 3;
                 this.ctx.shadowColor = '#7DF9FF';
@@ -151,13 +151,6 @@ export class UI {
                  roundRect(this.ctx, x, y, boxSize, boxSize, borderRadius);
                  this.ctx.stroke();
             }
-            
-            // Keybinding text
-            this.ctx.globalAlpha = 1.0;
-            this.ctx.fillStyle = 'white';
-            this.ctx.shadowColor = 'black';
-            this.ctx.shadowBlur = 5;
-            this.ctx.fillText(detail.key, x + boxSize / 2, y + boxSize -10);
         });
         
         this.ctx.restore();

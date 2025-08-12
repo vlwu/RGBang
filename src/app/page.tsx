@@ -8,17 +8,19 @@ import { Button } from '@/components/ui/button';
 import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
+import { GameColor } from './rgbang/color';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 
-function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef }: { 
+function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef, initialColor }: { 
     onGameOver: (score: number) => void, 
     isPaused: boolean,
     inputHandler: InputHandler,
     width: number,
     height: number,
-    gameRef: React.MutableRefObject<Game | null>
+    gameRef: React.MutableRefObject<Game | null>,
+    initialColor: GameColor
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -31,7 +33,7 @@ function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef
             
             InputHandler.getInstance(canvas);
             
-            const game = new Game(canvas, onGameOver, inputHandler);
+            const game = new Game(canvas, onGameOver, inputHandler, initialColor);
             gameRef.current = game;
             game.start();
 
@@ -39,7 +41,7 @@ function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef
                 game.stop();
             };
         }
-    }, [onGameOver, inputHandler, gameRef]);
+    }, [onGameOver, inputHandler, gameRef, initialColor]);
 
     useEffect(() => {
         if (gameRef.current) {
@@ -55,6 +57,7 @@ export default function Home() {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver'>('menu');
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
+    const [lastSelectedColor, setLastSelectedColor] = useState<GameColor>(GameColor.RED);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
@@ -85,6 +88,7 @@ export default function Home() {
 
     useEffect(() => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
+        setLastSelectedColor(localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED);
         inputHandlerRef.current = InputHandler.getInstance();
         const savedKeybindings = localStorage.getItem('rgBangKeybindings');
         if (savedKeybindings) {
@@ -134,6 +138,9 @@ export default function Home() {
             localStorage.setItem('rgBangHighScore', finalScore.toString());
             setHighScore(finalScore);
         }
+        if (gameRef.current?.player) {
+            localStorage.setItem('rgBangLastColor', gameRef.current.player.currentColor);
+        }
     }, [highScore]);
 
     const startGame = () => {
@@ -144,11 +151,15 @@ export default function Home() {
     const quitToMenu = () => {
         if (gameRef.current) {
             const currentScore = gameRef.current.getCurrentScore();
-             if (currentScore > highScore) {
+            if (currentScore > highScore) {
                 localStorage.setItem('rgBangHighScore', currentScore.toString());
                 setHighScore(currentScore);
             }
             setScore(currentScore);
+            if(gameRef.current.player) {
+                localStorage.setItem('rgBangLastColor', gameRef.current.player.currentColor);
+                setLastSelectedColor(gameRef.current.player.currentColor);
+            }
         }
         setGameState('menu');
     };
@@ -173,7 +184,7 @@ export default function Home() {
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
                     <h1 className="text-8xl font-bold tracking-tighter font-headline">
-                        <span className="bg-gradient-to-r from-yellow-400 via-red-500 to-pink-500 bg-clip-text text-transparent">RGB</span>
+                        <span className="bg-gradient-to-r from-red-400 via-green-400 to-blue-500 bg-clip-text text-transparent">RGB</span>
                         <span>ang</span>
                     </h1>
                     <div className="flex flex-col gap-4 w-64">
@@ -208,6 +219,7 @@ export default function Home() {
                         width={canvasSize.width}
                         height={canvasSize.height}
                         gameRef={gameRef}
+                        initialColor={lastSelectedColor}
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">

@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback } from 'react';
@@ -77,7 +78,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         primary1: "Select Red",
         primary2: "Select Yellow",
         primary3: "Select Blue",
-        combine: "Combine Colors",
+        comboRadial: "Combo Wheel",
         dash: "Dash"
     };
 
