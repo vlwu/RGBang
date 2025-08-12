@@ -31,14 +31,13 @@ const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
 
-function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, initialGameState, isPaused }: { 
+function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, initialGameState }: { 
     onGameOver: (score: number) => void, 
     onFragmentCollected: (color: GameColor | null) => void,
     width: number,
     height: number,
     gameRef: React.MutableRefObject<Game | null>,
     initialGameState: SavedGameState,
-    isPaused: boolean
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const inputHandler = InputHandler.getInstance();
@@ -172,26 +171,37 @@ export default function Home() {
     // Main Game Loop
     useEffect(() => {
         let animationFrameId: number | null = null;
-        const gameLoop = () => {
-            if (gameRef.current) {
-                const isPaused = gameState === 'paused' 
-                    || gameState === 'upgrading' 
-                    || isUpgradeOverviewOpen 
-                    || (gameRef.current?.player.isRadialMenuOpen ?? false);
 
-                gameRef.current.update(inputHandlerRef.current, isPaused);
-                inputHandlerRef.current.resetEvents();
-            }
+        const gameLoop = () => {
             animationFrameId = requestAnimationFrame(gameLoop);
+            if (!gameRef.current) return;
+
+            const isPaused = 
+                gameState === 'paused' || 
+                gameState === 'upgrading' || 
+                isUpgradeOverviewOpen || 
+                (gameRef.current?.player.isRadialMenuOpen ?? false);
+            
+            if (isPaused) {
+                gameRef.current.player.update(inputHandlerRef.current, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height);
+                gameRef.current.draw();
+            } else {
+                gameRef.current.update(inputHandlerRef.current);
+                gameRef.current.draw();
+            }
+
+            inputHandlerRef.current.resetEvents();
         };
-        animationFrameId = requestAnimationFrame(gameLoop);
+
+        gameLoop();
+        
         return () => {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
             }
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [gameState, isUpgradeOverviewOpen]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -360,12 +370,6 @@ export default function Home() {
         });
     }
 
-    const isPaused = gameState === 'paused' 
-        || gameState === 'upgrading' 
-        || isUpgradeOverviewOpen 
-        || (gameRef.current?.player.isRadialMenuOpen ?? false);
-
-
     return (
         <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
              <SettingsModal 
@@ -478,7 +482,6 @@ export default function Home() {
                         height={canvasSize.height}
                         gameRef={gameRef}
                         initialGameState={initialGameState}
-                        isPaused={isPaused}
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">

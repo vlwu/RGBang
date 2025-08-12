@@ -4,12 +4,12 @@ import { Bullet } from './bullet';
 import { Enemy } from './enemy';
 import { Boss } from './boss';
 import { UI } from './ui';
-import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
-import { circleCollision, Vec2, distance } from './utils';
+import { circleCollision, Vec2 } from './utils';
 import { getRandomElement, PRIMARY_COLORS, GameColor, ALL_COLORS } from './color';
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
+import InputHandler from './input-handler';
 
 class EnemySpawner {
     private spawnInterval = 120; // frames
@@ -66,14 +66,14 @@ class EnemySpawner {
 }
 
 export class Game {
-    private canvas: HTMLCanvasElement;
+    public canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
     public player: Player;
     private bullets: Bullet[] = [];
     private enemies: Enemy[] = [];
     private boss: Boss | null = null;
     private fragments: PrismFragment[] = [];
-    private particles: ParticleSystem;
+    public particles: ParticleSystem;
     private enemySpawner: EnemySpawner;
     private ui: UI;
 
@@ -139,7 +139,7 @@ export class Game {
         this.score += amount;
     }
 
-    private createBullet = (bullet: Bullet) => {
+    public createBullet = (bullet: Bullet) => {
         this.bullets.push(bullet);
     }
     
@@ -162,60 +162,50 @@ export class Game {
         this.enemies = []; // Clear existing enemies
     }
 
-    public update(inputHandler: InputHandler, isPaused: boolean) {
-        if (!this.isRunning) return;
+    public update(inputHandler: InputHandler) {
+        // 1. Update entities
+        this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
         
-        if (!isPaused) {
-            // 1. Update entities
-            this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
-            
-            this.bullets.forEach(bullet => bullet.update());
-            this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
-            this.fragments.forEach(fragment => fragment.update(this.player));
-            this.boss?.update();
+        this.bullets.forEach(bullet => bullet.update());
+        this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
+        this.fragments.forEach(fragment => fragment.update(this.player));
+        this.boss?.update();
 
-            // 2. Handle collisions
-            this.handleCollisions();
-            
-            // 3. Update particle effects
-            this.particles.update();
+        // 2. Handle collisions
+        this.handleCollisions();
+        
+        // 3. Update particle effects
+        this.particles.update();
 
-            // 4. Remove dead entities and out-of-bounds bullets
-            this.cleanupEntities();
+        // 4. Remove dead entities and out-of-bounds bullets
+        this.cleanupEntities();
 
-            // 5. Spawn new enemies or boss
-            if (this.boss) {
-                if (!this.boss.isAlive) {
-                    this.particles.add(this.boss.pos, this.boss.color, 100);
-                    this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null)); // null for white/special
-                    this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5); // Increase threshold by 50%
-                    this.boss = null;
-                    this.firstBossDefeated = true;
-                    this.isBossSpawning = false; // Reset flag
-                }
-            } else if (!this.isBossSpawning) {
-                // No boss active, spawn regular enemies
-                const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
-                this.enemySpawner.update(this.enemies.length, upgradeCount, this.firstBossDefeated, this.createEnemy);
-                // Check if it's time to spawn a boss
-                if (this.score >= this.nextBossScoreThreshold) {
-                    this.isBossSpawning = true;
-                    this.spawnBoss();
-                }
+        // 5. Spawn new enemies or boss
+        if (this.boss) {
+            if (!this.boss.isAlive) {
+                this.particles.add(this.boss.pos, this.boss.color, 100);
+                this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null)); // null for white/special
+                this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5); // Increase threshold by 50%
+                this.boss = null;
+                this.firstBossDefeated = true;
+                this.isBossSpawning = false; // Reset flag
             }
-            
-            // 6. Check for game over condition
-            if (!this.player.isAlive) {
-                this.stop();
-                this.onGameOver(this.score);
+        } else if (!this.isBossSpawning) {
+            // No boss active, spawn regular enemies
+            const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
+            this.enemySpawner.update(this.enemies.length, upgradeCount, this.firstBossDefeated, this.createEnemy);
+            // Check if it's time to spawn a boss
+            if (this.score >= this.nextBossScoreThreshold) {
+                this.isBossSpawning = true;
+                this.spawnBoss();
             }
-        } else {
-            // If paused, we might still want to update some things, like the radial menu
-            this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
         }
-
-        // Always draw
-        this.draw();
+        
+        // 6. Check for game over condition
+        if (!this.player.isAlive) {
+            this.stop();
+            this.onGameOver(this.score);
+        }
     }
     
     private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
@@ -361,7 +351,7 @@ export class Game {
         }
     }
     
-    private draw() {
+    public draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -376,5 +366,3 @@ export class Game {
         this.ui.draw(this.player, this.score, this.boss);
     }
 }
-
-    
