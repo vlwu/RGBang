@@ -124,6 +124,31 @@ export class Player {
     }
     
     private handleColorSelection(input: InputHandler, createBullet: (bullet: Bullet) => void) {
+        // Do not process color changes if the radial menu is active,
+        // as it has its own selection logic on release.
+        if (this.radialMenu.active) {
+            this.radialMenu.update(this.pos, input.mousePos, this.availableColors);
+            if (input.wasKeyReleased(input.keybindings.comboRadial)) {
+                const selectedColor = this.radialMenu.getSelectedColor();
+                if(selectedColor) {
+                    this.updateAvailableColors(selectedColor);
+                    const direction = input.mousePos.sub(this.pos);
+                    const bullet = new Bullet(this.pos, direction, this.currentColor);
+                    this.applyBulletUpgrades(bullet);
+                    createBullet(bullet);
+                    this.shootTimer = this.getShootCooldown();
+                }
+                this.radialMenu.close();
+            }
+            return; // Exit early
+        }
+
+        // Open radial menu
+        if (input.isKeyDown(input.keybindings.comboRadial)) {
+            this.radialMenu.active = true;
+            return;
+        }
+
         const trySelectColor = (color: GameColor) => {
             if (this.availableColors.has(color)) {
                 this.updateAvailableColors(color);
@@ -148,27 +173,6 @@ export class Player {
                 nextIndex = (currentIndex - 1 + selectableColors.length) % selectableColors.length;
             }
             this.updateAvailableColors(selectableColors[nextIndex]);
-        }
-
-        // Radial menu for secondary colors
-        if (input.isKeyDown(input.keybindings.comboRadial)) {
-            this.radialMenu.active = true;
-            this.radialMenu.update(this.pos, input.mousePos, this.availableColors);
-        } else {
-            this.radialMenu.active = false;
-        }
-
-        if (input.wasKeyReleased(input.keybindings.comboRadial)) {
-            const selectedColor = this.radialMenu.getSelectedColor();
-            if(selectedColor) {
-                this.updateAvailableColors(selectedColor);
-                const direction = input.mousePos.sub(this.pos);
-                const bullet = new Bullet(this.pos, direction, this.currentColor);
-                this.applyBulletUpgrades(bullet);
-                createBullet(bullet);
-                this.shootTimer = this.getShootCooldown();
-            }
-            this.radialMenu.close();
         }
     }
 
