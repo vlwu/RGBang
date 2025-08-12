@@ -14,6 +14,7 @@ import { Upgrade } from "./upgrades";
 import { GameColor, COLOR_DETAILS } from './color';
 import { PlayerUpgradeData, UpgradeProgress } from './upgrade-data';
 import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair, Award } from "lucide-react";
+import { cn } from '@/lib/utils';
 
 interface UpgradeModalProps {
     isOpen: boolean;
