@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "RGBang",
-  "version": "1.0",
+  "version": "1.0.0",
   "description": "A vibrant, fast-paced arcade shooter.",
   "background": {
     "service_worker": "background.js"

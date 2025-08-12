@@ -5,7 +5,7 @@ import { Player } from './player';
 
 export class PrismFragment {
     pos: Vec2;
-    radius = 6;
+    radius = 8; // Increased size
     isAlive = true;
     color: GameColor | null; // null for white/boss fragment
     hexColor: string;
@@ -59,11 +59,17 @@ export class PrismFragment {
         
         const pulse = (Math.sin(this.lifespan / 20) + 1) / 2;
         
-        // Glow
+        // Glow - Increased glow effect
         ctx.shadowColor = this.hexColor;
-        ctx.shadowBlur = 5 + pulse * 5;
+        ctx.shadowBlur = 10 + pulse * 10;
         
-        ctx.globalAlpha = (this.lifespan < 120) ? Math.max(0, this.lifespan / 120) : 1;
+        // Flashing and fading logic
+        if (this.lifespan < 120) { // Start flashing in the last 2 seconds
+            const flash = Math.abs(Math.sin(this.lifespan * 0.5)); // Rapid oscillation for flash
+            ctx.globalAlpha = flash;
+        } else {
+            ctx.globalAlpha = 1;
+        }
         
         ctx.translate(this.pos.x, this.pos.y);
         ctx.rotate(this.angle);
@@ -86,5 +92,3 @@ export class PrismFragment {
         ctx.restore();
     }
 }
-
-    
