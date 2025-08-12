@@ -42,7 +42,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSele
 
     return (
         <Card 
-            className="text-center bg-card/80 backdrop-blur-sm border-border hover:border-primary hover:bg-card transition-all cursor-pointer flex flex-col"
+            className="text-center bg-card/80 backdrop-blur-sm border-border hover:border-primary hover:bg-card transition-all cursor-pointer flex flex-col hover:-translate-y-2 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
             onClick={() => onSelect(upgrade)}
             style={{ '--card-glow-color': colorHex } as React.CSSProperties}
         >
