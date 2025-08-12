@@ -82,6 +82,7 @@ export class Game {
     private firstBossDefeated = false;
     private isRunning = false;
     private animationFrameId: number | null = null;
+    private isBossSpawning = false;
     
     private onGameOver: (finalScore: number) => void;
     private onFragmentCollected: (color: GameColor | null) => void;
@@ -188,13 +189,15 @@ export class Game {
                     this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5); // Increase threshold by 50%
                     this.boss = null;
                     this.firstBossDefeated = true;
+                    this.isBossSpawning = false; // Reset flag
                 }
-            } else {
+            } else if (!this.isBossSpawning) {
                 // No boss active, spawn regular enemies
                 const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
                 this.enemySpawner.update(this.enemies.length, upgradeCount, this.firstBossDefeated, this.createEnemy);
                 // Check if it's time to spawn a boss
                 if (this.score >= this.nextBossScoreThreshold) {
+                    this.isBossSpawning = true;
                     this.spawnBoss();
                 }
             }
@@ -209,8 +212,7 @@ export class Game {
             this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
         }
 
-        // Always reset input events and draw
-        inputHandler.resetEvents();
+        // Always draw
         this.draw();
     }
     
