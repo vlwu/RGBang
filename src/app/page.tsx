@@ -11,6 +11,7 @@ import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade } from './rgbang/upgrades';
+import { getUnlockedUpgrades, unlockUpgrade } from './rgbang/persistent-unlocks';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -60,6 +61,7 @@ export default function Home() {
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [lastSelectedColor, setLastSelectedColor] = useState<GameColor>(GameColor.RED);
+    const [unlockedUpgrades, setUnlockedUpgrades] = useState<Set<string>>(new Set());
     
     // UI Modals State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -96,6 +98,8 @@ export default function Home() {
     useEffect(() => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
         setLastSelectedColor(localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED);
+        setUnlockedUpgrades(getUnlockedUpgrades());
+
         inputHandlerRef.current = InputHandler.getInstance();
         const savedKeybindings = localStorage.getItem('rgBangKeybindings');
         if (savedKeybindings) {
@@ -138,17 +142,21 @@ export default function Home() {
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
-            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color);
+            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, unlockedUpgrades);
             setUpgradeOptions(options);
             setGameState('upgrading');
             setIsUpgradeModalOpen(true);
         }
-    }, []);
+    }, [unlockedUpgrades]);
     
     const handleUpgradeSelected = useCallback((upgrade: Upgrade) => {
         if (gameRef.current) {
             gameRef.current.player.applyUpgrade(upgrade);
         }
+        // Update the unlocked upgrades state
+        unlockUpgrade(upgrade.id);
+        setUnlockedUpgrades(getUnlockedUpgrades());
+
         setIsUpgradeModalOpen(false);
         setGameState('playing');
     }, []);
@@ -292,5 +300,3 @@ export default function Home() {
         </main>
     );
 }
-
-    

@@ -2,6 +2,7 @@
 import { Player } from './player';
 import { ALL_UPGRADES, Upgrade, UpgradeType } from './upgrades';
 import { GameColor } from './color';
+import { getUnlockedUpgrades, unlockUpgrade } from './persistent-unlocks';
 
 export class UpgradeManager {
     private player: Player;
@@ -11,7 +12,7 @@ export class UpgradeManager {
         this.player = player;
     }
 
-    getUpgradeOptions(color: GameColor | null): Upgrade[] {
+    getUpgradeOptions(color: GameColor | null, unlockedUpgrades: Set<string>): Upgrade[] {
         let pool: Upgrade[];
 
         if (color === null) { // Boss/white fragment
@@ -22,22 +23,52 @@ export class UpgradeManager {
             pool = [...colorUpgrades, ...generalUpgrades];
         }
 
-        // Filter out upgrades the player already has if they are not stackable
+        // Filter out upgrades the player already has in the current run
         const availablePool = pool.filter(u => !this.activeUpgrades.has(u.id));
 
-        // Fisher-Yates shuffle
-        for (let i = availablePool.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [availablePool[i], availablePool[j]] = [availablePool[j], availablePool[i]];
+        // Separate into seen and unseen upgrades
+        const seenUpgrades = availablePool.filter(u => unlockedUpgrades.has(u.id));
+        const unseenUpgrades = availablePool.filter(u => !unlockedUpgrades.has(u.id));
+
+        // Fisher-Yates shuffle for both pools
+        const shuffle = (arr: Upgrade[]) => {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
         }
 
-        return availablePool.slice(0, 3);
+        shuffle(seenUpgrades);
+        shuffle(unseenUpgrades);
+
+        const options: Upgrade[] = [];
+        
+        // Prioritize showing at least one new upgrade
+        if (unseenUpgrades.length > 0) {
+            options.push(unseenUpgrades.pop()!);
+        }
+
+        // Fill the rest of the options
+        while (options.length < 3) {
+            if (unseenUpgrades.length > 0) {
+                options.push(unseenUpgrades.pop()!);
+            } else if (seenUpgrades.length > 0) {
+                options.push(seenUpgrades.pop()!);
+            } else {
+                break; // No more upgrades to offer
+            }
+        }
+        
+        return options;
     }
 
     apply(upgrade: Upgrade) {
         if (!this.activeUpgrades.has(upgrade.id)) {
             this.activeUpgrades.add(upgrade.id);
             upgrade.apply(this.player);
+            // Persist the unlock
+            unlockUpgrade(upgrade.id);
         }
     }
 
