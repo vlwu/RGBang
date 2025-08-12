@@ -162,7 +162,7 @@ export default function Home() {
         }
     }, [loadInitialData, updateCanvasSize]);
 
-    const isPaused = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen;
+    const isPaused = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen || (gameRef.current?.player.isRadialMenuOpen ?? false);
 
     // Main Game Loop
     useEffect(() => {
@@ -221,7 +221,7 @@ export default function Home() {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
         }
-    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen]);
+    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isUpgradeOverviewOpen]);
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
