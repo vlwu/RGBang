@@ -7,7 +7,7 @@ import { UI } from './ui';
 import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
 import { circleCollision, Vec2, distance } from './utils';
-import { getRandomElement, PRIMARY_COLORS, GameColor } from './color';
+import { getRandomElement, PRIMARY_COLORS, GameColor, ALL_COLORS } from './color';
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
 
@@ -18,10 +18,10 @@ class EnemySpawner {
 
     constructor(private canvasWidth: number, private canvasHeight: number) {}
 
-    update(currentEnemyCount: number, upgradeCount: number, createEnemy: (enemy: Enemy) => void) {
+    update(currentEnemyCount: number, upgradeCount: number, firstBossDefeated: boolean, createEnemy: (enemy: Enemy) => void) {
         this.spawnTimer--;
         if (this.spawnTimer <= 0 && currentEnemyCount < this.maxEnemies) {
-            this.spawnEnemy(createEnemy, upgradeCount);
+            this.spawnEnemy(createEnemy, upgradeCount, firstBossDefeated);
             this.spawnTimer = this.spawnInterval;
             
             if (this.spawnInterval > 30) {
@@ -30,7 +30,7 @@ class EnemySpawner {
         }
     }
 
-    private spawnEnemy(createEnemy: (enemy: Enemy) => void, upgradeCount: number) {
+    private spawnEnemy(createEnemy: (enemy: Enemy) => void, upgradeCount: number, firstBossDefeated: boolean) {
         const edge = Math.floor(Math.random() * 4);
         let x, y;
         if (edge === 0) { // Top
@@ -47,7 +47,8 @@ class EnemySpawner {
             y = Math.random() * this.canvasHeight;
         }
 
-        const color = getRandomElement(PRIMARY_COLORS);
+        const availableColors = firstBossDefeated ? ALL_COLORS : PRIMARY_COLORS;
+        const color = getRandomElement(availableColors);
         const radius = 15;
         
         // Dynamic difficulty scaling
@@ -79,6 +80,7 @@ export class Game {
 
     private score = 0;
     private nextBossScoreThreshold = 150;
+    private firstBossDefeated = false;
     private isRunning = false;
     private animationFrameId: number | null = null;
     
@@ -107,6 +109,8 @@ export class Game {
         this.score = initialState.score;
         this.player.health = initialState.playerHealth;
         this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
+        // This check is a bit of a hack, we should find a better way to check if it's a new game
+        this.firstBossDefeated = initialState.score > 150; 
         initialState.activeUpgrades.forEach((level, id) => {
             this.player.upgradeManager.applyById(id, level);
         });
@@ -188,11 +192,12 @@ export class Game {
                 this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null)); // null for white/special
                 this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5); // Increase threshold by 50%
                 this.boss = null;
+                this.firstBossDefeated = true;
             }
         } else {
             // No boss active, spawn regular enemies
             const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
-            this.enemySpawner.update(this.enemies.length, upgradeCount, this.createEnemy);
+            this.enemySpawner.update(this.enemies.length, upgradeCount, this.firstBossDefeated, this.createEnemy);
             // Check if it's time to spawn a boss
             if (this.score >= this.nextBossScoreThreshold) {
                 this.spawnBoss();
