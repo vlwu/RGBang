@@ -20,6 +20,7 @@ export class Player {
     public availableColors: Set<GameColor>;
     private radialMenu: RadialMenu;
     public upgradeManager: UpgradeManager;
+    public isRadialMenuOpen = false;
     
     // --- Upgradeable Stats ---
     // These are multipliers applied to base values
@@ -63,6 +64,11 @@ export class Player {
     
     update(input: InputHandler, createBullet: (bullet: Bullet) => void, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
         if (!this.isAlive) return;
+        
+        if (this.isRadialMenuOpen) {
+            this.radialMenu.update(this.pos, input.mousePos, this.availableColors);
+            return;
+        }
 
         this.handleMovement(input, particleSystem, canvasWidth, canvasHeight);
         this.handleColorSelection(input, createBullet);
@@ -124,28 +130,28 @@ export class Player {
     }
     
     private handleColorSelection(input: InputHandler, createBullet: (bullet: Bullet) => void) {
-        // Do not process color changes if the radial menu is active,
-        // as it has its own selection logic on release.
-        if (this.radialMenu.active) {
-            this.radialMenu.update(this.pos, input.mousePos, this.availableColors);
-            if (input.wasKeyReleased(input.keybindings.comboRadial)) {
-                const selectedColor = this.radialMenu.getSelectedColor();
-                if(selectedColor) {
-                    this.updateAvailableColors(selectedColor);
-                    const direction = input.mousePos.sub(this.pos);
-                    const bullet = new Bullet(this.pos, direction, this.currentColor);
-                    this.applyBulletUpgrades(bullet);
-                    createBullet(bullet);
-                    this.shootTimer = this.getShootCooldown();
-                }
-                this.radialMenu.close();
+        // Handle closing the radial menu
+        if (this.radialMenu.active && input.wasKeyReleased(input.keybindings.comboRadial)) {
+            const selectedColor = this.radialMenu.getSelectedColor();
+            if(selectedColor) {
+                this.updateAvailableColors(selectedColor);
+                const direction = input.mousePos.sub(this.pos);
+                const bullet = new Bullet(this.pos, direction, this.currentColor);
+                this.applyBulletUpgrades(bullet);
+                createBullet(bullet);
+                this.shootTimer = this.getShootCooldown();
             }
-            return; // Exit early
+            this.radialMenu.close();
+            this.isRadialMenuOpen = false;
+            return;
         }
 
         // Open radial menu
-        if (input.isKeyDown(input.keybindings.comboRadial)) {
-            this.radialMenu.open();
+        if (input.isKeyDown(input.keybindings.comboRadial) && !this.radialMenu.active) {
+            this.isRadialMenuOpen = true;
+            this.radialMenu.open(() => {
+                this.isRadialMenuOpen = false; // Callback for when timer ends
+            });
             return;
         }
 

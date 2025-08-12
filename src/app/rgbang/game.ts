@@ -76,7 +76,6 @@ export class Game {
     private particles: ParticleSystem;
     private enemySpawner: EnemySpawner;
     private ui: UI;
-    private inputHandler: InputHandler;
 
     private score = 0;
     private nextBossScoreThreshold = 150;
@@ -92,13 +91,11 @@ export class Game {
         onGameOver: (finalScore: number) => void,
         onFragmentCollected: (color: GameColor | null) => void,
         initialState: SavedGameState,
-        inputHandler: InputHandler
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
         this.onFragmentCollected = onFragmentCollected;
-        this.inputHandler = inputHandler;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor);
         this.enemySpawner = new EnemySpawner(canvas.width, canvas.height);
@@ -119,15 +116,10 @@ export class Game {
     public start() {
         if (this.isRunning) return;
         this.isRunning = true;
-        this.gameLoop();
     }
 
     public stop() {
         this.isRunning = false;
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-            this.animationFrameId = null;
-        }
     }
     
     public getCurrentState(): SavedGameState {
@@ -167,48 +159,59 @@ export class Game {
         this.enemies = []; // Clear existing enemies
     }
 
-    private update() {
-        // 1. Update entities
-        this.player.update(this.inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
+    public update(inputHandler: InputHandler, isPaused: boolean) {
+        if (!this.isRunning) return;
         
-        this.bullets.forEach(bullet => bullet.update());
-        this.enemies.forEach(enemy => enemy.update(this.player));
-        this.fragments.forEach(fragment => fragment.update(this.player));
-        this.boss?.update();
+        if (!isPaused) {
+            // 1. Update entities
+            this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
+            
+            this.bullets.forEach(bullet => bullet.update());
+            this.enemies.forEach(enemy => enemy.update(this.player));
+            this.fragments.forEach(fragment => fragment.update(this.player));
+            this.boss?.update();
 
-        // 2. Handle collisions
-        this.handleCollisions();
-        
-        // 3. Update particle effects
-        this.particles.update();
+            // 2. Handle collisions
+            this.handleCollisions();
+            
+            // 3. Update particle effects
+            this.particles.update();
 
-        // 4. Remove dead entities and out-of-bounds bullets
-        this.cleanupEntities();
+            // 4. Remove dead entities and out-of-bounds bullets
+            this.cleanupEntities();
 
-        // 5. Spawn new enemies or boss
-        if (this.boss) {
-            if (!this.boss.isAlive) {
-                this.particles.add(this.boss.pos, this.boss.color, 100);
-                this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null)); // null for white/special
-                this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5); // Increase threshold by 50%
-                this.boss = null;
-                this.firstBossDefeated = true;
+            // 5. Spawn new enemies or boss
+            if (this.boss) {
+                if (!this.boss.isAlive) {
+                    this.particles.add(this.boss.pos, this.boss.color, 100);
+                    this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null)); // null for white/special
+                    this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5); // Increase threshold by 50%
+                    this.boss = null;
+                    this.firstBossDefeated = true;
+                }
+            } else {
+                // No boss active, spawn regular enemies
+                const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
+                this.enemySpawner.update(this.enemies.length, upgradeCount, this.firstBossDefeated, this.createEnemy);
+                // Check if it's time to spawn a boss
+                if (this.score >= this.nextBossScoreThreshold) {
+                    this.spawnBoss();
+                }
+            }
+            
+            // 6. Check for game over condition
+            if (!this.player.isAlive) {
+                this.stop();
+                this.onGameOver(this.score);
             }
         } else {
-            // No boss active, spawn regular enemies
-            const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
-            this.enemySpawner.update(this.enemies.length, upgradeCount, this.firstBossDefeated, this.createEnemy);
-            // Check if it's time to spawn a boss
-            if (this.score >= this.nextBossScoreThreshold) {
-                this.spawnBoss();
-            }
+            // If paused, we might still want to update some things, like the radial menu
+            this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
         }
-        
-        // 6. Check for game over condition
-        if (!this.player.isAlive) {
-            this.stop();
-            this.onGameOver(this.score);
-        }
+
+        // Always reset input events and draw
+        inputHandler.resetEvents();
+        this.draw();
     }
     
     private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
@@ -379,18 +382,5 @@ export class Game {
         this.player.draw(this.ctx);
         
         this.ui.draw(this.player, this.score, this.boss);
-    }
-
-    private gameLoop = () => {
-        if (!this.isRunning) {
-            this.draw(); // Draw one last time for paused state
-            return;
-        }
-        
-        this.update();
-        this.draw();
-        
-        this.inputHandler.resetEvents();
-        this.animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 }

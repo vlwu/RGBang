@@ -29,35 +29,44 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, 
     initialGameState: SavedGameState
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const inputHandler = InputHandler.getInstance();
-
+    const inputHandlerRef = useRef(InputHandler.getInstance());
+    const animationFrameId = useRef<number | null>(null);
+    
+    // This effect handles the game loop itself
     useEffect(() => {
         if (!canvasRef.current) return;
-
         const canvas = canvasRef.current;
-        canvas.width = GAME_WIDTH;
-        canvas.height = GAME_HEIGHT;
-        
-        // Ensure the singleton InputHandler is always aware of the current canvas
-        inputHandler.setCanvas(canvas);
-        
-        const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState, inputHandler);
+        inputHandlerRef.current.setCanvas(canvas);
+
+        const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState);
         gameRef.current = game;
         game.start();
 
+        const gameLoop = () => {
+             if (gameRef.current) {
+                const isActuallyPaused = isPaused || gameRef.current.player.isRadialMenuOpen;
+                gameRef.current.update(inputHandlerRef.current, isActuallyPaused);
+             }
+             animationFrameId.current = requestAnimationFrame(gameLoop);
+        };
+        
+        gameLoop();
+
         return () => {
+            if (animationFrameId.current) {
+                cancelAnimationFrame(animationFrameId.current);
+            }
             game.stop();
             gameRef.current = null;
         };
-    }, [onGameOver, onFragmentCollected, initialGameState, gameRef, inputHandler]);
-
+    }, [onGameOver, onFragmentCollected, initialGameState, gameRef, isPaused]);
+    
+    // This effect only handles resizing the canvas element
     useEffect(() => {
-        if (gameRef.current) {
-            if(isPaused) gameRef.current.stop();
-            else gameRef.current.start();
-        }
-    }, [isPaused, gameRef]);
-
+        if (!canvasRef.current) return;
+        canvasRef.current.width = GAME_WIDTH;
+        canvasRef.current.height = GAME_HEIGHT;
+    }, []);
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
@@ -210,7 +219,8 @@ export default function Home() {
                 }
             };
 
-            if (upgrade.id === 'fallback-score') {
+            if (upgrade.id === 'fallback-score' || upgrade.id === 'fallback-heal') {
+                 // The apply method is pre-configured with the right callbacks, just call it
                 upgrade.apply(gameRef.current.player, 1, addScoreCallback);
             } else {
                  gameRef.current.player.applyUpgrade(upgrade);

@@ -11,10 +11,27 @@ export class RadialMenu {
     private highlightedSegment: number | null = null;
     private availableColors: Set<GameColor> = new Set();
     
+    // Timer properties
+    private timer = 0;
+    private readonly maxTime = 180; // 3 seconds at 60fps
+    private onTimerEnd: (() => void) | null = null;
+
     update(playerPos: Vec2, mousePos: Vec2, availableColors: Set<GameColor>) {
         if (!this.active) return;
         this.center = playerPos;
         this.availableColors = availableColors;
+
+        // Update timer
+        if (this.timer > 0) {
+            this.timer--;
+            if (this.timer <= 0) {
+                if (this.onTimerEnd) {
+                    this.onTimerEnd();
+                }
+                this.close();
+                return;
+            }
+        }
         
         const relativeMousePos = mousePos.sub(this.center);
         const dist = relativeMousePos.magnitude();
@@ -75,6 +92,15 @@ export class RadialMenu {
             drawShapeForColor(ctx, shapePos, 30, color, isAvailable ? 'white' : '#718096');
 
         });
+
+        // Draw timer
+        const timerProgress = this.timer / this.maxTime;
+        const timerRadius = this.radius + 10;
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(this.center.x, this.center.y, timerRadius, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * timerProgress));
+        ctx.stroke();
         
         ctx.restore();
     }
@@ -89,12 +115,16 @@ export class RadialMenu {
         return null;
     }
     
-    open() {
+    open(onTimerEnd: () => void) {
         this.active = true;
+        this.timer = this.maxTime;
+        this.onTimerEnd = onTimerEnd;
     }
 
     close() {
         this.active = false;
         this.highlightedSegment = null;
+        this.timer = 0;
+        this.onTimerEnd = null;
     }
 }
