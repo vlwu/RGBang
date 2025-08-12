@@ -74,6 +74,12 @@ export default function Home() {
     const gameRef = useRef<Game | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
 
+    // Use a ref to store upgradeData to prevent callback recreation
+    const upgradeDataRef = useRef(upgradeData);
+    useEffect(() => {
+        upgradeDataRef.current = upgradeData;
+    }, [upgradeData]);
+
     const updateCanvasSize = useCallback(() => {
         const windowWidth = window.innerWidth * 0.9;
         const windowHeight = window.innerHeight * 0.9;
@@ -147,19 +153,21 @@ export default function Home() {
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
-            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, upgradeData);
+            // Access the latest upgradeData via the ref
+            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, upgradeDataRef.current);
             setUpgradeOptions(options);
             setGameState('upgrading');
             setIsUpgradeModalOpen(true);
         }
-    }, [upgradeData]);
+    }, []); // Empty dependency array prevents this from being recreated
     
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         if (gameRef.current) {
             gameRef.current.player.applyUpgrade(upgrade);
         }
         
-        const unlockedData = await unlockUpgrade(upgrade.id);
+        // No need to await unlockUpgrade here if it's not critical for the next step
+        unlockUpgrade(upgrade.id); 
         const finalData = await addExpAndLevelUp(upgrade.id, 25); // Grant 25 EXP per pickup for now
         setUpgradeData(finalData);
 
@@ -306,3 +314,5 @@ export default function Home() {
         </main>
     );
 }
+
+    
