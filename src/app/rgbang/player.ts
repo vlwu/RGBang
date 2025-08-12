@@ -5,7 +5,6 @@ import InputHandler from './input-handler';
 import { GameColor, COLOR_DETAILS, ALL_COLORS, isSecondaryColor } from './color';
 import { RadialMenu } from './radial-menu';
 import { ParticleSystem } from './particle';
-import { PrismFragment } from './prism-fragment';
 import { UpgradeManager } from './upgrade-manager';
 import { Upgrade } from './upgrades';
 
@@ -22,6 +21,12 @@ export class Player {
     private radialMenu: RadialMenu;
     public upgradeManager: UpgradeManager;
     
+    // Upgradeable Stats
+    public bulletDamageMultiplier = 1;
+    public dashCooldownModifier = 1;
+    public shootCooldownModifier = 1;
+
+
     private shootCooldown = 10; // frames
     private shootTimer = 0;
 
@@ -74,7 +79,7 @@ export class Player {
         if (input.isKeyDown(input.keybindings.dash) && this.dashCooldownTimer === 0) {
             this.isDashing = true;
             this.dashTimer = this.dashDuration;
-            this.dashCooldownTimer = this.dashCooldown;
+            this.dashCooldownTimer = this.dashCooldown * this.dashCooldownModifier;
         }
         
         let currentSpeed = this.speed;
@@ -147,7 +152,7 @@ export class Player {
                 const direction = input.mousePos.sub(this.pos);
                 const bullet = new Bullet(this.pos, direction, this.currentColor);
                 createBullet(bullet);
-                this.shootTimer = this.shootCooldown;
+                this.shootTimer = this.shootCooldown * this.shootCooldownModifier;
             }
             this.radialMenu.close();
         }
@@ -157,8 +162,9 @@ export class Player {
         if (input.isShooting() && this.shootTimer === 0 && !this.radialMenu.active) {
             const direction = input.mousePos.sub(this.pos);
             const bullet = new Bullet(this.pos, direction, this.currentColor);
+            bullet.damage *= this.bulletDamageMultiplier;
             createBullet(bullet);
-            this.shootTimer = this.shootCooldown;
+            this.shootTimer = this.shootCooldown * this.shootCooldownModifier;
         }
     }
 
@@ -208,7 +214,7 @@ export class Player {
         const indicatorX = this.pos.x - indicatorWidth / 2;
         const indicatorY = this.pos.y - this.radius - 12;
 
-        const progress = 1 - (this.dashCooldownTimer / this.dashCooldown);
+        const progress = 1 - (this.dashCooldownTimer / (this.dashCooldown * this.dashCooldownModifier));
 
         // Background
         ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
@@ -240,8 +246,6 @@ export class Player {
     }
 
     public getDashCooldownProgress(): number {
-        return this.dashCooldownTimer / this.dashCooldown;
+        return this.dashCooldownTimer / (this.dashCooldown * this.dashCooldownModifier);
     }
 }
-
-    

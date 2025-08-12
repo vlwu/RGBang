@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Upgrade } from "./upgrades";
 import { GameColor, COLOR_DETAILS } from './color';
-import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight } from "lucide-react";
+import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt } from "lucide-react";
 
 interface UpgradeModalProps {
     isOpen: boolean;
@@ -20,11 +20,12 @@ interface UpgradeModalProps {
     onSelect: (upgrade: Upgrade) => void;
 }
 
-const iconMap: { [key: string]: React.ElementType } = {
+export const iconMap: { [key: string]: React.ElementType } = {
     'default': Gem,
     'chain-lightning': Zap,
     'max-health': PlusCircle,
-    'dash-cooldown': ChevronsRight
+    'dash-cooldown': ChevronsRight,
+    'bullet-damage': Bolt
 };
 
 
@@ -73,6 +74,3 @@ export function UpgradeModal({ isOpen, options, onSelect }: UpgradeModalProps) {
         </Dialog>
     );
 }
-
-
-    

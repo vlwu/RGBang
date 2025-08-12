@@ -4,6 +4,8 @@ import { GameColor, COLOR_DETAILS, ALL_COLORS } from './color';
 import { Boss } from './boss';
 import { roundRect, drawShapeForColor } from './utils';
 import { Vec2 } from './utils';
+import { iconMap } from './upgrade-modal';
+import { Upgrade } from './upgrades';
 
 export class UI {
     private canvas: HTMLCanvasElement;
@@ -18,6 +20,7 @@ export class UI {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScore(score);
+        this.drawActiveUpgrades(player);
         if (boss && boss.isAlive) {
             this.drawBossHealthBar(boss);
         }
@@ -167,6 +170,32 @@ export class UI {
         this.ctx.shadowBlur = 5;
 
         this.ctx.fillText(`Score: ${score}`, this.canvas.width - 20, this.boss ? 60 : 20);
+        this.ctx.restore();
+    }
+
+    private drawActiveUpgrades(player: Player) {
+        this.ctx.save();
+        const iconSize = 24;
+        const spacing = 8;
+        const startX = 20;
+        const startY = this.canvas.height - iconSize - 90;
+
+        player.upgradeManager.getActiveUpgradeDetails().forEach((upgrade, index) => {
+            const x = startX + index * (iconSize + spacing);
+            const y = startY;
+
+            // Simple colored square for now
+            this.ctx.fillStyle = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
+            this.ctx.globalAlpha = 0.7;
+            this.ctx.fillRect(x, y, iconSize, iconSize);
+            this.ctx.globalAlpha = 1.0;
+            this.ctx.strokeStyle = 'white';
+            this.ctx.strokeRect(x,y,iconSize, iconSize);
+
+            // In a real scenario, you'd draw icons here
+            // This is a placeholder to show the upgrades are active
+        });
+
         this.ctx.restore();
     }
 }

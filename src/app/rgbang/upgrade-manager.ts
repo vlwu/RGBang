@@ -40,6 +40,8 @@ export class UpgradeManager {
             upgrade.apply(this.player);
         }
     }
-}
 
-    
+    getActiveUpgradeDetails(): Upgrade[] {
+        return ALL_UPGRADES.filter(u => this.activeUpgrades.has(u.id));
+    }
+}

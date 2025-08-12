@@ -37,9 +37,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         type: UpgradeType.PLAYER_STAT,
         color: null,
         apply: (player) => {
-            // This would require modifying the player's dash cooldown property
-            // For now, we'll log it. A full implementation would need player properties to be public or have setters.
-            console.log("Dash cooldown reduced!");
+            player.dashCooldownModifier *= 0.85;
         }
     },
      // General Upgrades (Can appear for any color)
@@ -49,7 +47,9 @@ export const ALL_UPGRADES: Upgrade[] = [
         description: 'Increases bullet damage by 20%.',
         type: UpgradeType.GENERAL,
         color: null, // can be applied to any
-        apply: (player) => { console.log('bullet damage up'); }
+        apply: (player) => { 
+            player.bulletDamageMultiplier *= 1.2;
+        }
     },
 
     // Gun-Specific Upgrades
@@ -78,5 +78,3 @@ export const ALL_UPGRADES: Upgrade[] = [
         apply: (player) => { console.log('explosive rounds active'); }
     }
 ];
-
-    
