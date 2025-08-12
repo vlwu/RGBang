@@ -65,7 +65,7 @@ export class PrismFragment {
         
         // Flashing and fading logic
         if (this.lifespan < 120) { // Start flashing in the last 2 seconds
-            const flash = Math.abs(Math.sin(this.lifespan * 0.5)); // Rapid oscillation for flash
+            const flash = Math.abs(Math.sin(this.lifespan * 0.1)); // Slower oscillation for flash
             ctx.globalAlpha = flash;
         } else {
             ctx.globalAlpha = 1;
