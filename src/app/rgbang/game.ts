@@ -98,7 +98,7 @@ export class Game {
         this.onFragmentCollected = onFragmentCollected;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor);
-        this.enemySpawner = new EnemySpawner(canvas.width, canvas.height);
+        this.enemySpawner = new EnemySpawner(canvas.width, this.canvas.height);
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();
         
@@ -219,6 +219,8 @@ export class Game {
     }
     
     private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
+        const chainRange = 100 + this.player.chainLightningLevel * 20;
+
         if (this.player.igniteLevel > 0 && bullet.color === GameColor.RED) {
             const igniteDamage = 1 + this.player.igniteLevel;
             const igniteDuration = 120 + this.player.igniteLevel * 30; // 2s + 0.5s per level
@@ -231,8 +233,11 @@ export class Game {
         if (this.player.chainLightningLevel > 0 && bullet.color === GameColor.YELLOW) {
             const maxChains = this.player.chainLightningLevel;
             const chainDamage = 5 + this.player.chainLightningLevel;
-            const chainRange = 100 + this.player.chainLightningLevel * 10;
-            enemy.applyChainLightning(maxChains, chainDamage, chainRange);
+            // Chain lightning is now applied on the enemy itself to find the next target
+            enemy.chainHit = true;
+            enemy.chainHitMaxChains = maxChains;
+            enemy.chainHitDamage = chainDamage;
+            enemy.chainHitRange = chainRange;
         }
     }
 
@@ -371,3 +376,5 @@ export class Game {
         this.ui.draw(this.player, this.score, this.boss);
     }
 }
+
+    
