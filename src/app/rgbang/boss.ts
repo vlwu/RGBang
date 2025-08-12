@@ -60,39 +60,13 @@ export class Boss {
     update() {
         if (!this.isAlive) return;
 
-        this.updateTimers();
-        this.handleStateTransitions();
-        this.performStateActions();
-    }
-    
-    private updateTimers() {
+        // Universal timers
         this.colorChangeTimer--;
         this.attackTimer--;
         this.stateTimer--;
-    }
 
-    private handleStateTransitions() {
-        if (this.stateTimer > 0) return;
-
-        switch (this.state) {
-            case BossState.IDLE:
-                this.state = BossState.TELEGRAPHING_MOVE;
-                this.stateTimer = this.telegraphTime;
-                this.setNewTargetPosition();
-                break;
-            case BossState.TELEGRAPHING_MOVE:
-                this.state = BossState.MOVING;
-                // No timer for moving, it's based on distance
-                break;
-            case BossState.MOVING:
-                this.state = BossState.IDLE;
-                this.stateTimer = this.idleTime;
-                break;
-        }
-    }
-
-    private performStateActions() {
-         if (this.colorChangeTimer <= 0) {
+        // Universal actions that happen regardless of state
+        if (this.colorChangeTimer <= 0) {
             this.changeColor();
             this.colorChangeTimer = this.colorChangeInterval;
         }
@@ -100,9 +74,28 @@ export class Boss {
             this.attack();
             this.attackTimer = this.attackInterval;
         }
-        
-        if (this.state === BossState.MOVING) {
-            this.move();
+
+        // State-specific logic
+        switch (this.state) {
+            case BossState.IDLE:
+                if (this.stateTimer <= 0) {
+                    this.state = BossState.TELEGRAPHING_MOVE;
+                    this.stateTimer = this.telegraphTime;
+                    this.setNewTargetPosition();
+                }
+                break;
+            
+            case BossState.TELEGRAPHING_MOVE:
+                if (this.stateTimer <= 0) {
+                    this.state = BossState.MOVING;
+                    // No timer for moving, it's based on distance
+                }
+                break;
+            
+            case BossState.MOVING:
+                this.move();
+                // Transition is handled inside the move() method
+                break;
         }
     }
     
