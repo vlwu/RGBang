@@ -14,12 +14,10 @@ import type { Upgrade } from './rgbang/upgrades';
 import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData } from './rgbang/upgrade-data';
 import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/save-state';
 import { UpgradesOverviewModal } from './rgbang/upgrades-overview-modal';
-import { cn } from '@/lib/utils';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
-
 
 function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, gameRef, initialGameState }: { 
     onGameOver: (score: number) => void, 
@@ -31,8 +29,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, 
     initialGameState: SavedGameState
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const animationFrameId = useRef<number | null>(null);
-    const inputHandlerRef = useRef<InputHandler | null>(null);
+    const inputHandler = InputHandler.getInstance();
 
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -41,32 +38,23 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, 
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;
         
-        inputHandlerRef.current = InputHandler.getInstance(canvas);
+        // Ensure the singleton InputHandler is always aware of the current canvas
+        inputHandler.setCanvas(canvas);
         
-        const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState);
+        const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState, inputHandler);
         gameRef.current = game;
         game.start();
 
-        const gameLoop = () => {
-            if (gameRef.current && gameRef.current.isRunning && inputHandlerRef.current) {
-                gameRef.current.update(inputHandlerRef.current);
-                gameRef.current.draw();
-                inputHandlerRef.current.resetEvents();
-            }
-            animationFrameId.current = requestAnimationFrame(gameLoop);
-        };
-        
-        gameLoop();
-
         return () => {
-            if(animationFrameId.current) cancelAnimationFrame(animationFrameId.current);
             game.stop();
+            gameRef.current = null;
         };
-    }, [onGameOver, onFragmentCollected, initialGameState, gameRef]);
+    }, [onGameOver, onFragmentCollected, initialGameState, gameRef, inputHandler]);
 
     useEffect(() => {
         if (gameRef.current) {
-            gameRef.current.isRunning = !isPaused;
+            if(isPaused) gameRef.current.stop();
+            else gameRef.current.start();
         }
     }, [isPaused, gameRef]);
 
@@ -147,7 +135,7 @@ export default function Home() {
         updateCanvasSize();
 
         const handleBeforeUnload = () => {
-             if (gameRef.current && gameRef.current.isRunning) {
+             if (gameRef.current) {
                 const stateToSave = gameRef.current.getCurrentState();
                 if (stateToSave.score > 0) { // Don't save empty games
                     saveGameState(stateToSave);
@@ -300,8 +288,8 @@ export default function Home() {
             }
             setScore(currentState.score);
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
-            gameRef.current = null; // Clear the game ref
         }
+        gameRef.current = null; // Clear the game ref
         setInitialGameState(DEFAULT_GAME_STATE); // Reset initial game state for the menu
         loadInitialData(); // Reload to check for saved games again
     };

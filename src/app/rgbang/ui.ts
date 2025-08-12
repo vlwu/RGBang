@@ -17,7 +17,7 @@ export class UI {
     draw(player: Player, score: number, boss: Boss | null) {
         this.drawHealthBar(player);
         this.drawHotbar(player);
-        this.drawScore(score);
+        this.drawScore(score, !!boss);
         if (boss && boss.isAlive) {
             this.drawBossHealthBar(boss);
         }
@@ -158,7 +158,7 @@ export class UI {
         this.ctx.restore();
     }
 
-    private drawScore(score: number) {
+    private drawScore(score: number, isBossActive: boolean) {
         this.ctx.save();
         this.ctx.fillStyle = 'white';
         this.ctx.font = 'bold 24px "Space Grotesk"';
@@ -167,9 +167,7 @@ export class UI {
         this.ctx.shadowColor = 'black';
         this.ctx.shadowBlur = 5;
 
-        this.ctx.fillText(`Score: ${score}`, this.canvas.width - 20, this.boss ? 60 : 20);
+        this.ctx.fillText(`Score: ${score}`, this.canvas.width - 20, isBossActive ? 60 : 20);
         this.ctx.restore();
     }
 }
-
-    

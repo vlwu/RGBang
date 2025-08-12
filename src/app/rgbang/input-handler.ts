@@ -22,7 +22,7 @@ export const defaultKeybindings: Keybindings = {
     primary1: '1',
     primary2: '2',
     primary3: '3',
-    comboRadial: 'mouse2',
+    comboRadial: 'mouse2', // Right-click
     dash: ' ',
     viewUpgrades: 'tab',
 }
@@ -41,12 +41,9 @@ class InputHandler {
         this.init();
     }
     
-    public static getInstance(canvas?: HTMLCanvasElement): InputHandler {
+    public static getInstance(): InputHandler {
         if (!InputHandler.instance) {
             InputHandler.instance = new InputHandler();
-        }
-        if (canvas && !InputHandler.instance.canvas) {
-            InputHandler.instance.setCanvas(canvas);
         }
         return InputHandler.instance;
     }
@@ -55,7 +52,7 @@ class InputHandler {
         this.keybindings = keybindings;
     }
 
-    private setCanvas(canvas: HTMLCanvasElement) {
+    public setCanvas(canvas: HTMLCanvasElement) {
         if (this.canvas) {
             this.canvas.removeEventListener('mousemove', this.handleMouseMove);
             this.canvas.removeEventListener('mousedown', this.handleMouseDown);
@@ -72,10 +69,7 @@ class InputHandler {
     }
     
     private preventContextMenu = (e: MouseEvent) => {
-        // Allow context menu only if the target is not the canvas, to allow for dev tools.
-        if (e.target === this.canvas) {
-            e.preventDefault();
-        }
+        e.preventDefault();
     };
 
     private init() {
@@ -152,5 +146,3 @@ class InputHandler {
 }
 
 export default InputHandler;
-
-    

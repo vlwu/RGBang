@@ -1,6 +1,6 @@
 
 import { Vec2, drawShapeForColor } from './utils';
-import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
+import { GameColor, COLOR_DETAILS } from './color';
 import { Player } from './player';
 
 export enum PunishmentType {
@@ -8,6 +8,7 @@ export enum PunishmentType {
     DAMAGE_BOOST = 'DAMAGE_BOOST',
     SPLIT = 'SPLIT',
 }
+
 
 export class Enemy {
     pos: Vec2;
@@ -152,7 +153,7 @@ export class Enemy {
         } else {
             // Wrong color hit
             this.wrongHitCounter++;
-            if (this.wrongHitCounter >= 5) {
+            if (this.wrongHitCounter >= 3) {
                 this.applyPunishment();
                 this.wrongHitCounter = 0;
             }
@@ -176,7 +177,7 @@ export class Enemy {
         if (this.activePunishment) return; // Don't stack punishments
 
         const punishments = Object.values(PunishmentType);
-        const randomPunishment = getRandomElement(punishments);
+        const randomPunishment = punishments[Math.floor(Math.random() * punishments.length)];
         this.activePunishment = randomPunishment;
 
         switch (randomPunishment) {
