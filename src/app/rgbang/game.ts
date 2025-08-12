@@ -130,6 +130,7 @@ export class Game {
             this.canvas.width,
             this.canvas.height
         );
+        this.enemies = []; // Clear existing enemies
         this.lastBossSpawnScore = this.score;
     }
 
