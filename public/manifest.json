@@ -3,20 +3,18 @@
   "name": "RGBang",
   "version": "1.0",
   "description": "A vibrant, fast-paced arcade shooter.",
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
-    "default_popup": "index.html",
-    "default_icon": {
-      "16": "favicon.ico",
-      "48": "favicon.ico",
-      "128": "favicon.ico"
-    }
+    "default_title": "RGBang"
   },
   "icons": {
-    "16": "favicon.ico",
-    "48": "favicon.ico",
-    "128": "favicon.ico"
+    "16": "next-assets/media/icon.png",
+    "48": "next-assets/media/icon.png",
+    "128": "next-assets/media/icon.png"
   },
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
   }
 }
