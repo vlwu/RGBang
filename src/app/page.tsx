@@ -14,6 +14,7 @@ import type { Upgrade } from './rgbang/upgrades';
 import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData } from './rgbang/upgrade-data';
 import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/save-state';
 import { UpgradesOverviewModal } from './rgbang/upgrades-overview-modal';
+import { cn } from '@/lib/utils';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -38,7 +39,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, w
             canvas.width = GAME_WIDTH;
             canvas.height = GAME_HEIGHT;
             
-            InputHandler.getInstance(canvas);
+            InputHandler.getInstance(canvas); // Ensure handler is always linked to the current canvas
             
             const game = new Game(canvas, onGameOver, onFragmentCollected, inputHandler, initialGameState);
             gameRef.current = game;
@@ -208,7 +209,19 @@ export default function Home() {
     
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         if (gameRef.current && inputHandlerRef.current) {
-            gameRef.current.player.applyUpgrade(upgrade);
+            
+            const addScoreCallback = (amount: number) => {
+                if (gameRef.current) {
+                    gameRef.current.addScore(amount);
+                }
+            };
+
+            if (upgrade.id === 'fallback-score') {
+                upgrade.apply(gameRef.current.player, 1, addScoreCallback);
+            } else {
+                 gameRef.current.player.applyUpgrade(upgrade);
+            }
+
              // Clear the mouse down state to prevent auto-firing
             inputHandlerRef.current.keys.delete('mouse0');
         }
