@@ -31,21 +31,24 @@ const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
 
-function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, initialGameState }: { 
+function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, initialGameState, isPaused }: { 
     onGameOver: (score: number) => void, 
     onFragmentCollected: (color: GameColor | null) => void,
     width: number,
     height: number,
     gameRef: React.MutableRefObject<Game | null>,
-    initialGameState: SavedGameState
+    initialGameState: SavedGameState,
+    isPaused: boolean
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const inputHandlerRef = useRef<InputHandler | null>(null);
     
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
         const inputHandler = InputHandler.getInstance();
         inputHandler.setCanvas(canvas);
+        inputHandlerRef.current = inputHandler;
 
         const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState);
         gameRef.current = game;
@@ -63,6 +66,28 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
         canvasRef.current.width = GAME_WIDTH;
         canvasRef.current.height = GAME_HEIGHT;
     }, []);
+
+    // Main Game Loop
+    useEffect(() => {
+        let animationFrameId: number | null = null;
+        
+        const gameLoop = () => {
+             if (gameRef.current && inputHandlerRef.current) {
+                gameRef.current.update(inputHandlerRef.current, isPaused);
+                inputHandlerRef.current.resetEvents();
+             }
+             animationFrameId = requestAnimationFrame(gameLoop);
+        };
+        
+        animationFrameId = requestAnimationFrame(gameLoop);
+
+        return () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        };
+    }, [isPaused]);
+
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
@@ -160,33 +185,6 @@ export default function Home() {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         }
     }, [loadInitialData, updateCanvasSize]);
-
-    // Main Game Loop - runs continuously
-    useEffect(() => {
-        const inputHandler = InputHandler.getInstance();
-        let animationFrameId: number | null = null;
-        
-        const gameLoop = () => {
-             if (gameRef.current) {
-                const isPaused = gameState === 'paused' 
-                    || gameState === 'upgrading' 
-                    || isUpgradeOverviewOpen 
-                    || (gameRef.current?.player.isRadialMenuOpen ?? false);
-
-                gameRef.current.update(inputHandler, isPaused);
-             }
-             inputHandler.resetEvents();
-             animationFrameId = requestAnimationFrame(gameLoop);
-        };
-        
-        animationFrameId = requestAnimationFrame(gameLoop);
-
-        return () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-        };
-    }, [gameState, isUpgradeOverviewOpen]);
 
     useEffect(() => {
         InputHandler.getInstance().setKeybindings(keybindings);
@@ -365,7 +363,10 @@ export default function Home() {
         });
     }
 
-    const isPaused = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen || (gameRef.current?.player.isRadialMenuOpen ?? false);
+    const isPaused = gameState === 'paused' 
+        || gameState === 'upgrading' 
+        || isUpgradeOverviewOpen 
+        || (gameRef.current?.player.isRadialMenuOpen ?? false);
 
 
     return (
@@ -479,8 +480,9 @@ export default function Home() {
                         height={canvasSize.height}
                         gameRef={gameRef}
                         initialGameState={initialGameState}
+                        isPaused={isPaused}
                     />
-                    {isPaused && !isUpgradeModalOpen && (
+                    {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
                              <div className="absolute top-4 right-4">
                                 <Button size="icon" variant="ghost" onClick={resumeGame}>
