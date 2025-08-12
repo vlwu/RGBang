@@ -90,7 +90,13 @@ export class Enemy {
     }
     
     takeDamage(amount: number, damageColor: GameColor): boolean {
-        if (damageColor === this.color) {
+        const damageColorDetail = COLOR_DETAILS[damageColor];
+        
+        // Direct hit or component hit
+        const isEffectiveHit = damageColor === this.color || 
+                               (damageColorDetail.components?.includes(this.color) ?? false);
+
+        if (isEffectiveHit) {
             this.health -= amount;
             if (this.health <= 0) {
                 this.health = 0;

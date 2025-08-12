@@ -122,17 +122,18 @@ export class UI {
         ALL_COLORS.forEach((color, index) => {
             const x = startX + index * (boxSize + spacing);
             const detail = COLOR_DETAILS[color];
+            const isAvailable = player.availableColors.has(color);
             
             // Background box
             this.ctx.fillStyle = detail.hex;
-            this.ctx.globalAlpha = 0.8;
+            this.ctx.globalAlpha = isAvailable ? 0.8 : 0.2;
             this.ctx.beginPath();
             roundRect(this.ctx, x, y, boxSize, boxSize, borderRadius);
             this.ctx.fill();
 
             // Draw shape inside the box
             const shapePos = new Vec2(x + boxSize / 2, y + boxSize / 2);
-            drawShapeForColor(this.ctx, shapePos, boxSize * 0.4, color, 'black');
+            drawShapeForColor(this.ctx, shapePos, boxSize * 0.4, color, isAvailable ? 'black' : 'rgba(0,0,0,0.5)');
 
             // Selection highlight
             if (player.currentColor === color) {
@@ -144,7 +145,7 @@ export class UI {
                 roundRect(this.ctx, x, y, boxSize, boxSize, borderRadius);
                 this.ctx.stroke();
                 this.ctx.shadowColor = 'transparent'; // reset shadow
-            } else {
+            } else if (isAvailable) {
                  this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
                  this.ctx.lineWidth = 1;
                  this.ctx.beginPath();

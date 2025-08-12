@@ -2,7 +2,7 @@
 import { Vec2, drawShapeForColor } from './utils';
 import { Bullet } from './bullet';
 import InputHandler from './input-handler';
-import { GameColor, COLOR_DETAILS, ALL_COLORS, SECONDARY_COLORS } from './color';
+import { GameColor, COLOR_DETAILS, ALL_COLORS, SECONDARY_COLORS, PRIMARY_COLORS, isSecondaryColor } from './color';
 import { RadialMenu } from './radial-menu';
 import { ParticleSystem } from './particle';
 
@@ -15,6 +15,7 @@ export class Player {
     isAlive = true;
     
     public currentColor: GameColor;
+    public availableColors: Set<GameColor>;
     private radialMenu: RadialMenu;
     
     private shootCooldown = 10; // frames
@@ -32,7 +33,9 @@ export class Player {
         this.pos = new Vec2(x, y);
         this.health = this.maxHealth;
         this.currentColor = initialColor;
+        this.availableColors = new Set(ALL_COLORS);
         this.radialMenu = new RadialMenu();
+        this.updateAvailableColors(initialColor);
     }
     
     update(input: InputHandler, createBullet: (bullet: Bullet) => void, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
@@ -44,6 +47,21 @@ export class Player {
         
         if (this.shootTimer > 0) this.shootTimer--;
         if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
+    }
+
+    private updateAvailableColors(newColor: GameColor) {
+        this.currentColor = newColor;
+        if (isSecondaryColor(newColor)) {
+            const components = COLOR_DETAILS[newColor].components;
+            this.availableColors = new Set(ALL_COLORS);
+            if (components) {
+                this.availableColors.delete(components[0]);
+                this.availableColors.delete(components[1]);
+            }
+        } else {
+             // If switching to a primary, all colors become available
+             this.availableColors = new Set(ALL_COLORS);
+        }
     }
 
     private handleMovement(input: InputHandler, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
@@ -83,27 +101,36 @@ export class Player {
     }
     
     private handleColorSelection(input: InputHandler, createBullet: (bullet: Bullet) => void) {
+        const trySelectColor = (color: GameColor) => {
+            if (this.availableColors.has(color)) {
+                this.updateAvailableColors(color);
+            }
+        };
+        
         // Keyboard primary selection
-        if (input.isKeyDown(input.keybindings.primary1)) this.currentColor = GameColor.RED;
-        if (input.isKeyDown(input.keybindings.primary2)) this.currentColor = GameColor.YELLOW;
-        if (input.isKeyDown(input.keybindings.primary3)) this.currentColor = GameColor.BLUE;
+        if (input.isKeyDown(input.keybindings.primary1)) trySelectColor(GameColor.RED);
+        if (input.isKeyDown(input.keybindings.primary2)) trySelectColor(GameColor.YELLOW);
+        if (input.isKeyDown(input.keybindings.primary3)) trySelectColor(GameColor.BLUE);
 
         // Mouse wheel selection
         if (input.wheelDeltaY !== 0) {
-            const currentIndex = ALL_COLORS.indexOf(this.currentColor);
+            const selectableColors = ALL_COLORS.filter(c => this.availableColors.has(c));
+            if(selectableColors.length === 0) return;
+
+            const currentIndex = selectableColors.indexOf(this.currentColor);
             let nextIndex;
             if (input.wheelDeltaY > 0) { // Scroll down
-                nextIndex = (currentIndex + 1) % ALL_COLORS.length;
+                nextIndex = (currentIndex + 1) % selectableColors.length;
             } else { // Scroll up
-                nextIndex = (currentIndex - 1 + ALL_COLORS.length) % ALL_COLORS.length;
+                nextIndex = (currentIndex - 1 + selectableColors.length) % selectableColors.length;
             }
-            this.currentColor = ALL_COLORS[nextIndex];
+            this.updateAvailableColors(selectableColors[nextIndex]);
         }
 
         // Radial menu for secondary colors
         if (input.isKeyDown(input.keybindings.comboRadial)) {
             this.radialMenu.active = true;
-            this.radialMenu.update(this.pos, input.mousePos);
+            this.radialMenu.update(this.pos, input.mousePos, this.availableColors);
         } else {
             this.radialMenu.active = false;
         }
@@ -111,8 +138,9 @@ export class Player {
         if (input.wasKeyReleased(input.keybindings.comboRadial)) {
             const selectedColor = this.radialMenu.getSelectedColor();
             if(selectedColor) {
+                this.updateAvailableColors(selectedColor);
                 const direction = input.mousePos.sub(this.pos);
-                const bullet = new Bullet(this.pos, direction, selectedColor);
+                const bullet = new Bullet(this.pos, direction, this.currentColor);
                 createBullet(bullet);
                 this.shootTimer = this.shootCooldown;
             }

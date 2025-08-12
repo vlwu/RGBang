@@ -40,3 +40,7 @@ export function mixColors(color1: GameColor, color2: GameColor): GameColor | nul
 export function getRandomElement<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
 }
+
+export function isSecondaryColor(color: GameColor): boolean {
+    return SECONDARY_COLORS.includes(color);
+}
