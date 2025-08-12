@@ -5,8 +5,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Game } from './rgbang/game';
 import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
 import { Button } from '@/components/ui/button';
-import { Award, Gamepad2, Github, Waves, Pause, Play, LogOut, Settings } from 'lucide-react';
+import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
+import { InfoModal } from './rgbang/info-modal';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -55,6 +56,7 @@ export default function Home() {
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
     const inputHandlerRef = useRef<InputHandler | null>(null);
     const gameRef = useRef<Game | null>(null);
@@ -109,7 +111,10 @@ export default function Home() {
             if (e.key === 'Escape') {
                 if (isSettingsOpen) {
                     setIsSettingsOpen(false);
-                } else if (gameState === 'playing') {
+                } else if (isInfoOpen) {
+                    setIsInfoOpen(false);
+                }
+                else if (gameState === 'playing') {
                     setGameState('paused');
                 } else if (gameState === 'paused') {
                     setGameState('playing');
@@ -119,7 +124,7 @@ export default function Home() {
 
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [gameState, isSettingsOpen]);
+    }, [gameState, isSettingsOpen, isInfoOpen]);
 
 
     const handleGameOver = useCallback((finalScore: number) => {
@@ -160,6 +165,10 @@ export default function Home() {
                 keybindings={keybindings}
                 onKeybindingsChange={setKeybindings}
             />
+            <InfoModal 
+                isOpen={isInfoOpen}
+                onClose={() => setIsInfoOpen(false)}
+            />
 
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
@@ -175,6 +184,10 @@ export default function Home() {
                          <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)}>
                             <Settings className="mr-2" />
                             Settings
+                        </Button>
+                         <Button size="lg" variant="secondary" onClick={() => setIsInfoOpen(true)}>
+                            <Info className="mr-2" />
+                            How to Play
                         </Button>
                     </div>
                      <div className="pt-4 text-xl font-semibold text-foreground/80">
