@@ -5,7 +5,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Game } from './rgbang/game';
 import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
 import { Button } from '@/components/ui/button';
-import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History } from 'lucide-react';
+import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History, X } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
@@ -14,6 +14,18 @@ import type { Upgrade } from './rgbang/upgrades';
 import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData } from './rgbang/upgrade-data';
 import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/save-state';
 import { UpgradesOverviewModal } from './rgbang/upgrades-overview-modal';
+import { useToast } from '@/hooks/use-toast';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -74,12 +86,18 @@ export default function Home() {
     const gameRef = useRef<Game | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
     const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE);
+    const { toast } = useToast();
 
     // Use a ref to store upgradeData to prevent callback recreation
     const upgradeDataRef = useRef(upgradeData);
     useEffect(() => {
         upgradeDataRef.current = upgradeData;
     }, [upgradeData]);
+    
+    const keybindingsRef = useRef(keybindings);
+    useEffect(() => {
+        keybindingsRef.current = keybindings;
+    }, [keybindings]);
 
     const updateCanvasSize = useCallback(() => {
         const windowWidth = window.innerWidth * 0.9;
@@ -185,14 +203,14 @@ export default function Home() {
                     setGameState('playing');
                 }
             }
-             if (e.key.toLowerCase() === keybindings.viewUpgrades.toLowerCase()) {
-                if(gameState === 'playing' || gameState === 'paused') {
+             if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase()) {
+                if((gameState === 'playing' || gameState === 'paused') && !isUpgradeOverviewOpen) {
                     setIsUpgradeOverviewOpen(true);
                 }
             }
         };
         const handleKeyUp = (e: KeyboardEvent) => {
-            if (e.key.toLowerCase() === keybindings.viewUpgrades.toLowerCase()) {
+            if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase()) {
                 setIsUpgradeOverviewOpen(false);
             }
         };
@@ -203,7 +221,7 @@ export default function Home() {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
         }
-    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, keybindings.viewUpgrades]);
+    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen]);
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
@@ -243,7 +261,9 @@ export default function Home() {
         if (!upgrade.id.startsWith('fallback-')) {
             await unlockUpgrade(upgrade.id); 
             const finalData = await levelUpUpgrade(upgrade.id);
-            setUpgradeData(finalData);
+            // Intentionally not calling setUpgradeData here to prevent re-renders mid-game
+            // The data is saved and will be loaded on the next full load.
+            upgradeDataRef.current = finalData;
         }
 
         setIsUpgradeModalOpen(false);
@@ -261,11 +281,21 @@ export default function Home() {
         gameRef.current = null; // Clear the game ref
     }, [highScore]);
     
+    // This is the new centralized function to reset state
+    const resetGameAndUpgradeState = () => {
+        const freshUpgradeData = { unlockedUpgradeIds: new Set(), upgradeProgress: new Map() };
+        setUpgradeData(freshUpgradeData);
+        upgradeDataRef.current = freshUpgradeData;
+        setScore(0);
+        setSavedGame(null);
+    };
+
+
     const startNewRun = async () => {
         await clearGameState();
+        resetGameAndUpgradeState();
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
         setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor });
-        setScore(0);
         setGameState('playing');
     };
     
@@ -281,6 +311,11 @@ export default function Home() {
     const continueRun = async () => {
         const savedRun = await loadGameState();
         if (savedRun) {
+            // Load upgrade data for the continued run
+            const data = await getPlayerUpgradeData();
+            setUpgradeData(data);
+            upgradeDataRef.current = data;
+
             setInitialGameState(savedRun);
             setGameState('playing');
         } else {
@@ -319,7 +354,13 @@ export default function Home() {
         await clearGameState();
         localStorage.removeItem('rgBangHighScore');
         localStorage.removeItem('rgBangLastColor');
-        await loadInitialData();
+        // Manually reset state here to reflect changes immediately
+        setHighScore(0);
+        resetGameAndUpgradeState(); // Use the new centralized reset function
+        toast({
+            title: "Progress Reset",
+            description: "Your high score and all upgrade progress have been cleared.",
+        });
     }
 
     return (
@@ -365,10 +406,28 @@ export default function Home() {
                             <Info className="mr-2" />
                             How to Play
                         </Button>
-                        <Button size="lg" variant="destructive" onClick={handleResetData}>
-                            <Trash2 className="mr-2" />
-                            Reset Progress
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button size="lg" variant="destructive">
+                                    <Trash2 className="mr-2" />
+                                    Reset Progress
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your high score and all upgrade progress.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleResetData}>
+                                    Yes, reset everything
+                                </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                     </div>
                      <div className="pt-4 text-xl font-semibold text-foreground/80">
                         <div className="flex items-center justify-center gap-2">
@@ -408,7 +467,7 @@ export default function Home() {
             {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && (
                 <div className="relative">
                     <GameCanvas
-                        key={initialGameState.score + initialGameState.playerHealth} 
+                        key={initialGameState.score + initialGameState.playerHealth + initialGameState.initialColor} 
                         onGameOver={handleGameOver} 
                         onFragmentCollected={handleFragmentCollected}
                         isPaused={isPaused}
@@ -419,6 +478,11 @@ export default function Home() {
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
+                             <div className="absolute top-4 right-4">
+                                <Button size="icon" variant="ghost" onClick={resumeGame}>
+                                    <X/>
+                                </Button>
+                             </div>
                              <h2 className="text-6xl font-bold font-headline tracking-tighter mb-8 text-glow">Paused</h2>
                              <div className="flex flex-col space-y-4 w-52">
                                 <Button size="lg" onClick={resumeGame} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
@@ -451,7 +515,7 @@ export default function Home() {
                            <span>High Score: {highScore}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={() => setGameState('menu')} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
+                     <Button size="lg" onClick={() => { loadInitialData(); setGameState('menu'); }} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>
@@ -459,4 +523,5 @@ export default function Home() {
             )}
         </main>
     );
-}
+
+    
