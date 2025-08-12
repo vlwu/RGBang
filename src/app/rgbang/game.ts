@@ -17,10 +17,10 @@ class EnemySpawner {
 
     constructor(private canvasWidth: number, private canvasHeight: number) {}
 
-    update(currentEnemyCount: number, createEnemy: (enemy: Enemy) => void) {
+    update(currentEnemyCount: number, upgradeCount: number, createEnemy: (enemy: Enemy) => void) {
         this.spawnTimer--;
         if (this.spawnTimer <= 0 && currentEnemyCount < this.maxEnemies) {
-            this.spawnEnemy(createEnemy);
+            this.spawnEnemy(createEnemy, upgradeCount);
             this.spawnTimer = this.spawnInterval;
             
             if (this.spawnInterval > 30) {
@@ -29,7 +29,7 @@ class EnemySpawner {
         }
     }
 
-    private spawnEnemy(createEnemy: (enemy: Enemy) => void) {
+    private spawnEnemy(createEnemy: (enemy: Enemy) => void, upgradeCount: number) {
         const edge = Math.floor(Math.random() * 4);
         let x, y;
         if (edge === 0) { // Top
@@ -48,9 +48,16 @@ class EnemySpawner {
 
         const color = getRandomElement(PRIMARY_COLORS);
         const radius = 15;
-        const health = 30;
-        const speed = 1.5;
-        const points = 10;
+        
+        // Dynamic difficulty scaling
+        const healthMultiplier = 1 + upgradeCount * 0.15; // 15% more health per upgrade
+        const speedMultiplier = 1 + upgradeCount * 0.05; // 5% more speed per upgrade
+        const pointsMultiplier = 1 + upgradeCount * 0.2;  // 20% more points per upgrade
+        
+        const health = Math.round(30 * healthMultiplier);
+        const speed = 1.5 * speedMultiplier;
+        const points = Math.round(10 * pointsMultiplier);
+
         const newEnemy = new Enemy(x, y, color, radius, health, speed, points);
         createEnemy(newEnemy);
     }
@@ -165,7 +172,8 @@ export class Game {
             }
         } else {
             // No boss active, spawn regular enemies
-            this.enemySpawner.update(this.enemies.length, this.createEnemy);
+            const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
+            this.enemySpawner.update(this.enemies.length, upgradeCount, this.createEnemy);
             // Check if it's time to spawn a boss
             if (this.score >= this.nextBossScoreThreshold) {
                 this.spawnBoss();
@@ -318,5 +326,3 @@ export class Game {
         this.animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 }
-
-    
