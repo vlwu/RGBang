@@ -1,0 +1,90 @@
+
+import { Vec2, lerp, drawShapeForColor } from './utils';
+import { GameColor, COLOR_DETAILS } from './color';
+import { Player } from './player';
+import { ParticleSystem } from './particle';
+
+export class PrismFragment {
+    pos: Vec2;
+    radius = 6;
+    isAlive = true;
+    color: GameColor | null; // null for white/boss fragment
+    hexColor: string;
+
+    private lifespan = 480; // 8 seconds
+    private attractRadius = 100;
+    private attractSpeed = 0.08;
+    private canAttract = false;
+    private attractDelay = 30; // 0.5 seconds
+
+    private angle = Math.random() * Math.PI * 2;
+    private rotationSpeed = (Math.random() - 0.5) * 0.1;
+
+
+    constructor(x: number, y: number, color: GameColor | null) {
+        this.pos = new Vec2(x, y);
+        this.color = color;
+        this.hexColor = color ? COLOR_DETAILS[color].hex : '#FFFFFF';
+    }
+
+    update(player: Player) {
+        if (!this.isAlive) return;
+        
+        this.lifespan--;
+        this.attractDelay--;
+        this.angle += this.rotationSpeed;
+        
+        if (this.attractDelay <= 0) {
+            this.canAttract = true;
+        }
+
+        if (this.lifespan <= 0) {
+            this.isAlive = false;
+        }
+        
+        // Attraction logic
+        if (this.canAttract) {
+            const distVec = player.pos.sub(this.pos);
+            const dist = distVec.magnitude();
+            if (dist < this.attractRadius) {
+                this.pos.x = lerp(this.pos.x, player.pos.x, this.attractSpeed);
+                this.pos.y = lerp(this.pos.y, player.pos.y, this.attractSpeed);
+            }
+        }
+    }
+
+    draw(ctx: CanvasRenderingContext2D) {
+        if (!this.isAlive) return;
+        
+        ctx.save();
+        
+        const pulse = (Math.sin(this.lifespan / 20) + 1) / 2;
+        const glowAlpha = (this.lifespan / 480) * 0.5 + 0.2; // Fade out glow
+        
+        // Glow
+        ctx.shadowColor = this.hexColor;
+        ctx.shadowBlur = 5 + pulse * 5;
+        
+        ctx.globalAlpha = (this.lifespan < 120) ? Math.max(0, this.lifespan / 120) : 1;
+        
+        ctx.translate(this.pos.x, this.pos.y);
+        ctx.rotate(this.angle);
+
+        // Main Shape
+        ctx.fillStyle = this.hexColor;
+        ctx.beginPath();
+        const points = 5;
+        for (let i = 0; i < points * 2; i++) {
+            const r = (i % 2 === 0) ? this.radius : this.radius / 2;
+            const a = (i / (points * 2)) * (Math.PI * 2);
+            const x = r * Math.sin(a);
+            const y = r * Math.cos(a);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+}

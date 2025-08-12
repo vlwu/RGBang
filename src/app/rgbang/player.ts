@@ -5,6 +5,7 @@ import InputHandler from './input-handler';
 import { GameColor, COLOR_DETAILS, ALL_COLORS, SECONDARY_COLORS, PRIMARY_COLORS, isSecondaryColor } from './color';
 import { RadialMenu } from './radial-menu';
 import { ParticleSystem } from './particle';
+import { PrismFragment } from './prism-fragment';
 
 export class Player {
     pos: Vec2;
@@ -230,8 +231,9 @@ export class Player {
         }
     }
 
-    refillHealth() {
-        this.health = this.maxHealth;
+    collectFragment(fragment: PrismFragment) {
+        // This is where the upgrade UI would be triggered.
+        // For now, it just collects the fragment.
     }
 
     public getDashCooldownProgress(): number {

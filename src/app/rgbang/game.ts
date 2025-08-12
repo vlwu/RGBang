@@ -8,7 +8,7 @@ import InputHandler from './input-handler';
 import { ParticleSystem } from './particle';
 import { circleCollision, Vec2 } from './utils';
 import { getRandomElement, PRIMARY_COLORS, GameColor } from './color';
-import { Prism } from './prism';
+import { PrismFragment } from './prism-fragment';
 
 class EnemySpawner {
     private spawnInterval = 120; // frames
@@ -63,7 +63,7 @@ export class Game {
     private bullets: Bullet[] = [];
     private enemies: Enemy[] = [];
     private boss: Boss | null = null;
-    private prisms: Prism[] = [];
+    private fragments: PrismFragment[] = [];
     private particles: ParticleSystem;
     private enemySpawner: EnemySpawner;
     private ui: UI;
@@ -140,7 +140,7 @@ export class Game {
         
         this.bullets.forEach(bullet => bullet.update());
         this.enemies.forEach(enemy => enemy.update(this.player));
-        this.prisms.forEach(prism => prism.update());
+        this.fragments.forEach(fragment => fragment.update(this.player));
         this.boss?.update();
 
         // 2. Handle collisions
@@ -156,8 +156,8 @@ export class Game {
         if (this.boss) {
             if (!this.boss.isAlive) {
                 this.particles.add(this.boss.pos, this.boss.color, 100);
-                this.prisms.push(new Prism(this.boss.pos.x, this.boss.pos.y));
-                this.nextBossScoreThreshold *= 1.5; // Increase threshold by 50%
+                this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null)); // null for white/special
+                this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5); // Increase threshold by 50%
                 this.boss = null;
             }
         } else {
@@ -182,7 +182,16 @@ export class Game {
             const bullet = this.bullets[i];
             let bulletRemoved = false;
             
-            // Check collision with regular enemies
+            if (bullet.isFromBoss) {
+                if (this.player.isAlive && circleCollision(bullet, this.player)) {
+                    this.player.takeDamage(bullet.damage);
+                    this.particles.add(bullet.pos, bullet.color, 10);
+                    this.bullets.splice(i, 1);
+                }
+                continue;
+            }
+            
+            // Player bullet collisions
             for (let j = this.enemies.length - 1; j >= 0; j--) {
                 const enemy = this.enemies[j];
                 
@@ -193,6 +202,7 @@ export class Game {
                     
                     if (hitSuccess && !enemy.isAlive) {
                         this.score += enemy.points;
+                        this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
                     }
                     
                     this.bullets.splice(i, 1);
@@ -203,18 +213,11 @@ export class Game {
             if (bulletRemoved) continue;
             
             // Check collision with boss
-            if (this.boss && this.boss.isAlive && !bullet.isFromBoss && circleCollision(bullet, this.boss)) {
+            if (this.boss && this.boss.isAlive && circleCollision(bullet, this.boss)) {
                 this.particles.add(bullet.pos, bullet.color, 15);
                 this.boss.takeDamage(bullet.damage, bullet.color);
                 this.bullets.splice(i, 1);
                 continue;
-            }
-            
-            // Check collision with player
-            if (bullet.isFromBoss && this.player.isAlive && circleCollision(bullet, this.player)) {
-                this.player.takeDamage(bullet.damage);
-                this.particles.add(bullet.pos, bullet.color, 10);
-                this.bullets.splice(i, 1);
             }
         }
 
@@ -222,8 +225,9 @@ export class Game {
         for (const enemy of this.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(enemy.damage);
-                enemy.isAlive = false; 
+                enemy.isAlive = false; // Enemy dies on collision with player
                 this.particles.add(enemy.pos, enemy.color, 10);
+                // No fragment drop on collision
             }
         }
 
@@ -233,16 +237,17 @@ export class Game {
             // Boss doesn't die from collision, just damages player
         }
 
-        // Player-Prism Collision
-        for (let i = this.prisms.length - 1; i >= 0; i--) {
-            const prism = this.prisms[i];
-            if (prism.isAlive && this.player.isAlive && circleCollision(this.player, prism)) {
-                this.player.refillHealth();
-                prism.isAlive = false;
-                this.prisms.splice(i, 1);
-                this.particles.add(this.player.pos, GameColor.GREEN, 50); // Health particle effect
+        // Player-Fragment Collision
+        for (let i = this.fragments.length - 1; i >= 0; i--) {
+            const fragment = this.fragments[i];
+            if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
+                // TODO: Trigger upgrade selection UI
+                this.player.collectFragment(fragment);
+                this.particles.addPickupEffect(fragment.pos, fragment.color);
+                fragment.isAlive = false;
             }
         }
+
 
         // Enemy-Enemy Collisions for separation
         for (let i = 0; i < this.enemies.length; i++) {
@@ -258,15 +263,15 @@ export class Game {
     }
     
     private cleanupEntities() {
-         // Create particles for dead enemies before removing them
         this.enemies.forEach(enemy => {
             if (!enemy.isAlive) {
-                this.particles.add(enemy.pos, enemy.color, 30)
+                this.particles.add(enemy.pos, enemy.color, 30);
             }
         });
 
         // Remove dead enemies
         this.enemies = this.enemies.filter(e => e.isAlive);
+        this.fragments = this.fragments.filter(f => f.isAlive);
         
         // Remove off-screen bullets
         this.bullets = this.bullets.filter((bullet) => 
@@ -294,7 +299,7 @@ export class Game {
         this.particles.draw(this.ctx);
         this.boss?.draw(this.ctx);
         this.enemies.forEach(e => e.draw(this.ctx));
-        this.prisms.forEach(p => p.draw(this.ctx));
+        this.fragments.forEach(p => p.draw(this.ctx));
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx, this.inputHandler);
         

@@ -46,6 +46,80 @@ class Particle implements IParticle {
     }
 }
 
+class FragmentParticle implements IParticle {
+    pos: Vec2;
+    vel: Vec2;
+    lifespan: number;
+    maxLifespan: number;
+    radius: number;
+    color: string;
+
+    constructor(pos: Vec2, color: string) {
+        this.pos = new Vec2(pos.x, pos.y);
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 0.5 + 0.2;
+        this.vel = new Vec2(Math.cos(angle) * speed, Math.sin(angle) * speed);
+        this.maxLifespan = this.lifespan = Math.random() * 50 + 40;
+        this.radius = Math.random() * 1.5 + 0.5;
+        this.color = color;
+    }
+
+    update() {
+        this.pos = this.pos.add(this.vel);
+        this.lifespan--;
+    }
+
+    draw(ctx: CanvasRenderingContext2D) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, (this.lifespan / this.maxLifespan) * 0.7);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 3;
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+class PickupParticle implements IParticle {
+    pos: Vec2;
+    vel: Vec2;
+    lifespan: number;
+    maxLifespan: number;
+    radius: number;
+    color: string;
+
+    constructor(pos: Vec2, color: string) {
+        this.pos = new Vec2(pos.x, pos.y);
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 4 + 2; // Faster burst
+        this.vel = new Vec2(Math.cos(angle) * speed, Math.sin(angle) * speed);
+        this.maxLifespan = this.lifespan = Math.random() * 30 + 20; // Shorter lifespan
+        this.radius = Math.random() * 2 + 1;
+        this.color = color;
+    }
+    
+    update() {
+        this.pos = this.pos.add(this.vel);
+        this.vel = this.vel.scale(0.95); // More friction
+        this.lifespan--;
+    }
+
+    draw(ctx: CanvasRenderingContext2D) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.lifespan / this.maxLifespan);
+        ctx.fillStyle = this.color;
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 5;
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+
 class DashParticle implements IParticle {
     pos: Vec2;
     vel: Vec2;
@@ -111,5 +185,18 @@ export class ParticleSystem {
     
     addDashParticle(pos: Vec2) {
         this.particles.push(new DashParticle(pos));
+    }
+
+    addFragmentParticle(pos: Vec2, color: string) {
+        if (Math.random() > 0.7) { // Don't add every frame
+             this.particles.push(new FragmentParticle(pos, color));
+        }
+    }
+    
+    addPickupEffect(pos: Vec2, color: GameColor | null) {
+        const hexColor = color ? COLOR_DETAILS[color].hex : '#FFFFFF';
+        for (let i = 0; i < 20; i++) {
+            this.particles.push(new PickupParticle(pos, hexColor));
+        }
     }
 }
