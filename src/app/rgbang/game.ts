@@ -70,7 +70,7 @@ export class Game {
     private inputHandler: InputHandler;
 
     private score = 0;
-    private lastBossSpawnScore = 0;
+    private nextBossScoreThreshold = 150;
     public isRunning = false;
     private animationFrameId: number | null = null;
     
@@ -131,7 +131,6 @@ export class Game {
             this.canvas.height
         );
         this.enemies = []; // Clear existing enemies
-        this.lastBossSpawnScore = this.score;
     }
 
     private update() {
@@ -158,13 +157,14 @@ export class Game {
             if (!this.boss.isAlive) {
                 this.particles.add(this.boss.pos, this.boss.color, 100);
                 this.prisms.push(new Prism(this.boss.pos.x, this.boss.pos.y));
+                this.nextBossScoreThreshold *= 1.5; // Increase threshold by 50%
                 this.boss = null;
             }
         } else {
             // No boss active, spawn regular enemies
             this.enemySpawner.update(this.enemies.length, this.createEnemy);
             // Check if it's time to spawn a boss
-            if (this.score > 0 && Math.floor(this.score / 100) > Math.floor(this.lastBossSpawnScore / 100)) {
+            if (this.score >= this.nextBossScoreThreshold) {
                 this.spawnBoss();
             }
         }
