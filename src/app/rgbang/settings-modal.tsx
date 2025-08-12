@@ -83,6 +83,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
     };
 
     const getKeyDisplay = (key: string) => {
+        if (!key) return '';
         if (key === ' ') return 'SPACE';
         return key.toUpperCase();
     }
