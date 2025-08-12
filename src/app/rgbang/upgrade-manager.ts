@@ -23,10 +23,10 @@ export class UpgradeManager {
             pool = [...colorUpgrades, ...generalUpgrades];
         }
 
-        // Filter out upgrades the player already has at max level in the current run
+        // Filter out upgrades the player has at max level
         const availablePool = pool.filter(u => {
-            const active = this.activeUpgrades.get(u.id);
-            return !active || active.level < u.getMaxLevel();
+            const progress = upgradeData.upgradeProgress.get(u.id);
+            return !progress || progress.level < 5;
         });
 
         // Separate into seen and unseen upgrades
@@ -114,5 +114,3 @@ export class UpgradeManager {
         return Array.from(this.activeUpgrades.values()).map(item => item.upgrade);
     }
 }
-
-    

@@ -11,7 +11,7 @@ import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade } from './rgbang/upgrades';
-import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, addExpAndLevelUp, resetAllUpgradeData } from './rgbang/upgrade-data';
+import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData } from './rgbang/upgrade-data';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -169,7 +169,7 @@ export default function Home() {
         }
         
         await unlockUpgrade(upgrade.id); 
-        const finalData = await addExpAndLevelUp(upgrade.id, 25);
+        const finalData = await levelUpUpgrade(upgrade.id);
         setUpgradeData(finalData);
 
         setIsUpgradeModalOpen(false);
@@ -327,9 +327,3 @@ export default function Home() {
         </main>
     );
 }
-
-    
-
-    
-
-    

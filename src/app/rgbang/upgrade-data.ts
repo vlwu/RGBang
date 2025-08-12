@@ -1,7 +1,6 @@
 
 export interface UpgradeProgress {
     level: number;
-    exp: number;
 }
 
 export interface PlayerUpgradeData {
@@ -10,9 +9,6 @@ export interface PlayerUpgradeData {
 }
 
 const UPGRADE_DATA_KEY = 'rgBangUpgradeData';
-
-// EXP needed to reach level 2, 3, 4, 5. Level 1 is 0 EXP.
-const EXP_THRESHOLDS = [0, 100, 250, 500, 1000];
 
 // Helper to convert Maps and Sets to JSON
 const replacer = (key: string, value: any) => {
@@ -76,28 +72,16 @@ export async function savePlayerUpgradeData(data: PlayerUpgradeData): Promise<vo
     }
 }
 
-export async function addExpAndLevelUp(upgradeId: string, expToAdd: number): Promise<PlayerUpgradeData> {
+export async function levelUpUpgrade(upgradeId: string): Promise<PlayerUpgradeData> {
     const data = await getPlayerUpgradeData();
     let progress = data.upgradeProgress.get(upgradeId);
 
     if (!progress) {
-        progress = { level: 1, exp: 0 };
-    }
-    
-    // Cap level
-    if (progress.level >= EXP_THRESHOLDS.length) {
-        progress.exp = EXP_THRESHOLDS[EXP_THRESHOLDS.length - 1];
-        data.upgradeProgress.set(upgradeId, progress);
-        await savePlayerUpgradeData(data);
-        return data;
-    }
-    
-    progress.exp += expToAdd;
-    
-    // Check for level up
-    while (progress.level < EXP_THRESHOLDS.length && progress.exp >= EXP_THRESHOLDS[progress.level]) {
-        progress.level++;
-        // Do not carry over "extra" exp for simplicity
+        progress = { level: 1 };
+    } else {
+        if (progress.level < 5) {
+            progress.level++;
+        }
     }
     
     data.upgradeProgress.set(upgradeId, progress);
@@ -111,7 +95,7 @@ export async function unlockUpgrade(upgradeId: string): Promise<PlayerUpgradeDat
         data.unlockedUpgradeIds.add(upgradeId);
         // Initialize progress when an upgrade is first unlocked
         if (!data.upgradeProgress.has(upgradeId)) {
-            data.upgradeProgress.set(upgradeId, { level: 1, exp: 0 });
+            data.upgradeProgress.set(upgradeId, { level: 1 });
         }
         await savePlayerUpgradeData(data);
     }

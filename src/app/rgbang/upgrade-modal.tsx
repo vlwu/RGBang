@@ -8,7 +8,6 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
-import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Upgrade } from "./upgrades";
 import { GameColor, COLOR_DETAILS } from './color';
@@ -34,20 +33,12 @@ export const iconMap: { [key: string]: React.ElementType } = {
     'prism-exp-gain': Star
 };
 
-// EXP needed to reach level 2, 3, 4, 5. Level 1 is 0 EXP.
-const EXP_THRESHOLDS = [0, 100, 250, 500, 1000];
-
 
 const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSelect: (upgrade: Upgrade) => void, progress?: UpgradeProgress }) => {
     const Icon = iconMap[upgrade.id] || iconMap['default'];
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
     
     const level = progress?.level || 1;
-    const currentExp = progress?.exp || 0;
-    const expForNextLevel = EXP_THRESHOLDS[level] || EXP_THRESHOLDS[EXP_THRESHOLDS.length - 1];
-    const expForPrevLevel = EXP_THRESHOLDS[level - 1] || 0;
-    
-    const progressPercent = level >= 5 ? 100 : Math.max(0, Math.min(100, ((currentExp - expForPrevLevel) / (expForNextLevel - expForPrevLevel)) * 100));
 
     return (
         <Card 
@@ -69,12 +60,6 @@ const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSele
                             <Star key={i} className={`w-5 h-5 ${i < level ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
                         ))}
                     </div>
-                    {level < 5 && (
-                        <>
-                            <Progress value={progressPercent} className="h-2" />
-                            <p className="text-xs text-muted-foreground mt-1">{currentExp} / {expForNextLevel} EXP</p>
-                        </>
-                    )}
                      {level >= 5 && (
                         <p className="text-sm font-bold text-yellow-400">MAX LEVEL</p>
                     )}
