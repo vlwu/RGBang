@@ -17,6 +17,8 @@ import { UpgradesOverviewModal } from './rgbang/upgrades-overview-modal';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
+const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
+
 
 function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, width, height, gameRef, initialGameState }: { 
     onGameOver: (score: number) => void, 
@@ -60,6 +62,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, w
 
 export default function Home() {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'continuePrompt'>('menu');
+    const [runId, setRunId] = useState(0); // Used to force remount of GameCanvas
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
@@ -76,7 +79,7 @@ export default function Home() {
     const inputHandlerRef = useRef<InputHandler | null>(null);
     const gameRef = useRef<Game | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
-    const [initialGameState, setInitialGameState] = useState<SavedGameState>({ score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED });
+    const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE);
 
     // Use a ref to store upgradeData to prevent callback recreation
     const upgradeDataRef = useRef(upgradeData);
@@ -229,13 +232,15 @@ export default function Home() {
             setHighScore(finalScore);
         }
         clearGameState(); // Clear saved run on game over
+        gameRef.current = null; // Clear the game ref
     }, [highScore]);
     
     const startNewRun = async () => {
         await clearGameState();
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
-        setInitialGameState({ score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: lastColor });
+        setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor });
         setScore(0);
+        setRunId(id => id + 1); // Increment runId to force remount
         setGameState('playing');
     };
 
@@ -243,6 +248,7 @@ export default function Home() {
         const savedRun = await loadGameState();
         if (savedRun) {
             setInitialGameState(savedRun);
+            setRunId(id => id + 1); // Increment runId to force remount
             setGameState('playing');
         } else {
             // Failsafe in case saved data disappears
@@ -255,14 +261,19 @@ export default function Home() {
             const currentState = gameRef.current.getCurrentState();
             if (currentState.score > 0) {
                  saveGameState(currentState);
+            } else {
+                 clearGameState(); // Clear if they quit with 0 score
             }
+
             if (currentState.score > highScore) {
                 localStorage.setItem('rgBangHighScore', currentState.score.toString());
                 setHighScore(currentState.score);
             }
             setScore(currentState.score);
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
+            gameRef.current = null; // Clear the game ref
         }
+        setInitialGameState(DEFAULT_GAME_STATE); // Reset initial game state for the menu
         setGameState('menu');
         loadInitialData(); // Reload to check for saved games again
     };
@@ -361,7 +372,8 @@ export default function Home() {
 
             {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && inputHandlerRef.current && (
                 <div className="relative">
-                    <GameCanvas 
+                    <GameCanvas
+                        key={runId} 
                         onGameOver={handleGameOver} 
                         onFragmentCollected={handleFragmentCollected}
                         isPaused={gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen}
