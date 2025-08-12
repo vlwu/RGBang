@@ -1,6 +1,4 @@
 
-'use server';
-
 export interface UpgradeProgress {
     level: number;
     exp: number;
