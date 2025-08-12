@@ -80,8 +80,7 @@ export class Game {
     private score = 0;
     private nextBossScoreThreshold = 150;
     private firstBossDefeated = false;
-    private isRunning = false;
-    private animationFrameId: number | null = null;
+    public isRunning = false;
     private isBossSpawning = false;
     
     private onGameOver: (finalScore: number) => void;
@@ -107,11 +106,14 @@ export class Game {
         this.score = initialState.score;
         this.player.health = initialState.playerHealth;
         this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
-        // This check is a bit of a hack, we should find a better way to check if it's a new game
-        this.firstBossDefeated = initialState.score > 150; 
-        initialState.activeUpgrades.forEach((level, id) => {
-            this.player.upgradeManager.applyById(id, level);
-        });
+        this.firstBossDefeated = initialState.nextBossScoreThreshold > 150; 
+
+        // CRITICAL FIX: Apply all saved upgrades when the game starts
+        if (initialState.activeUpgrades) {
+            initialState.activeUpgrades.forEach((level, id) => {
+                this.player.upgradeManager.applyById(id, level);
+            });
+        }
     }
 
     public start() {
@@ -386,3 +388,5 @@ export class Game {
         this.ui.draw(this.player, this.score, this.boss);
     }
 }
+
+    

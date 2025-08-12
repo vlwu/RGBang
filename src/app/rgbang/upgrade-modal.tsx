@@ -21,6 +21,7 @@ interface UpgradeModalProps {
     options: Upgrade[];
     onSelect: (upgrade: Upgrade) => void;
     upgradeData: PlayerUpgradeData;
+    runUpgrades: Map<string, number>;
 }
 
 export const iconMap: { [key: string]: React.ElementType } = {
@@ -40,12 +41,19 @@ export const iconMap: { [key: string]: React.ElementType } = {
 };
 
 
-const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable }: { upgrade: Upgrade, onSelect: (upgrade: Upgrade) => void, progress?: UpgradeProgress, isSelectable: boolean }) => {
+const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: { 
+    upgrade: Upgrade, 
+    onSelect: (upgrade: Upgrade) => void, 
+    progress?: UpgradeProgress, 
+    isSelectable: boolean,
+    runLevel: number
+}) => {
     const Icon = iconMap[upgrade.id] || iconMap['default'];
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
     
-    const level = progress?.level || 0;
     const isFallback = upgrade.id.startsWith('fallback-');
+    const displayLevel = isFallback ? 0 : runLevel;
+    const maxLevel = upgrade.getMaxLevel();
 
     const cardClasses = cn(
         "text-center bg-card/80 backdrop-blur-sm border-border flex flex-col transition-all duration-300",
@@ -75,11 +83,11 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable }: { upgrade: U
                 {!isFallback && (
                     <div>
                         <div className="flex justify-center items-center mb-2">
-                            {Array.from({ length: 5 }).map((_, i) => (
-                                <Star key={i} className={`w-5 h-5 ${i < level ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
+                            {Array.from({ length: maxLevel }).map((_, i) => (
+                                <Star key={i} className={`w-5 h-5 ${i < displayLevel ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
                             ))}
                         </div>
-                         {level >= 5 && (
+                         {displayLevel >= maxLevel && (
                             <p className="text-sm font-bold text-yellow-400">MAX LEVEL</p>
                         )}
                     </div>
@@ -89,7 +97,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable }: { upgrade: U
     )
 }
 
-export function UpgradeModal({ isOpen, options, onSelect, upgradeData }: UpgradeModalProps) {
+export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrades }: UpgradeModalProps) {
     const [isSelectable, setIsSelectable] = useState(false);
 
     useEffect(() => {
@@ -97,7 +105,7 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData }: Upgrade
             setIsSelectable(false);
             const timer = setTimeout(() => {
                 setIsSelectable(true);
-            }, 1000); // 1-second delay
+            }, 500); // 0.5-second delay to prevent accidental clicks
 
             return () => clearTimeout(timer); // Cleanup on close
         }
@@ -123,6 +131,7 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData }: Upgrade
                             onSelect={onSelect}
                             progress={upgradeData.upgradeProgress.get(opt.id)}
                             isSelectable={isSelectable}
+                            runLevel={runUpgrades.get(opt.id) || 0}
                         />
                     ))}
                 </div>
@@ -130,3 +139,5 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData }: Upgrade
         </Dialog>
     );
 }
+
+    

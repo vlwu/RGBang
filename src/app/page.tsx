@@ -41,14 +41,12 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
     isPaused: boolean
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const inputHandlerRef = useRef<InputHandler | null>(null);
+    const inputHandler = InputHandler.getInstance();
     
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
-        const inputHandler = InputHandler.getInstance();
         inputHandler.setCanvas(canvas);
-        inputHandlerRef.current = inputHandler;
 
         const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState);
         gameRef.current = game;
@@ -69,7 +67,6 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
     // Main Game Loop
     useEffect(() => {
         let animationFrameId: number | null = null;
-        const inputHandler = InputHandler.getInstance();
         
         const gameLoop = () => {
              if (gameRef.current) {
@@ -98,6 +95,7 @@ export default function Home() {
     const [highScore, setHighScore] = useState(0);
     const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
     const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set(), upgradeProgress: new Map() });
+    const [runUpgrades, setRunUpgrades] = useState<Map<string, number>>(new Map());
     
     // UI Modals State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -246,29 +244,23 @@ export default function Home() {
             };
 
             if (upgrade.id === 'fallback-score' || upgrade.id === 'fallback-heal') {
-                 // The apply method is pre-configured with the right callbacks, just call it
                 upgrade.apply(gameRef.current.player, 1, addScoreCallback);
             } else {
                  gameRef.current.player.applyUpgrade(upgrade);
+                 const currentLevel = runUpgrades.get(upgrade.id) || 0;
+                 setRunUpgrades(new Map(runUpgrades.set(upgrade.id, currentLevel + 1)));
             }
-
-            const inputHandler = InputHandler.getInstance();
-            inputHandler.keys.delete('mouse0');
-            inputHandler.keys.delete('mouse2');
         }
         
-        // Only level up real upgrades, not fallbacks
         if (!upgrade.id.startsWith('fallback-')) {
-            await unlockUpgrade(upgrade.id); 
             const finalData = await levelUpUpgrade(upgrade.id);
-            // Intentionally not calling setUpgradeData here to prevent re-renders mid-game
-            // The data is saved and will be loaded on the next full load.
+            setUpgradeData(finalData); // Update permanent data state
             upgradeDataRef.current = finalData;
         }
 
         setIsUpgradeModalOpen(false);
         setGameState('playing');
-    }, []);
+    }, [runUpgrades]);
 
     const handleGameOver = useCallback((finalScore: number) => {
         setScore(finalScore);
@@ -281,11 +273,11 @@ export default function Home() {
         gameRef.current = null; // Clear the game ref
     }, [highScore]);
     
-    // This is the new centralized function to reset state
     const resetGameAndUpgradeState = () => {
         const freshUpgradeData = { unlockedUpgradeIds: new Set(), upgradeProgress: new Map() };
         setUpgradeData(freshUpgradeData);
         upgradeDataRef.current = freshUpgradeData;
+        setRunUpgrades(new Map());
         setScore(0);
         setSavedGame(null);
     };
@@ -311,15 +303,14 @@ export default function Home() {
     const continueRun = async () => {
         const savedRun = await loadGameState();
         if (savedRun) {
-            // Load upgrade data for the continued run
             const data = await getPlayerUpgradeData();
             setUpgradeData(data);
             upgradeDataRef.current = data;
+            setRunUpgrades(new Map(savedRun.activeUpgrades));
 
             setInitialGameState(savedRun);
             setGameState('playing');
         } else {
-            // Failsafe in case saved data disappears
             startNewRun();
         }
     };
@@ -341,8 +332,8 @@ export default function Home() {
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
         }
         gameRef.current = null; // Clear the game ref
-        setInitialGameState(DEFAULT_GAME_STATE); // Reset initial game state for the menu
-        loadInitialData(); // Reload to check for saved games again
+        setInitialGameState(DEFAULT_GAME_STATE);
+        loadInitialData();
     };
 
     const resumeGame = () => {
@@ -354,9 +345,8 @@ export default function Home() {
         await clearGameState();
         localStorage.removeItem('rgBangHighScore');
         localStorage.removeItem('rgBangLastColor');
-        // Manually reset state here to reflect changes immediately
         setHighScore(0);
-        resetGameAndUpgradeState(); // Use the new centralized reset function
+        resetGameAndUpgradeState();
         toast({
             title: "Progress Reset",
             description: "Your high score and all upgrade progress have been cleared.",
@@ -386,6 +376,7 @@ export default function Home() {
                 options={upgradeOptions}
                 onSelect={handleUpgradeSelected}
                 upgradeData={upgradeData}
+                runUpgrades={runUpgrades}
             />
             <UpgradesOverviewModal
                 isOpen={isUpgradeOverviewOpen}
@@ -530,3 +521,5 @@ export default function Home() {
         </main>
     );
 }
+
+    
