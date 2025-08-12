@@ -162,8 +162,10 @@ export default function Home() {
     }, []);
     
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
-        if (gameRef.current) {
+        if (gameRef.current && inputHandlerRef.current) {
             gameRef.current.player.applyUpgrade(upgrade);
+             // Clear the mouse down state to prevent auto-firing
+            inputHandlerRef.current.keys.delete('mouse0');
         }
         
         await unlockUpgrade(upgrade.id); 
@@ -325,6 +327,8 @@ export default function Home() {
         </main>
     );
 }
+
+    
 
     
 
