@@ -2,16 +2,21 @@
   "manifest_version": 3,
   "name": "RGBang",
   "version": "1.0",
-  "description": "A vibrant, fast-paced arcade shooter built with Next.js and Canvas.",
-  "background": {
-    "service_worker": "background.js"
-  },
+  "description": "A vibrant, fast-paced arcade shooter.",
   "action": {
-    "default_title": "Play RGBang"
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "favicon.ico",
+      "48": "favicon.ico",
+      "128": "favicon.ico"
+    }
   },
   "icons": {
-    "16": "icon.png",
-    "48": "icon.png",
-    "128": "icon.png"
+    "16": "favicon.ico",
+    "48": "favicon.ico",
+    "128": "favicon.ico"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   }
 }
