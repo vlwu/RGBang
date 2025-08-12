@@ -9,6 +9,7 @@ import { ParticleSystem } from './particle';
 import { circleCollision, Vec2, distance } from './utils';
 import { getRandomElement, PRIMARY_COLORS, GameColor } from './color';
 import { PrismFragment } from './prism-fragment';
+import { SavedGameState } from './save-state';
 
 class EnemySpawner {
     private spawnInterval = 120; // frames
@@ -89,7 +90,7 @@ export class Game {
         onGameOver: (finalScore: number) => void,
         onFragmentCollected: (color: GameColor | null) => void,
         inputHandler: InputHandler,
-        initialColor: GameColor,
+        initialState: SavedGameState,
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
@@ -97,10 +98,18 @@ export class Game {
         this.onFragmentCollected = onFragmentCollected;
         this.inputHandler = inputHandler;
 
-        this.player = new Player(canvas.width / 2, canvas.height / 2, initialColor);
+        this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor);
         this.enemySpawner = new EnemySpawner(canvas.width, canvas.height);
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();
+        
+        // Restore state
+        this.score = initialState.score;
+        this.player.health = initialState.playerHealth;
+        this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
+        initialState.activeUpgrades.forEach((level, id) => {
+            this.player.upgradeManager.applyById(id, level);
+        });
     }
 
     public start() {
@@ -116,8 +125,14 @@ export class Game {
         }
     }
     
-    public getCurrentScore(): number {
-        return this.score;
+    public getCurrentState(): SavedGameState {
+        return {
+            score: this.score,
+            playerHealth: this.player.health,
+            activeUpgrades: this.player.upgradeManager.getActiveUpgradeMap(),
+            nextBossScoreThreshold: this.nextBossScoreThreshold,
+            initialColor: this.player.currentColor,
+        };
     }
     
     public addScore(amount: number) {
@@ -373,5 +388,3 @@ export class Game {
         this.animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 }
-
-    

@@ -16,9 +16,8 @@ export class UpgradeManager {
         let pool: Upgrade[];
 
         if (color === null) { // Boss/white fragment
-            const gunUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GUN);
             const playerStatUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.PLAYER_STAT);
-            pool = [...gunUpgrades, ...playerStatUpgrades];
+            pool = [...playerStatUpgrades];
         } else {
             const gunUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GUN && u.color === color);
             const generalUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GENERAL);
@@ -72,9 +71,8 @@ export class UpgradeManager {
             }
         }
         
-        // If there are still no options, it means everything is maxed out.
-        // Provide fallback options.
-        if (options.length === 0) {
+        // If there are still not enough options, add fallbacks.
+        if (options.length < 3) {
             const healUpgrade: Upgrade = {
                 id: 'fallback-heal',
                 name: 'First Aid',
@@ -105,8 +103,11 @@ export class UpgradeManager {
             
             // Pass the callback to the apply function
             scoreUpgrade.apply = scoreUpgrade.apply.bind(null, this.player, 1, addScoreCallback);
+            
+            if (options.length === 0) return [healUpgrade, scoreUpgrade];
 
-            return [healUpgrade, scoreUpgrade];
+            if (!options.some(opt => opt.id === healUpgrade.id)) options.push(healUpgrade);
+            if (options.length < 3 && !options.some(opt => opt.id === scoreUpgrade.id)) options.push(scoreUpgrade);
         }
 
 
@@ -115,20 +116,19 @@ export class UpgradeManager {
 
     apply(upgrade: Upgrade, level: number) {
         if (upgrade.id.startsWith('fallback-')) {
-             // Fallback upgrades have their apply logic defined on creation.
             upgrade.apply(this.player, level);
             return;
         }
-
-        if (this.activeUpgrades.has(upgrade.id)) {
-            const existing = this.activeUpgrades.get(upgrade.id)!;
-            existing.level = level;
-
-        } else {
-            this.activeUpgrades.set(upgrade.id, { upgrade, level });
-        }
         
+        this.activeUpgrades.set(upgrade.id, { upgrade, level });
         this.recalculatePlayerStats();
+    }
+    
+    applyById(upgradeId: string, level: number) {
+        const upgrade = ALL_UPGRADES.find(u => u.id === upgradeId);
+        if (upgrade) {
+            this.apply(upgrade, level);
+        }
     }
 
     recalculatePlayerStats() {
@@ -162,5 +162,13 @@ export class UpgradeManager {
 
     getActiveUpgradeDetails(): Upgrade[] {
         return Array.from(this.activeUpgrades.values()).map(item => item.upgrade);
+    }
+    
+    getActiveUpgradeMap(): Map<string, number> {
+        const map = new Map<string, number>();
+        this.activeUpgrades.forEach(({level}, id) => {
+            map.set(id, level);
+        });
+        return map;
     }
 }

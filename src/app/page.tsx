@@ -5,18 +5,19 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Game } from './rgbang/game';
 import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
 import { Button } from '@/components/ui/button';
-import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2 } from 'lucide-react';
+import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade } from './rgbang/upgrades';
 import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData } from './rgbang/upgrade-data';
+import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/save-state';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 
-function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, width, height, gameRef, initialColor }: { 
+function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, width, height, gameRef, initialGameState }: { 
     onGameOver: (score: number) => void, 
     onFragmentCollected: (color: GameColor | null) => void,
     isPaused: boolean,
@@ -24,7 +25,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, w
     width: number,
     height: number,
     gameRef: React.MutableRefObject<Game | null>,
-    initialColor: GameColor
+    initialGameState: SavedGameState
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -36,7 +37,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, w
             
             InputHandler.getInstance(canvas);
             
-            const game = new Game(canvas, onGameOver, onFragmentCollected, inputHandler, initialColor);
+            const game = new Game(canvas, onGameOver, onFragmentCollected, inputHandler, initialGameState);
             gameRef.current = game;
             game.start();
 
@@ -44,7 +45,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, w
                 game.stop();
             };
         }
-    }, [onGameOver, onFragmentCollected, inputHandler, gameRef, initialColor]);
+    }, [onGameOver, onFragmentCollected, inputHandler, gameRef, initialGameState]);
 
     useEffect(() => {
         if (gameRef.current) {
@@ -57,10 +58,10 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, w
 }
 
 export default function Home() {
-    const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading'>('menu');
+    const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'continuePrompt'>('menu');
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
-    const [lastSelectedColor, setLastSelectedColor] = useState<GameColor>(GameColor.RED);
+    const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
     const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set(), upgradeProgress: new Map() });
     
     // UI Modals State
@@ -73,6 +74,7 @@ export default function Home() {
     const inputHandlerRef = useRef<InputHandler | null>(null);
     const gameRef = useRef<Game | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
+    const [initialGameState, setInitialGameState] = useState<SavedGameState>({ score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED });
 
     // Use a ref to store upgradeData to prevent callback recreation
     const upgradeDataRef = useRef(upgradeData);
@@ -103,11 +105,17 @@ export default function Home() {
 
     const loadInitialData = useCallback(async () => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
-        setLastSelectedColor(localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED);
-        
+        const savedRun = await loadGameState();
+        if (savedRun && savedRun.score > 0) {
+            setSavedGame(savedRun);
+            setGameState('continuePrompt');
+        } else {
+             setGameState('menu');
+        }
+
         const data = await getPlayerUpgradeData();
         setUpgradeData(data);
-        upgradeDataRef.current = data; // Also update the ref here
+        upgradeDataRef.current = data;
 
         inputHandlerRef.current = InputHandler.getInstance();
         const savedKeybindings = localStorage.getItem('rgBangKeybindings');
@@ -123,7 +131,21 @@ export default function Home() {
         window.addEventListener('resize', updateCanvasSize);
         updateCanvasSize();
 
-        return () => window.removeEventListener('resize', updateCanvasSize);
+        const handleBeforeUnload = () => {
+             if (gameRef.current && gameRef.current.isRunning) {
+                const stateToSave = gameRef.current.getCurrentState();
+                if (stateToSave.score > 0) { // Don't save empty games
+                    saveGameState(stateToSave);
+                }
+             }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        return () => {
+            window.removeEventListener('resize', updateCanvasSize);
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        }
     }, [loadInitialData, updateCanvasSize]);
 
     useEffect(() => {
@@ -191,30 +213,43 @@ export default function Home() {
             localStorage.setItem('rgBangHighScore', finalScore.toString());
             setHighScore(finalScore);
         }
-        if (gameRef.current?.player) {
-            localStorage.setItem('rgBangLastColor', gameRef.current.player.currentColor);
-        }
+        clearGameState(); // Clear saved run on game over
     }, [highScore]);
-
-    const startGame = () => {
+    
+    const startNewRun = async () => {
+        await clearGameState();
+        const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
+        setInitialGameState({ score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: lastColor });
         setScore(0);
         setGameState('playing');
+    };
+
+    const continueRun = async () => {
+        const savedRun = await loadGameState();
+        if (savedRun) {
+            setInitialGameState(savedRun);
+            setGameState('playing');
+        } else {
+            // Failsafe in case saved data disappears
+            startNewRun();
+        }
     };
     
     const quitToMenu = () => {
         if (gameRef.current) {
-            const currentScore = gameRef.current.getCurrentScore();
-            if (currentScore > highScore) {
-                localStorage.setItem('rgBangHighScore', currentScore.toString());
-                setHighScore(currentScore);
+            const currentState = gameRef.current.getCurrentState();
+            if (currentState.score > 0) {
+                 saveGameState(currentState);
             }
-            setScore(currentScore);
-            if(gameRef.current.player) {
-                localStorage.setItem('rgBangLastColor', gameRef.current.player.currentColor);
-                setLastSelectedColor(gameRef.current.player.currentColor);
+            if (currentState.score > highScore) {
+                localStorage.setItem('rgBangHighScore', currentState.score.toString());
+                setHighScore(currentState.score);
             }
+            setScore(currentState.score);
+            localStorage.setItem('rgBangLastColor', currentState.initialColor);
         }
         setGameState('menu');
+        loadInitialData(); // Reload to check for saved games again
     };
 
     const resumeGame = () => {
@@ -223,6 +258,7 @@ export default function Home() {
 
     const handleResetData = async () => {
         await resetAllUpgradeData();
+        await clearGameState();
         localStorage.removeItem('rgBangHighScore');
         localStorage.removeItem('rgBangLastColor');
         await loadInitialData();
@@ -254,9 +290,9 @@ export default function Home() {
                         <span>ang</span>
                     </h1>
                     <div className="flex flex-col gap-4 w-64">
-                        <Button size="lg" onClick={startGame} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
+                        <Button size="lg" onClick={startNewRun} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
                             <Gamepad2 className="mr-2" />
-                            Play Game
+                            New Game
                         </Button>
                          <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)}>
                             <Settings className="mr-2" />
@@ -279,6 +315,29 @@ export default function Home() {
                     </div>
                 </div>
             )}
+            
+            {gameState === 'continuePrompt' && savedGame && (
+                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
+                    <h1 className="text-6xl font-bold tracking-tighter font-headline">
+                        Welcome Back!
+                    </h1>
+                     <div className="text-2xl font-semibold text-foreground/80">
+                        <p>You have a run in progress.</p>
+                        <p>Score: <span className="font-bold text-accent">{savedGame.score}</span></p>
+                    </div>
+                    <div className="flex flex-col gap-4 w-64">
+                        <Button size="lg" onClick={continueRun} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
+                            <History className="mr-2" />
+                            Continue Run
+                        </Button>
+                        <Button size="lg" variant="destructive" onClick={startNewRun}>
+                            <Gamepad2 className="mr-2" />
+                            Start New Run
+                        </Button>
+                    </div>
+                </div>
+            )}
+
 
             {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && inputHandlerRef.current && (
                 <div className="relative">
@@ -290,7 +349,7 @@ export default function Home() {
                         width={canvasSize.width}
                         height={canvasSize.height}
                         gameRef={gameRef}
-                        initialColor={lastSelectedColor}
+                        initialGameState={initialGameState}
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
@@ -326,7 +385,7 @@ export default function Home() {
                            <span>High Score: {highScore}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={quitToMenu} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
+                     <Button size="lg" onClick={() => setGameState('menu')} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>
