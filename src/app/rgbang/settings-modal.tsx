@@ -87,12 +87,14 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         primary2: "Select Yellow",
         primary3: "Select Blue",
         comboRadial: "Combo Wheel",
-        dash: "Dash"
+        dash: "Dash",
+        viewUpgrades: "View Upgrades",
     };
 
     const getKeyDisplay = (key: string) => {
         if (!key) return '';
         if (key === ' ') return 'SPACE';
+        if (key === 'tab') return 'TAB';
         if (key === 'mouse0') return 'LMB';
         if (key === 'mouse1') return 'MMB';
         if (key === 'mouse2') return 'RMB';

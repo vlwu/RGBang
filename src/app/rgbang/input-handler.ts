@@ -11,6 +11,7 @@ export interface Keybindings {
     primary3: string;
     comboRadial: string;
     dash: string;
+    viewUpgrades: string;
 }
 
 export const defaultKeybindings: Keybindings = {
@@ -23,6 +24,7 @@ export const defaultKeybindings: Keybindings = {
     primary3: '3',
     comboRadial: 'mouse2',
     dash: ' ',
+    viewUpgrades: 'tab',
 }
 
 class InputHandler {

@@ -13,6 +13,7 @@ import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade } from './rgbang/upgrades';
 import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData } from './rgbang/upgrade-data';
 import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/save-state';
+import { UpgradesOverviewModal } from './rgbang/upgrades-overview-modal';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -68,6 +69,7 @@ export default function Home() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [isUpgradeOverviewOpen, setIsUpgradeOverviewOpen] = useState(false);
     const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
     
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
@@ -156,23 +158,36 @@ export default function Home() {
     }, [keybindings]);
     
     useEffect(() => {
-        const handleKeyPress = (e: KeyboardEvent) => {
+        const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 if (isSettingsOpen || isInfoOpen || isUpgradeModalOpen) {
                     setIsSettingsOpen(false);
                     setIsInfoOpen(false);
-                    // Do not close upgrade modal with Esc for now to prevent accidental skips
                 } else if (gameState === 'playing') {
                     setGameState('paused');
                 } else if (gameState === 'paused') {
                     setGameState('playing');
                 }
             }
+             if (e.key.toLowerCase() === keybindings.viewUpgrades.toLowerCase()) {
+                if(gameState === 'playing' || gameState === 'paused') {
+                    setIsUpgradeOverviewOpen(true);
+                }
+            }
+        };
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (e.key.toLowerCase() === keybindings.viewUpgrades.toLowerCase()) {
+                setIsUpgradeOverviewOpen(false);
+            }
         };
 
-        window.addEventListener('keydown', handleKeyPress);
-        return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen]);
+        window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('keyup', handleKeyUp);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
+        }
+    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, keybindings.viewUpgrades]);
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
@@ -282,6 +297,11 @@ export default function Home() {
                 onSelect={handleUpgradeSelected}
                 upgradeData={upgradeData}
             />
+            <UpgradesOverviewModal
+                isOpen={isUpgradeOverviewOpen}
+                upgradeManager={gameRef.current?.player.upgradeManager}
+            />
+
 
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
@@ -344,7 +364,7 @@ export default function Home() {
                     <GameCanvas 
                         onGameOver={handleGameOver} 
                         onFragmentCollected={handleFragmentCollected}
-                        isPaused={gameState === 'paused' || gameState === 'upgrading'}
+                        isPaused={gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen}
                         inputHandler={inputHandlerRef.current}
                         width={canvasSize.width}
                         height={canvasSize.height}

@@ -4,8 +4,6 @@ import { GameColor, COLOR_DETAILS, ALL_COLORS } from './color';
 import { Boss } from './boss';
 import { roundRect, drawShapeForColor } from './utils';
 import { Vec2 } from './utils';
-import { iconMap } from './upgrade-modal';
-import { Upgrade, ALL_UPGRADES } from './upgrades';
 
 export class UI {
     private canvas: HTMLCanvasElement;
@@ -20,7 +18,6 @@ export class UI {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScore(score);
-        this.drawActiveUpgrades(player);
         if (boss && boss.isAlive) {
             this.drawBossHealthBar(boss);
         }
@@ -171,43 +168,6 @@ export class UI {
         this.ctx.shadowBlur = 5;
 
         this.ctx.fillText(`Score: ${score}`, this.canvas.width - 20, this.boss ? 60 : 20);
-        this.ctx.restore();
-    }
-
-    private drawActiveUpgrades(player: Player) {
-        this.ctx.save();
-        const iconSize = 24;
-        const spacing = 8;
-        const startX = 20;
-        const startY = 80;
-
-        player.upgradeManager.getActiveUpgradeDetails().forEach((upgrade, index) => {
-            const x = startX;
-            const y = startY + index * (iconSize + spacing);
-
-            // Simple colored square for now
-            const hexColor = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
-            this.ctx.fillStyle = hexColor;
-            this.ctx.globalAlpha = 0.7;
-            this.ctx.beginPath();
-            roundRect(this.ctx, x, y, iconSize, iconSize, 5);
-            this.ctx.fill();
-
-            this.ctx.globalAlpha = 1.0;
-            this.ctx.strokeStyle = 'white';
-            this.ctx.lineWidth = 1;
-            this.ctx.stroke();
-            
-            // Draw star level
-            const level = player.upgradeManager.getUpgradeLevel(upgrade.id);
-            this.ctx.fillStyle = 'yellow';
-            this.ctx.font = 'bold 12px "Space Grotesk"';
-            this.ctx.textAlign = 'right';
-            this.ctx.textBaseline = 'bottom';
-            this.ctx.fillText(`★${level}`, x + iconSize - 2, y + iconSize - 2);
-
-        });
-
         this.ctx.restore();
     }
 }
