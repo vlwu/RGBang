@@ -31,22 +31,21 @@ const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
 
-function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, gameRef, initialGameState }: { 
+function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, initialGameState }: { 
     onGameOver: (score: number) => void, 
     onFragmentCollected: (color: GameColor | null) => void,
-    isPaused: boolean,
     width: number,
     height: number,
     gameRef: React.MutableRefObject<Game | null>,
     initialGameState: SavedGameState
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const inputHandlerRef = useRef(InputHandler.getInstance());
     
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
-        inputHandlerRef.current.setCanvas(canvas);
+        const inputHandler = InputHandler.getInstance();
+        inputHandler.setCanvas(canvas);
 
         const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState);
         gameRef.current = game;
@@ -162,29 +161,32 @@ export default function Home() {
         }
     }, [loadInitialData, updateCanvasSize]);
 
-    const isPaused = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen || (gameRef.current?.player.isRadialMenuOpen ?? false);
-
-    // Main Game Loop
+    // Main Game Loop - runs continuously
     useEffect(() => {
-        const inputHandlerRef = InputHandler.getInstance();
+        const inputHandler = InputHandler.getInstance();
         let animationFrameId: number | null = null;
         
         const gameLoop = () => {
              if (gameRef.current) {
-                gameRef.current.update(inputHandlerRef, isPaused);
+                const isPaused = gameState === 'paused' 
+                    || gameState === 'upgrading' 
+                    || isUpgradeOverviewOpen 
+                    || (gameRef.current?.player.isRadialMenuOpen ?? false);
+
+                gameRef.current.update(inputHandler, isPaused);
              }
-             inputHandlerRef.resetEvents();
+             inputHandler.resetEvents();
              animationFrameId = requestAnimationFrame(gameLoop);
         };
         
-        gameLoop();
+        animationFrameId = requestAnimationFrame(gameLoop);
 
         return () => {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
             }
         };
-    }, [isPaused]); // Depend on isPaused to correctly pass it to the loop scope
+    }, [gameState, isUpgradeOverviewOpen]);
 
     useEffect(() => {
         InputHandler.getInstance().setKeybindings(keybindings);
@@ -363,6 +365,9 @@ export default function Home() {
         });
     }
 
+    const isPaused = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen || (gameRef.current?.player.isRadialMenuOpen ?? false);
+
+
     return (
         <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
              <SettingsModal 
@@ -470,13 +475,12 @@ export default function Home() {
                         key={initialGameState.score + initialGameState.playerHealth + initialGameState.initialColor} 
                         onGameOver={handleGameOver} 
                         onFragmentCollected={handleFragmentCollected}
-                        isPaused={isPaused}
                         width={canvasSize.width}
                         height={canvasSize.height}
                         gameRef={gameRef}
                         initialGameState={initialGameState}
                     />
-                    {gameState === 'paused' && (
+                    {isPaused && !isUpgradeModalOpen && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
                              <div className="absolute top-4 right-4">
                                 <Button size="icon" variant="ghost" onClick={resumeGame}>
@@ -523,5 +527,6 @@ export default function Home() {
             )}
         </main>
     );
+}
 
     
