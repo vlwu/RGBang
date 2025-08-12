@@ -96,6 +96,18 @@ export const ALL_UPGRADES: Upgrade[] = [
             player.expGainMultiplier *= 1.2;
         }
     },
+    {
+        id: 'accuracy',
+        name: 'Focus',
+        description: 'Improves bullet accuracy by 15% per level.',
+        type: UpgradeType.GENERAL,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => 1 - (0.15 * level),
+        apply: (player, level) => {
+            player.accuracyModifier *= 0.85;
+        }
+    },
 
 
     // --- GUN-Specific Upgrades ---
@@ -130,5 +142,3 @@ export const ALL_UPGRADES: Upgrade[] = [
         apply: (player) => { console.log('ignite active'); }
     }
 ];
-
-    

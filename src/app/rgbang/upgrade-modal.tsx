@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Upgrade } from "./upgrades";
 import { GameColor, COLOR_DETAILS } from './color';
 import { PlayerUpgradeData, UpgradeProgress } from './upgrade-data';
-import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge } from "lucide-react";
+import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair } from "lucide-react";
 
 interface UpgradeModalProps {
     isOpen: boolean;
@@ -30,7 +30,8 @@ export const iconMap: { [key: string]: React.ElementType } = {
     'movement-speed': Wind,
     'ignite': Flame,
     'faster-reload': Gauge,
-    'prism-exp-gain': Star
+    'prism-exp-gain': Star,
+    'accuracy': Crosshair,
 };
 
 

@@ -94,6 +94,7 @@ export class UpgradeManager {
         this.player.dashCooldownModifier = 1;
         this.player.shootCooldownModifier = 1;
         this.player.expGainMultiplier = 1;
+        this.player.accuracyModifier = 1;
         this.player.flatHealthIncrease = 0;
         this.player.maxHealth = 100;
         

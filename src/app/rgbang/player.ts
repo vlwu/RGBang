@@ -28,10 +28,12 @@ export class Player {
     public dashCooldownModifier = 1;
     public shootCooldownModifier = 1;
     public expGainMultiplier = 1;
+    public accuracyModifier = 1; // 1 is default, closer to 0 is more accurate
 
     // Direct stat boosts
     public flatHealthIncrease = 0;
 
+    private baseBulletSpread = 0.15; // in radians
 
     private shootCooldown = 10; // frames
     private shootTimer = 0;
@@ -173,7 +175,10 @@ export class Player {
     private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void) {
         if (input.isShooting() && this.shootTimer === 0 && !this.radialMenu.active) {
             const direction = input.mousePos.sub(this.pos);
-            const bullet = new Bullet(this.pos, direction, this.currentColor);
+            const spreadAngle = (Math.random() - 0.5) * this.getBulletSpread();
+            const finalDirection = direction.rotate(spreadAngle);
+            
+            const bullet = new Bullet(this.pos, finalDirection, this.currentColor);
             this.applyBulletUpgrades(bullet);
             createBullet(bullet);
             this.shootTimer = this.getShootCooldown();
@@ -272,10 +277,12 @@ export class Player {
     public getShootCooldown(): number {
         return this.shootCooldown * this.shootCooldownModifier;
     }
+    
+    public getBulletSpread(): number {
+        return this.baseBulletSpread * this.accuracyModifier;
+    }
 
     public getDashCooldownProgress(): number {
         return this.dashCooldownTimer / this.getDashCooldown();
     }
 }
-
-    

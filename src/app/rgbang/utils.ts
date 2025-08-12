@@ -1,3 +1,4 @@
+
 import { GameColor, COLOR_DETAILS, Shape } from './color';
 
 export class Vec2 {
@@ -23,6 +24,12 @@ export class Vec2 {
         const mag = this.magnitude();
         if (mag === 0) return new Vec2(0, 0);
         return new Vec2(this.x / mag, this.y / mag);
+    }
+    
+    rotate(angle: number): Vec2 {
+        const cos = Math.cos(angle);
+        const sin = Math.sin(angle);
+        return new Vec2(this.x * cos - this.y * sin, this.x * sin + this.y * cos);
     }
 }
 
