@@ -40,22 +40,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, isPaused, width, height, 
         gameRef.current = game;
         game.start();
 
-        let animationFrameId: number | null = null;
-        
-        const gameLoop = () => {
-             if (gameRef.current) {
-                gameRef.current.update(inputHandlerRef.current, isPaused);
-             }
-             inputHandlerRef.current.resetEvents();
-             animationFrameId = requestAnimationFrame(gameLoop);
-        };
-        
-        gameLoop();
-
         return () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
             game.stop();
             gameRef.current = null;
         };
@@ -158,6 +143,30 @@ export default function Home() {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         }
     }, [loadInitialData, updateCanvasSize]);
+
+    const isPaused = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen;
+
+    // Main Game Loop
+    useEffect(() => {
+        const inputHandlerRef = InputHandler.getInstance();
+        let animationFrameId: number | null = null;
+        
+        const gameLoop = () => {
+             if (gameRef.current) {
+                gameRef.current.update(inputHandlerRef, isPaused);
+             }
+             inputHandlerRef.resetEvents();
+             animationFrameId = requestAnimationFrame(gameLoop);
+        };
+        
+        gameLoop();
+
+        return () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        };
+    }, [isPaused]); // Depend on isPaused to correctly pass it to the loop scope
 
     useEffect(() => {
         InputHandler.getInstance().setKeybindings(keybindings);
@@ -402,7 +411,7 @@ export default function Home() {
                         key={initialGameState.score + initialGameState.playerHealth} 
                         onGameOver={handleGameOver} 
                         onFragmentCollected={handleFragmentCollected}
-                        isPaused={gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen}
+                        isPaused={isPaused}
                         width={canvasSize.width}
                         height={canvasSize.height}
                         gameRef={gameRef}
