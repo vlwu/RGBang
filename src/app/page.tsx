@@ -114,10 +114,10 @@ export default function Home() {
         const savedRun = await loadGameState();
         if (savedRun && savedRun.score > 0) {
             setSavedGame(savedRun);
-            setGameState('continuePrompt');
         } else {
-             setGameState('menu');
+            setSavedGame(null); // Explicitly clear if no valid saved game
         }
+        setGameState('menu'); // Always start at the menu
 
         const data = await getPlayerUpgradeData();
         setUpgradeData(data);
@@ -256,6 +256,15 @@ export default function Home() {
         setRunId(id => id + 1); // Increment runId to force remount
         setGameState('playing');
     };
+    
+    const handlePlayClick = () => {
+        if (savedGame) {
+            setGameState('continuePrompt');
+        } else {
+            startNewRun();
+        }
+    };
+
 
     const continueRun = async () => {
         const savedRun = await loadGameState();
@@ -287,7 +296,6 @@ export default function Home() {
             gameRef.current = null; // Clear the game ref
         }
         setInitialGameState(DEFAULT_GAME_STATE); // Reset initial game state for the menu
-        setGameState('menu');
         loadInitialData(); // Reload to check for saved games again
     };
 
@@ -334,9 +342,9 @@ export default function Home() {
                         <span>ang</span>
                     </h1>
                     <div className="flex flex-col gap-4 w-64">
-                        <Button size="lg" onClick={startNewRun} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
+                        <Button size="lg" onClick={handlePlayClick} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
                             <Gamepad2 className="mr-2" />
-                            New Game
+                            Play
                         </Button>
                          <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)}>
                             <Settings className="mr-2" />
@@ -376,7 +384,10 @@ export default function Home() {
                         </Button>
                         <Button size="lg" variant="destructive" onClick={startNewRun}>
                             <Gamepad2 className="mr-2" />
-                            Start New Run
+                            Start Fresh
+                        </Button>
+                         <Button size="lg" variant="secondary" onClick={() => setGameState('menu')}>
+                            Main Menu
                         </Button>
                     </div>
                 </div>
@@ -439,3 +450,5 @@ export default function Home() {
         </main>
     );
 }
+
+    
