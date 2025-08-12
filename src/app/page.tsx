@@ -11,7 +11,7 @@ import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade } from './rgbang/upgrades';
-import { getUnlockedUpgrades, unlockUpgrade } from './rgbang/persistent-unlocks';
+import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, addExpAndLevelUp } from './rgbang/upgrade-data';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -61,7 +61,7 @@ export default function Home() {
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [lastSelectedColor, setLastSelectedColor] = useState<GameColor>(GameColor.RED);
-    const [unlockedUpgrades, setUnlockedUpgrades] = useState<Set<string>>(new Set());
+    const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set(), upgradeProgress: new Map() });
     
     // UI Modals State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -96,18 +96,23 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
-        setLastSelectedColor(localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED);
-        setUnlockedUpgrades(getUnlockedUpgrades());
+        const loadInitialData = async () => {
+            setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
+            setLastSelectedColor(localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED);
+            
+            const data = await getPlayerUpgradeData();
+            setUpgradeData(data);
 
-        inputHandlerRef.current = InputHandler.getInstance();
-        const savedKeybindings = localStorage.getItem('rgBangKeybindings');
-        if (savedKeybindings) {
-            setKeybindings(JSON.parse(savedKeybindings));
-        } else {
-            setKeybindings(defaultKeybindings);
-        }
+            inputHandlerRef.current = InputHandler.getInstance();
+            const savedKeybindings = localStorage.getItem('rgBangKeybindings');
+            if (savedKeybindings) {
+                setKeybindings(JSON.parse(savedKeybindings));
+            } else {
+                setKeybindings(defaultKeybindings);
+            }
+        };
 
+        loadInitialData();
         window.addEventListener('resize', updateCanvasSize);
         updateCanvasSize();
 
@@ -142,20 +147,21 @@ export default function Home() {
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
-            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, unlockedUpgrades);
+            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, upgradeData);
             setUpgradeOptions(options);
             setGameState('upgrading');
             setIsUpgradeModalOpen(true);
         }
-    }, [unlockedUpgrades]);
+    }, [upgradeData]);
     
-    const handleUpgradeSelected = useCallback((upgrade: Upgrade) => {
+    const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         if (gameRef.current) {
             gameRef.current.player.applyUpgrade(upgrade);
         }
-        // Update the unlocked upgrades state
-        unlockUpgrade(upgrade.id);
-        setUnlockedUpgrades(getUnlockedUpgrades());
+        
+        const unlockedData = await unlockUpgrade(upgrade.id);
+        const finalData = await addExpAndLevelUp(upgrade.id, 25); // Grant 25 EXP per pickup for now
+        setUpgradeData(finalData);
 
         setIsUpgradeModalOpen(false);
         setGameState('playing');

@@ -2,7 +2,7 @@
 import { Player } from './player';
 import { ALL_UPGRADES, Upgrade, UpgradeType } from './upgrades';
 import { GameColor } from './color';
-import { getUnlockedUpgrades, unlockUpgrade } from './persistent-unlocks';
+import { PlayerUpgradeData } from './upgrade-data';
 
 export class UpgradeManager {
     private player: Player;
@@ -12,7 +12,7 @@ export class UpgradeManager {
         this.player = player;
     }
 
-    getUpgradeOptions(color: GameColor | null, unlockedUpgrades: Set<string>): Upgrade[] {
+    getUpgradeOptions(color: GameColor | null, upgradeData: PlayerUpgradeData): Upgrade[] {
         let pool: Upgrade[];
 
         if (color === null) { // Boss/white fragment
@@ -27,8 +27,8 @@ export class UpgradeManager {
         const availablePool = pool.filter(u => !this.activeUpgrades.has(u.id));
 
         // Separate into seen and unseen upgrades
-        const seenUpgrades = availablePool.filter(u => unlockedUpgrades.has(u.id));
-        const unseenUpgrades = availablePool.filter(u => !unlockedUpgrades.has(u.id));
+        const seenUpgrades = availablePool.filter(u => upgradeData.unlockedUpgradeIds.has(u.id));
+        const unseenUpgrades = availablePool.filter(u => !upgradeData.unlockedUpgradeIds.has(u.id));
 
         // Fisher-Yates shuffle for both pools
         const shuffle = (arr: Upgrade[]) => {
@@ -67,8 +67,6 @@ export class UpgradeManager {
         if (!this.activeUpgrades.has(upgrade.id)) {
             this.activeUpgrades.add(upgrade.id);
             upgrade.apply(this.player);
-            // Persist the unlock
-            unlockUpgrade(upgrade.id);
         }
     }
 
