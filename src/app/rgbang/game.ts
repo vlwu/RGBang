@@ -75,16 +75,19 @@ export class Game {
     private animationFrameId: number | null = null;
     
     private onGameOver: (finalScore: number) => void;
+    private onFragmentCollected: (color: GameColor | null) => void;
 
     constructor(
         canvas: HTMLCanvasElement, 
         onGameOver: (finalScore: number) => void,
+        onFragmentCollected: (color: GameColor | null) => void,
         inputHandler: InputHandler,
         initialColor: GameColor,
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
+        this.onFragmentCollected = onFragmentCollected;
         this.inputHandler = inputHandler;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialColor);
@@ -241,8 +244,7 @@ export class Game {
         for (let i = this.fragments.length - 1; i >= 0; i--) {
             const fragment = this.fragments[i];
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
-                // TODO: Trigger upgrade selection UI
-                this.player.collectFragment(fragment);
+                this.onFragmentCollected(fragment.color);
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
                 fragment.isAlive = false;
             }
@@ -316,3 +318,5 @@ export class Game {
         this.animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 }
+
+    

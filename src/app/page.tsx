@@ -9,12 +9,15 @@ import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings } from 'lucide-rea
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
+import { UpgradeModal } from './rgbang/upgrade-modal';
+import type { Upgrade } from './rgbang/upgrades';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 
-function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef, initialColor }: { 
+function GameCanvas({ onGameOver, onFragmentCollected, isPaused, inputHandler, width, height, gameRef, initialColor }: { 
     onGameOver: (score: number) => void, 
+    onFragmentCollected: (color: GameColor | null) => void,
     isPaused: boolean,
     inputHandler: InputHandler,
     width: number,
@@ -27,13 +30,12 @@ function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef
     useEffect(() => {
         if (canvasRef.current) {
             const canvas = canvasRef.current;
-            // Set the internal resolution
             canvas.width = GAME_WIDTH;
             canvas.height = GAME_HEIGHT;
             
             InputHandler.getInstance(canvas);
             
-            const game = new Game(canvas, onGameOver, inputHandler, initialColor);
+            const game = new Game(canvas, onGameOver, onFragmentCollected, inputHandler, initialColor);
             gameRef.current = game;
             game.start();
 
@@ -41,7 +43,7 @@ function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef
                 game.stop();
             };
         }
-    }, [onGameOver, inputHandler, gameRef, initialColor]);
+    }, [onGameOver, onFragmentCollected, inputHandler, gameRef, initialColor]);
 
     useEffect(() => {
         if (gameRef.current) {
@@ -54,12 +56,17 @@ function GameCanvas({ onGameOver, isPaused, inputHandler, width, height, gameRef
 }
 
 export default function Home() {
-    const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver'>('menu');
+    const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading'>('menu');
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [lastSelectedColor, setLastSelectedColor] = useState<GameColor>(GameColor.RED);
+    
+    // UI Modals State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
+    const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+    const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
+    
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
     const inputHandlerRef = useRef<InputHandler | null>(null);
     const gameRef = useRef<Game | null>(null);
@@ -113,12 +120,11 @@ export default function Home() {
     useEffect(() => {
         const handleKeyPress = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
-                if (isSettingsOpen) {
+                if (isSettingsOpen || isInfoOpen || isUpgradeModalOpen) {
                     setIsSettingsOpen(false);
-                } else if (isInfoOpen) {
                     setIsInfoOpen(false);
-                }
-                else if (gameState === 'playing') {
+                    // Do not close upgrade modal with Esc for now to prevent accidental skips
+                } else if (gameState === 'playing') {
                     setGameState('paused');
                 } else if (gameState === 'paused') {
                     setGameState('playing');
@@ -128,8 +134,24 @@ export default function Home() {
 
         window.addEventListener('keydown', handleKeyPress);
         return () => window.removeEventListener('keydown', handleKeyPress);
-    }, [gameState, isSettingsOpen, isInfoOpen]);
+    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen]);
 
+    const handleFragmentCollected = useCallback((color: GameColor | null) => {
+        if (gameRef.current) {
+            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color);
+            setUpgradeOptions(options);
+            setGameState('upgrading');
+            setIsUpgradeModalOpen(true);
+        }
+    }, []);
+    
+    const handleUpgradeSelected = useCallback((upgrade: Upgrade) => {
+        if (gameRef.current) {
+            gameRef.current.player.applyUpgrade(upgrade);
+        }
+        setIsUpgradeModalOpen(false);
+        setGameState('playing');
+    }, []);
 
     const handleGameOver = useCallback((finalScore: number) => {
         setScore(finalScore);
@@ -180,6 +202,11 @@ export default function Home() {
                 isOpen={isInfoOpen}
                 onClose={() => setIsInfoOpen(false)}
             />
+            <UpgradeModal
+                isOpen={isUpgradeModalOpen}
+                options={upgradeOptions}
+                onSelect={handleUpgradeSelected}
+            />
 
             {gameState === 'menu' && (
                 <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
@@ -210,11 +237,12 @@ export default function Home() {
                 </div>
             )}
 
-            {(gameState === 'playing' || gameState === 'paused') && inputHandlerRef.current && (
+            {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && inputHandlerRef.current && (
                 <div className="relative">
                     <GameCanvas 
                         onGameOver={handleGameOver} 
-                        isPaused={gameState === 'paused'}
+                        onFragmentCollected={handleFragmentCollected}
+                        isPaused={gameState === 'paused' || gameState === 'upgrading'}
                         inputHandler={inputHandlerRef.current}
                         width={canvasSize.width}
                         height={canvasSize.height}
@@ -264,3 +292,5 @@ export default function Home() {
         </main>
     );
 }
+
+    

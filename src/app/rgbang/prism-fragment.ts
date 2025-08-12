@@ -1,8 +1,7 @@
 
-import { Vec2, lerp, drawShapeForColor } from './utils';
+import { Vec2, lerp } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 import { Player } from './player';
-import { ParticleSystem } from './particle';
 
 export class PrismFragment {
     pos: Vec2;
@@ -59,7 +58,6 @@ export class PrismFragment {
         ctx.save();
         
         const pulse = (Math.sin(this.lifespan / 20) + 1) / 2;
-        const glowAlpha = (this.lifespan / 480) * 0.5 + 0.2; // Fade out glow
         
         // Glow
         ctx.shadowColor = this.hexColor;
@@ -88,3 +86,5 @@ export class PrismFragment {
         ctx.restore();
     }
 }
+
+    

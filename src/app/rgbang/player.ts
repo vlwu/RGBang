@@ -2,10 +2,12 @@
 import { Vec2, drawShapeForColor } from './utils';
 import { Bullet } from './bullet';
 import InputHandler from './input-handler';
-import { GameColor, COLOR_DETAILS, ALL_COLORS, SECONDARY_COLORS, PRIMARY_COLORS, isSecondaryColor } from './color';
+import { GameColor, COLOR_DETAILS, ALL_COLORS, isSecondaryColor } from './color';
 import { RadialMenu } from './radial-menu';
 import { ParticleSystem } from './particle';
 import { PrismFragment } from './prism-fragment';
+import { UpgradeManager } from './upgrade-manager';
+import { Upgrade } from './upgrades';
 
 export class Player {
     pos: Vec2;
@@ -18,6 +20,7 @@ export class Player {
     public currentColor: GameColor;
     public availableColors: Set<GameColor>;
     private radialMenu: RadialMenu;
+    public upgradeManager: UpgradeManager;
     
     private shootCooldown = 10; // frames
     private shootTimer = 0;
@@ -36,6 +39,7 @@ export class Player {
         this.currentColor = initialColor;
         this.availableColors = new Set(ALL_COLORS);
         this.radialMenu = new RadialMenu();
+        this.upgradeManager = new UpgradeManager(this);
         this.updateAvailableColors(initialColor);
     }
     
@@ -230,13 +234,14 @@ export class Player {
             this.isAlive = false;
         }
     }
-
-    collectFragment(fragment: PrismFragment) {
-        // This is where the upgrade UI would be triggered.
-        // For now, it just collects the fragment.
+    
+    applyUpgrade(upgrade: Upgrade) {
+        this.upgradeManager.apply(upgrade);
     }
 
     public getDashCooldownProgress(): number {
         return this.dashCooldownTimer / this.dashCooldown;
     }
 }
+
+    
