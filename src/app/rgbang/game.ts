@@ -144,9 +144,11 @@ export class Game {
     }
 
     private update() {
+        // Reset single-frame events at the start of the loop
+        this.inputHandler.resetEvents();
+        
         // 1. Update entities
         this.player.update(this.inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
-        this.inputHandler.resetEvents();
         
         this.bullets.forEach(bullet => bullet.update());
         this.enemies.forEach(enemy => enemy.update(this.player));
@@ -326,3 +328,5 @@ export class Game {
         this.animationFrameId = requestAnimationFrame(this.gameLoop);
     }
 }
+
+    

@@ -5,7 +5,7 @@ import { Boss } from './boss';
 import { roundRect, drawShapeForColor } from './utils';
 import { Vec2 } from './utils';
 import { iconMap } from './upgrade-modal';
-import { Upgrade } from './upgrades';
+import { Upgrade, ALL_UPGRADES } from './upgrades';
 
 export class UI {
     private canvas: HTMLCanvasElement;
@@ -32,6 +32,7 @@ export class UI {
         const x = 20;
         const y = 20;
         const borderRadius = 10;
+        const maxHealth = player.getMaxHealth();
         
         this.ctx.save();
         
@@ -42,7 +43,7 @@ export class UI {
         this.ctx.fill();
         
         // Health
-        const healthPercentage = player.health / player.maxHealth;
+        const healthPercentage = player.health / maxHealth;
         const healthWidth = barWidth * healthPercentage;
         
         this.ctx.fillStyle = '#4ade80'; // green-400
@@ -62,7 +63,7 @@ export class UI {
         this.ctx.font = '14px "Space Grotesk"';
         this.ctx.textAlign = 'center';
         this.ctx.textBaseline = 'middle';
-        this.ctx.fillText(`${Math.round(player.health)} / ${player.maxHealth}`, x + barWidth / 2, y + barHeight / 2 + 1);
+        this.ctx.fillText(`${Math.round(player.health)} / ${maxHealth}`, x + barWidth / 2, y + barHeight / 2 + 1);
         this.ctx.restore();
     }
     
@@ -178,24 +179,37 @@ export class UI {
         const iconSize = 24;
         const spacing = 8;
         const startX = 20;
-        const startY = this.canvas.height - iconSize - 90;
+        const startY = 80;
 
         player.upgradeManager.getActiveUpgradeDetails().forEach((upgrade, index) => {
-            const x = startX + index * (iconSize + spacing);
-            const y = startY;
+            const x = startX;
+            const y = startY + index * (iconSize + spacing);
 
             // Simple colored square for now
-            this.ctx.fillStyle = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
+            const hexColor = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
+            this.ctx.fillStyle = hexColor;
             this.ctx.globalAlpha = 0.7;
-            this.ctx.fillRect(x, y, iconSize, iconSize);
+            this.ctx.beginPath();
+            roundRect(this.ctx, x, y, iconSize, iconSize, 5);
+            this.ctx.fill();
+
             this.ctx.globalAlpha = 1.0;
             this.ctx.strokeStyle = 'white';
-            this.ctx.strokeRect(x,y,iconSize, iconSize);
+            this.ctx.lineWidth = 1;
+            this.ctx.stroke();
+            
+            // Draw star level
+            const level = player.upgradeManager.getUpgradeLevel(upgrade.id);
+            this.ctx.fillStyle = 'yellow';
+            this.ctx.font = 'bold 12px "Space Grotesk"';
+            this.ctx.textAlign = 'right';
+            this.ctx.textBaseline = 'bottom';
+            this.ctx.fillText(`★${level}`, x + iconSize - 2, y + iconSize - 2);
 
-            // In a real scenario, you'd draw icons here
-            // This is a placeholder to show the upgrades are active
         });
 
         this.ctx.restore();
     }
 }
+
+    

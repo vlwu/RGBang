@@ -5,13 +5,13 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Game } from './rgbang/game';
 import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
 import { Button } from '@/components/ui/button';
-import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings } from 'lucide-react';
+import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2 } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade } from './rgbang/upgrades';
-import { getUnlockedUpgrades, unlockUpgrade } from './rgbang/persistent-unlocks';
+import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, addExpAndLevelUp, resetAllUpgradeData } from './rgbang/upgrade-data';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -61,7 +61,7 @@ export default function Home() {
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [lastSelectedColor, setLastSelectedColor] = useState<GameColor>(GameColor.RED);
-    const [unlockedUpgrades, setUnlockedUpgrades] = useState<Set<string>>(new Set());
+    const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set(), upgradeProgress: new Map() });
     
     // UI Modals State
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -73,6 +73,12 @@ export default function Home() {
     const inputHandlerRef = useRef<InputHandler | null>(null);
     const gameRef = useRef<Game | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
+
+    // Use a ref to store upgradeData to prevent callback recreation
+    const upgradeDataRef = useRef(upgradeData);
+    useEffect(() => {
+        upgradeDataRef.current = upgradeData;
+    }, [upgradeData]);
 
     const updateCanvasSize = useCallback(() => {
         const windowWidth = window.innerWidth * 0.9;
@@ -95,10 +101,13 @@ export default function Home() {
         setCanvasSize({ width: newWidth, height: newHeight });
     }, []);
 
-    useEffect(() => {
+    const loadInitialData = useCallback(async () => {
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
         setLastSelectedColor(localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED);
-        setUnlockedUpgrades(getUnlockedUpgrades());
+        
+        const data = await getPlayerUpgradeData();
+        setUpgradeData(data);
+        upgradeDataRef.current = data; // Also update the ref here
 
         inputHandlerRef.current = InputHandler.getInstance();
         const savedKeybindings = localStorage.getItem('rgBangKeybindings');
@@ -107,12 +116,15 @@ export default function Home() {
         } else {
             setKeybindings(defaultKeybindings);
         }
+    }, []);
 
+    useEffect(() => {
+        loadInitialData();
         window.addEventListener('resize', updateCanvasSize);
         updateCanvasSize();
 
         return () => window.removeEventListener('resize', updateCanvasSize);
-    }, [updateCanvasSize]);
+    }, [loadInitialData, updateCanvasSize]);
 
     useEffect(() => {
         if(inputHandlerRef.current) {
@@ -142,20 +154,21 @@ export default function Home() {
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
         if (gameRef.current) {
-            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, unlockedUpgrades);
+            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, upgradeDataRef.current);
             setUpgradeOptions(options);
             setGameState('upgrading');
             setIsUpgradeModalOpen(true);
         }
-    }, [unlockedUpgrades]);
+    }, []);
     
-    const handleUpgradeSelected = useCallback((upgrade: Upgrade) => {
+    const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         if (gameRef.current) {
             gameRef.current.player.applyUpgrade(upgrade);
         }
-        // Update the unlocked upgrades state
-        unlockUpgrade(upgrade.id);
-        setUnlockedUpgrades(getUnlockedUpgrades());
+        
+        await unlockUpgrade(upgrade.id); 
+        const finalData = await addExpAndLevelUp(upgrade.id, 25);
+        setUpgradeData(finalData);
 
         setIsUpgradeModalOpen(false);
         setGameState('playing');
@@ -198,6 +211,13 @@ export default function Home() {
         setGameState('playing');
     };
 
+    const handleResetData = async () => {
+        await resetAllUpgradeData();
+        localStorage.removeItem('rgBangHighScore');
+        localStorage.removeItem('rgBangLastColor');
+        await loadInitialData();
+    }
+
     return (
         <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
              <SettingsModal 
@@ -214,6 +234,7 @@ export default function Home() {
                 isOpen={isUpgradeModalOpen}
                 options={upgradeOptions}
                 onSelect={handleUpgradeSelected}
+                upgradeData={upgradeData}
             />
 
             {gameState === 'menu' && (
@@ -234,6 +255,10 @@ export default function Home() {
                          <Button size="lg" variant="secondary" onClick={() => setIsInfoOpen(true)}>
                             <Info className="mr-2" />
                             How to Play
+                        </Button>
+                        <Button size="lg" variant="destructive" onClick={handleResetData}>
+                            <Trash2 className="mr-2" />
+                            Reset Progress
                         </Button>
                     </div>
                      <div className="pt-4 text-xl font-semibold text-foreground/80">
@@ -300,3 +325,7 @@ export default function Home() {
         </main>
     );
 }
+
+    
+
+    

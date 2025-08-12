@@ -8,34 +8,50 @@ import {
   DialogTitle,
   DialogDescription
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Upgrade } from "./upgrades";
 import { GameColor, COLOR_DETAILS } from './color';
-import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt } from "lucide-react";
+import { PlayerUpgradeData, UpgradeProgress } from './upgrade-data';
+import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge } from "lucide-react";
 
 interface UpgradeModalProps {
     isOpen: boolean;
     options: Upgrade[];
     onSelect: (upgrade: Upgrade) => void;
+    upgradeData: PlayerUpgradeData;
 }
 
 export const iconMap: { [key: string]: React.ElementType } = {
     'default': Gem,
     'chain-lightning': Zap,
-    'max-health': PlusCircle,
+    'max-health': Shield,
     'dash-cooldown': ChevronsRight,
-    'bullet-damage': Bolt
+    'bullet-damage': Bolt,
+    'movement-speed': Wind,
+    'ignite': Flame,
+    'faster-reload': Gauge,
+    'prism-exp-gain': Star
 };
 
+// EXP needed to reach level 2, 3, 4, 5. Level 1 is 0 EXP.
+const EXP_THRESHOLDS = [0, 100, 250, 500, 1000];
 
-const UpgradeCard = ({ upgrade, onSelect }: { upgrade: Upgrade, onSelect: (upgrade: Upgrade) => void }) => {
+
+const UpgradeCard = ({ upgrade, onSelect, progress }: { upgrade: Upgrade, onSelect: (upgrade: Upgrade) => void, progress?: UpgradeProgress }) => {
     const Icon = iconMap[upgrade.id] || iconMap['default'];
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
     
+    const level = progress?.level || 1;
+    const currentExp = progress?.exp || 0;
+    const expForNextLevel = EXP_THRESHOLDS[level] || EXP_THRESHOLDS[EXP_THRESHOLDS.length - 1];
+    const expForPrevLevel = EXP_THRESHOLDS[level - 1] || 0;
+    
+    const progressPercent = level >= 5 ? 100 : Math.max(0, Math.min(100, ((currentExp - expForPrevLevel) / (expForNextLevel - expForPrevLevel)) * 100));
+
     return (
         <Card 
-            className="text-center bg-card/80 backdrop-blur-sm border-border hover:border-primary hover:bg-card transition-all cursor-pointer"
+            className="text-center bg-card/80 backdrop-blur-sm border-border hover:border-primary hover:bg-card transition-all cursor-pointer flex flex-col"
             onClick={() => onSelect(upgrade)}
             style={{ '--card-glow-color': colorHex } as React.CSSProperties}
         >
@@ -45,14 +61,30 @@ const UpgradeCard = ({ upgrade, onSelect }: { upgrade: Upgrade, onSelect: (upgra
                 </div>
                 <CardTitle className="text-lg text-primary">{upgrade.name}</CardTitle>
             </CardHeader>
-            <CardContent>
-                <CardDescription>{upgrade.description}</CardDescription>
+            <CardContent className="flex-grow flex flex-col justify-between">
+                <CardDescription className="mb-4">{upgrade.description}</CardDescription>
+                <div>
+                    <div className="flex justify-center items-center mb-2">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className={`w-5 h-5 ${i < level ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
+                        ))}
+                    </div>
+                    {level < 5 && (
+                        <>
+                            <Progress value={progressPercent} className="h-2" />
+                            <p className="text-xs text-muted-foreground mt-1">{currentExp} / {expForNextLevel} EXP</p>
+                        </>
+                    )}
+                     {level >= 5 && (
+                        <p className="text-sm font-bold text-yellow-400">MAX LEVEL</p>
+                    )}
+                </div>
             </CardContent>
         </Card>
     )
 }
 
-export function UpgradeModal({ isOpen, options, onSelect }: UpgradeModalProps) {
+export function UpgradeModal({ isOpen, options, onSelect, upgradeData }: UpgradeModalProps) {
     return (
         <Dialog open={isOpen}>
             <DialogContent 
@@ -60,14 +92,19 @@ export function UpgradeModal({ isOpen, options, onSelect }: UpgradeModalProps) {
                 hideCloseButton={true}
             >
                 <DialogHeader>
-                    <DialogTitle className="text-3xl text-center font-headline text-primary tracking-wider">Choose Your Upgrade</DialogTitle>
+                    <DialogTitle className="text-3xl text-center font-headline text-primary tracking-wider">Choose Your Power</DialogTitle>
                     <DialogDescription className="text-center text-lg">
-                        Select one of the following powers. Choose wisely.
+                        Your journey evolves. Select an upgrade to continue.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
                     {options.map(opt => (
-                        <UpgradeCard key={opt.id} upgrade={opt} onSelect={onSelect} />
+                        <UpgradeCard 
+                            key={opt.id} 
+                            upgrade={opt} 
+                            onSelect={onSelect}
+                            progress={upgradeData.upgradeProgress.get(opt.id)}
+                        />
                     ))}
                 </div>
             </DialogContent>
