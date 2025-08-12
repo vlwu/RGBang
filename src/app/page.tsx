@@ -56,7 +56,6 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
 
         return () => {
             game.stop();
-            gameRef.current = null;
         };
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initialGameState]);
@@ -70,11 +69,12 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
     // Main Game Loop
     useEffect(() => {
         let animationFrameId: number | null = null;
+        const inputHandler = InputHandler.getInstance();
         
         const gameLoop = () => {
-             if (gameRef.current && inputHandlerRef.current) {
-                gameRef.current.update(inputHandlerRef.current, isPaused);
-                inputHandlerRef.current.resetEvents();
+             if (gameRef.current) {
+                gameRef.current.update(inputHandler, isPaused);
+                inputHandler.resetEvents();
              }
              animationFrameId = requestAnimationFrame(gameLoop);
         };
@@ -530,5 +530,3 @@ export default function Home() {
         </main>
     );
 }
-
-    

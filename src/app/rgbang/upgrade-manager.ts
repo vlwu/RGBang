@@ -40,7 +40,7 @@ export class UpgradeManager {
         }
 
         // Filter out the gun upgrades from the main pool to avoid duplication
-        const remainingPool = availablePool.filter(u => u.type !== UpgradeType.GUN);
+        const remainingPool = availablePool.filter(u => !options.some(opt => opt.id === u.id));
 
         // Separate into seen and unseen upgrades from the remaining pool
         const seenUpgrades = remainingPool.filter(u => upgradeData.unlockedUpgradeIds.has(u.id));
