@@ -128,7 +128,6 @@ export class Boss {
     }
 
     private attack() {
-        this.soundManager.play(SoundType.BossAttack);
         const numBullets = 16;
         for (let i = 0; i < numBullets; i++) {
             const angle = (i / numBullets) * (Math.PI * 2);
@@ -141,7 +140,6 @@ export class Boss {
     takeDamage(amount: number, damageColor: GameColor) {
         if (damageColor === this.color) {
             this.health -= amount;
-            this.soundManager.play(SoundType.BossDamage);
             if (this.health <= 0) {
                 this.health = 0;
                 this.isAlive = false;

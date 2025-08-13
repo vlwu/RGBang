@@ -339,7 +339,7 @@ export default function Home() {
     };
 
     const quitToMenu = () => {
-        soundManager.play(SoundType.ButtonClick);
+        soundManager.play(SoundType.GameQuit);
         if (gameRef.current) {
             const currentState = gameRef.current.getCurrentState();
             if (currentState.score > 0) {

@@ -3,10 +3,6 @@ export enum SoundType {
     PlayerDash = 'playerDash',
     PlayerDamage = 'playerDamage',
     EnemyHit = 'enemyHit',
-    EnemyDestroy = 'enemyDestroy',
-    EnemySplit = 'enemySplit',
-    BossAttack = 'bossAttack',
-    BossDamage = 'bossDamage',
     BossDestroy = 'bossDestroy',
     FragmentCollect = 'fragmentCollect',
     UpgradeSelect = 'upgradeSelect',
@@ -15,6 +11,8 @@ export enum SoundType {
     ButtonHover = 'buttonHover',
     GamePause = 'gamePause',
     GameResume = 'gameResume',
+    GameOver = 'gameOver',
+    GameQuit = 'gameQuit',
 }
 
 const soundPaths: Record<SoundType, string> = {
@@ -22,10 +20,6 @@ const soundPaths: Record<SoundType, string> = {
     [SoundType.PlayerDash]: '/sounds/player-dash.mp3',
     [SoundType.PlayerDamage]: '/sounds/player-damage.mp3',
     [SoundType.EnemyHit]: '/sounds/enemy-hit.mp3',
-    [SoundType.EnemyDestroy]: '/sounds/enemy-destroy.mp3',
-    [SoundType.EnemySplit]: '/sounds/enemy-split.mp3',
-    [SoundType.BossAttack]: '/sounds/boss-attack.mp3',
-    [SoundType.BossDamage]: '/sounds/boss-damage.mp3',
     [SoundType.BossDestroy]: '/sounds/boss-destroy.mp3',
     [SoundType.FragmentCollect]: '/sounds/fragment-collect.mp3',
     [SoundType.UpgradeSelect]: '/sounds/upgrade-select.mp3',
@@ -34,6 +28,8 @@ const soundPaths: Record<SoundType, string> = {
     [SoundType.ButtonHover]: '/sounds/button-hover.mp3',
     [SoundType.GamePause]: '/sounds/game-pause.mp3',
     [SoundType.GameResume]: '/sounds/game-resume.mp3',
+    [SoundType.GameOver]: '/sounds/game-over.mp3',
+    [SoundType.GameQuit]: '/sounds/game-quit.mp3',
 };
 
 export class SoundManager {
@@ -43,7 +39,7 @@ export class SoundManager {
 
     constructor() {
         if (typeof window !== 'undefined') {
-            // Requires a user gesture to start the AudioContext, so resume it here.
+
             this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
             if (this.audioContext.state === 'suspended') {
                 this.audioContext.resume();
@@ -71,7 +67,7 @@ export class SoundManager {
     play(sound: SoundType, volume = 1.0) {
         if (this.isMuted || !this.audioContext) return;
 
-        // Resume context on play, as it might be suspended by the browser.
+
         if (this.audioContext.state === 'suspended') {
             this.audioContext.resume();
         }

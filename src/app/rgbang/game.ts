@@ -148,7 +148,6 @@ export class Game {
 
     private createEnemy = (enemy: Enemy) => {
         enemy.onSplit = (newEnemy) => {
-            this.soundManager.play(SoundType.EnemySplit);
             this.createEnemy(newEnemy);
         };
         this.enemies.push(enemy);
@@ -210,6 +209,7 @@ export class Game {
 
 
         if (!this.player.isAlive) {
+            this.soundManager.play(SoundType.GameOver);
             this.stop();
             this.onGameOver(this.score);
         }
@@ -262,7 +262,6 @@ export class Game {
                         this.soundManager.play(SoundType.EnemyHit);
                         this.applySpecialEffects(bullet, enemy);
                         if (!enemy.isAlive) {
-                           this.soundManager.play(SoundType.EnemyDestroy);
                            this.score += enemy.points;
                            this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
                         }
@@ -289,7 +288,6 @@ export class Game {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(enemy.damage);
                 enemy.isAlive = false;
-                this.soundManager.play(SoundType.EnemyDestroy);
                 this.particles.add(enemy.pos, enemy.color, 10);
 
             }
