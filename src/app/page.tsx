@@ -46,6 +46,11 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
+
+        // Set canvas width and height before game initialization
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+
         inputHandler.setCanvas(canvas);
 
         const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState, soundManager);
@@ -56,13 +61,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
             game.stop();
         };
 
-    }, [initialGameState]);
-
-    useEffect(() => {
-        if (!canvasRef.current) return;
-        canvasRef.current.width = GAME_WIDTH;
-        canvasRef.current.height = GAME_HEIGHT;
-    }, []);
+    }, [initialGameState, onGameOver, onFragmentCollected, gameRef]);
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
@@ -282,7 +281,7 @@ export default function Home() {
                 if (originalUpgrade) {
                     gameRef.current.player.upgradeManager.applyMax(originalUpgrade);
                     setRunUpgrades(new Map(runUpgrades.set(originalId, originalUpgrade.getMaxLevel())));
-                    
+
                     const data = await getPlayerUpgradeData();
                     data.unlockedUpgradeIds.add(originalId);
                     data.upgradeProgress.set(originalId, { level: originalUpgrade.getMaxLevel() });
