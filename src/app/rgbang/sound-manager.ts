@@ -43,7 +43,11 @@ export class SoundManager {
 
     constructor() {
         if (typeof window !== 'undefined') {
+            // Requires a user gesture to start the AudioContext, so resume it here.
             this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            if (this.audioContext.state === 'suspended') {
+                this.audioContext.resume();
+            }
         }
     }
 
@@ -52,7 +56,10 @@ export class SoundManager {
 
         const soundPromises = Object.entries(soundPaths).map(async ([key, path]) => {
             try {
-                // In a real scenario, you would fetch and decode the audio data.
+                const response = await fetch(path);
+                const arrayBuffer = await response.arrayBuffer();
+                const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
+                this.audioBuffers.set(key as SoundType, audioBuffer);
             } catch (error) {
                 console.error(`Failed to load sound: ${key} from ${path}`, error);
             }
@@ -63,9 +70,27 @@ export class SoundManager {
 
     play(sound: SoundType, volume = 1.0) {
         if (this.isMuted || !this.audioContext) return;
-        
-        // This is a placeholder for actual sound playing.
-        console.log(`Playing sound: ${sound} at volume ${volume}`);
+
+        // Resume context on play, as it might be suspended by the browser.
+        if (this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+
+        const audioBuffer = this.audioBuffers.get(sound);
+        if (!audioBuffer) {
+            console.warn(`Sound not found or not loaded: ${sound}`);
+            return;
+        }
+
+        const source = this.audioContext.createBufferSource();
+        source.buffer = audioBuffer;
+
+        const gainNode = this.audioContext.createGain();
+        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+
+        source.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        source.start(0);
     }
 
     setMuted(muted: boolean) {
