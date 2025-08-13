@@ -3,69 +3,108 @@ const path = require('path');
 const archiver = require('archiver');
 
 function fixNext() {
+    // Copy essential files to the out directory
     const outDir = path.join(__dirname, '..', 'out');
     const publicDir = path.join(__dirname, '..', 'public');
-
-    // Rename _next to next_assets to avoid Chrome extension error
-    const oldNextDir = path.join(outDir, '_next');
-    const newNextDir = path.join(outDir, 'next_assets');
-    if (fs.existsSync(oldNextDir)) {
-        fs.renameSync(oldNextDir, newNextDir);
-        console.log('✓ Renamed _next directory to next_assets');
+    
+    // Ensure out directory exists
+    if (!fs.existsSync(outDir)) {
+        fs.mkdirSync(outDir, { recursive: true });
     }
-
-    // Recursively find and replace asset paths in built files
-    function patchFileContent(directory) {
-        if (!fs.existsSync(directory)) return;
-
-        const items = fs.readdirSync(directory);
+    
+    // Remove problematic Next.js files that Chrome extensions don't allow
+    const filesToRemove = [
+        '_next',
+        '*next*'
+    ];
+    
+    function removeProblematicFiles(dir) {
+        if (!fs.existsSync(dir)) return;
+        
+        const items = fs.readdirSync(dir);
         items.forEach(item => {
-            const fullPath = path.join(directory, item);
+            const fullPath = path.join(dir, item);
             const stat = fs.statSync(fullPath);
-            if (stat.isDirectory()) {
-                patchFileContent(fullPath);
-            } else if (/\.(html|js|css)$/.test(item)) {
-                let content = fs.readFileSync(fullPath, 'utf8');
-                // Replace both /_next/ and ./_next/ asset paths
-                const newContent = content.replace(/(\.\/|\/)?_next\//g, 'next_assets/');
-                if (content !== newContent) {
-                    fs.writeFileSync(fullPath, newContent, 'utf8');
-                    console.log(`✓ Patched asset paths in: ${item}`);
+            
+            // Remove files/directories starting with * or containing problematic patterns
+            if (item.startsWith('*') || item.includes('*next*')) {
+                if (stat.isDirectory()) {
+                    fs.rmSync(fullPath, { recursive: true, force: true });
+                } else {
+                    fs.unlinkSync(fullPath);
                 }
+                console.log(`✓ Removed problematic file: ${item}`);
+                return;
+            }
+            
+            // Recursively check subdirectories
+            if (stat.isDirectory() && item !== 'icons' && item !== 'sounds') {
+                removeProblematicFiles(fullPath);
             }
         });
     }
-
-    patchFileContent(outDir);
-
-    // Helper to copy assets from public to out
-    function copyAsset(assetPath, isDir = false) {
-        const src = path.join(publicDir, assetPath);
-        const dest = path.join(outDir, assetPath);
-        if (fs.existsSync(src)) {
-            if (isDir) {
-                if (!fs.existsSync(dest)) {
-                    fs.mkdirSync(dest, { recursive: true });
-                }
-                fs.readdirSync(src).forEach(file => {
-                    const srcFile = path.join(src, file);
-                    const destFile = path.join(dest, file);
-                    fs.copyFileSync(srcFile, destFile);
-                    console.log(`✓ Copied ${assetPath.slice(0,-1)}: ${file}`);
-                });
-            } else {
-                fs.copyFileSync(src, dest);
-                console.log(`✓ Copied ${assetPath}`);
-            }
-        } else if (assetPath === 'manifest.json' || assetPath === 'background.js') {
-             console.error(`✗ ${assetPath} not found in public directory`);
-        }
+    
+    removeProblematicFiles(outDir);
+    
+    // Copy manifest.json
+    const manifestSrc = path.join(publicDir, 'manifest.json');
+    const manifestDest = path.join(outDir, 'manifest.json');
+    if (fs.existsSync(manifestSrc)) {
+        fs.copyFileSync(manifestSrc, manifestDest);
+        console.log('✓ Copied manifest.json');
+    } else {
+        console.error('✗ manifest.json not found in public directory');
     }
-
-    copyAsset('manifest.json');
-    copyAsset('background.js');
-    copyAsset('icons', true);
-    copyAsset('sounds', true);
+    
+    // Copy background.js
+    const backgroundSrc = path.join(publicDir, 'background.js');
+    const backgroundDest = path.join(outDir, 'background.js');
+    if (fs.existsSync(backgroundSrc)) {
+        fs.copyFileSync(backgroundSrc, backgroundDest);
+        console.log('✓ Copied background.js');
+    } else {
+        console.error('✗ background.js not found in public directory');
+    }
+    
+    // Copy icons directory
+    const iconsSrc = path.join(publicDir, 'icons');
+    const iconsDest = path.join(outDir, 'icons');
+    
+    if (fs.existsSync(iconsSrc)) {
+        // Create icons directory in out
+        if (!fs.existsSync(iconsDest)) {
+            fs.mkdirSync(iconsDest, { recursive: true });
+        }
+        
+        // Copy all icon files
+        const iconFiles = fs.readdirSync(iconsSrc);
+        iconFiles.forEach(file => {
+            const srcFile = path.join(iconsSrc, file);
+            const destFile = path.join(iconsDest, file);
+            fs.copyFileSync(srcFile, destFile);
+            console.log(`✓ Copied icon: ${file}`);
+        });
+    } else {
+        console.error('✗ icons directory not found in public directory');
+    }
+    
+    // Copy sounds directory if it exists
+    const soundsSrc = path.join(publicDir, 'sounds');
+    const soundsDest = path.join(outDir, 'sounds');
+    
+    if (fs.existsSync(soundsSrc)) {
+        if (!fs.existsSync(soundsDest)) {
+            fs.mkdirSync(soundsDest, { recursive: true });
+        }
+        
+        const soundFiles = fs.readdirSync(soundsSrc);
+        soundFiles.forEach(file => {
+            const srcFile = path.join(soundsSrc, file);
+            const destFile = path.join(soundsDest, file);
+            fs.copyFileSync(srcFile, destFile);
+            console.log(`✓ Copied sound: ${file}`);
+        });
+    }
     
     console.log('✓ Build fix complete');
 }
@@ -74,18 +113,19 @@ function createZip() {
     return new Promise((resolve, reject) => {
         const output = fs.createWriteStream(path.join(__dirname, '..', 'rgbang-extension.zip'));
         const archive = archiver('zip', { zlib: { level: 9 } });
-
+        
         output.on('close', () => {
             console.log(`✓ Extension packaged: ${archive.pointer()} total bytes`);
             resolve();
         });
-
+        
         archive.on('error', (err) => {
             reject(err);
         });
-
+        
         archive.pipe(output);
-
+        
+        // Only include files that Chrome extensions allow
         const outDir = path.join(__dirname, '..', 'out');
         const allowedFiles = [
             'index.html',
@@ -93,26 +133,27 @@ function createZip() {
             'background.js',
             'icons',
             'sounds',
-            'next_assets'
+            '_next/static'  // Static assets are usually OK
         ];
-
+        
         allowedFiles.forEach(file => {
             const fullPath = path.join(outDir, file);
             if (fs.existsSync(fullPath)) {
                 const stat = fs.statSync(fullPath);
                 if (stat.isDirectory()) {
-                    archive.directory(fullPath, file);
+                    archive.directory(fullPath + '/', file === 'icons' || file === 'sounds' ? file + '/' : file + '/');
                 } else {
                     archive.file(fullPath, { name: file });
                 }
             }
         });
-
+        
         archive.finalize();
     });
 }
 
 if (require.main === module) {
+    // If run directly, create the zip
     createZip().catch(console.error);
 }
 
