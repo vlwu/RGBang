@@ -518,7 +518,7 @@ export default function Home() {
                     </h1>
                      <div className="text-2xl font-semibold text-foreground/80">
                         <p>You have a run in progress.</p>
-                        <p>Score: <span className="font-bold text-accent">{savedGame.score}</span></p>
+                        <p>Score: <span className="font-bold text-accent">{Math.round(savedGame.score)}</span></p>
                     </div>
                     <div className="flex flex-col gap-4 w-64">
                         <Button size="lg" onClick={continueRun} onMouseEnter={playHoverSound} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
