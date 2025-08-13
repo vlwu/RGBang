@@ -1,4 +1,3 @@
-
 import { Vec2, drawShapeForColor } from './utils';
 import { Bullet } from './bullet';
 import InputHandler from './input-handler';
@@ -7,6 +6,7 @@ import { RadialMenu } from './radial-menu';
 import { ParticleSystem } from './particle';
 import { UpgradeManager } from './upgrade-manager';
 import { Upgrade } from './upgrades';
+import { SoundManager, SoundType } from './sound-manager';
 
 export class Player {
     pos: Vec2;
@@ -15,56 +15,58 @@ export class Player {
     maxHealth = 100;
     health: number;
     isAlive = true;
-    
+
     public currentColor: GameColor;
     public availableColors: Set<GameColor>;
     private radialMenu: RadialMenu;
     public upgradeManager: UpgradeManager;
     public isRadialMenuOpen = false;
-    
-    // --- Upgradeable Stats ---
-    // These are multipliers applied to base values
+    private soundManager: SoundManager;
+
+
+
     public movementSpeedMultiplier = 1;
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
     public shootCooldownModifier = 1;
     public expGainMultiplier = 1;
-    public accuracyModifier = 1; // 1 is default, closer to 0 is more accurate
+    public accuracyModifier = 1;
 
-    // Direct stat boosts
+
     public flatHealthIncrease = 0;
-    
-    // Gun-specific effect levels
+
+
     public chainLightningLevel = 0;
     public igniteLevel = 0;
     public iceSpikerLevel = 0;
 
-    private baseBulletSpread = 0.15; // in radians
+    private baseBulletSpread = 0.15;
 
-    private shootCooldown = 10; // frames
+    private shootCooldown = 10;
     private shootTimer = 0;
 
-    // Dash properties
+
     private isDashing = false;
     private dashTimer = 0;
-    private dashDuration = 12; // frames
+    private dashDuration = 12;
     private baseDashSpeed = 12;
-    private baseDashCooldown = 180; // frames
+    private baseDashCooldown = 180;
     private dashCooldownTimer = 0;
 
-    constructor(x: number, y: number, initialColor: GameColor) {
+    constructor(x: number, y: number, initialColor: GameColor, soundManager: SoundManager) {
         this.pos = new Vec2(x, y);
         this.health = this.maxHealth;
         this.currentColor = initialColor;
         this.availableColors = new Set(ALL_COLORS);
         this.radialMenu = new RadialMenu();
         this.upgradeManager = new UpgradeManager(this);
+        this.soundManager = soundManager;
         this.updateAvailableColors(initialColor);
     }
-    
+
     update(input: InputHandler, createBullet: (bullet: Bullet) => void, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
         if (!this.isAlive) return;
-        
+
         this.handleColorSelection(input, createBullet);
 
         if (this.isRadialMenuOpen) {
@@ -74,7 +76,7 @@ export class Player {
 
         this.handleMovement(input, particleSystem, canvasWidth, canvasHeight);
         this.handleShooting(input, createBullet);
-        
+
         if (this.shootTimer > 0) this.shootTimer--;
         if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
     }
@@ -89,33 +91,34 @@ export class Player {
                 this.availableColors.delete(components[1]);
             }
         } else {
-             // If switching to a primary, all colors become available
+
              this.availableColors = new Set(ALL_COLORS);
         }
     }
 
     private handleMovement(input: InputHandler, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
-        // Dash activation
+
         if (input.isKeyDown(input.keybindings.dash) && this.dashCooldownTimer === 0) {
             this.isDashing = true;
             this.dashTimer = this.dashDuration;
             this.dashCooldownTimer = this.getDashCooldown();
+            this.soundManager.play(SoundType.PlayerDash);
         }
-        
+
         let currentSpeed = this.getSpeed();
         let moveDir = new Vec2(0, 0);
 
         if (this.isDashing) {
-            currentSpeed = this.baseDashSpeed; // Dash speed isn't currently upgradeable, but could be
+            currentSpeed = this.baseDashSpeed;
             this.dashTimer--;
             if (this.dashTimer <= 0) {
                 this.isDashing = false;
             }
-             // Add dash particles
+
             particleSystem.addDashParticle(this.pos);
 
         }
-        
+
         if (input.isKeyDown(input.keybindings.up)) moveDir.y -= 1;
         if (input.isKeyDown(input.keybindings.down)) moveDir.y += 1;
         if (input.isKeyDown(input.keybindings.left)) moveDir.x -= 1;
@@ -125,13 +128,13 @@ export class Player {
             this.pos = this.pos.add(moveDir.normalize().scale(currentSpeed));
         }
 
-        // Boundary checks
+
         this.pos.x = Math.max(this.radius, Math.min(canvasWidth - this.radius, this.pos.x));
         this.pos.y = Math.max(this.radius, Math.min(canvasHeight - this.radius, this.pos.y));
     }
-    
+
     private handleColorSelection(input: InputHandler, createBullet: (bullet: Bullet) => void) {
-        // Handle closing the radial menu
+
         if (this.radialMenu.active && input.wasKeyReleased(input.keybindings.comboRadial)) {
             const selectedColor = this.radialMenu.getSelectedColor();
             if(selectedColor) {
@@ -140,6 +143,7 @@ export class Player {
                 const bullet = new Bullet(this.pos, direction, this.currentColor);
                 this.applyBulletUpgrades(bullet);
                 createBullet(bullet);
+                this.soundManager.play(SoundType.PlayerShoot);
                 this.shootTimer = this.getShootCooldown();
             }
             this.radialMenu.close();
@@ -147,7 +151,7 @@ export class Player {
             return;
         }
 
-        // Open radial menu
+
         if (input.isKeyDown(input.keybindings.comboRadial) && !this.radialMenu.active) {
             this.isRadialMenuOpen = true;
             this.radialMenu.open();
@@ -161,22 +165,22 @@ export class Player {
                 this.updateAvailableColors(color);
             }
         };
-        
-        // Keyboard primary selection
+
+
         if (input.isKeyDown(input.keybindings.primary1)) trySelectColor(GameColor.RED);
         if (input.isKeyDown(input.keybindings.primary2)) trySelectColor(GameColor.YELLOW);
         if (input.isKeyDown(input.keybindings.primary3)) trySelectColor(GameColor.BLUE);
 
-        // Mouse wheel selection
+
         if (input.wheelDeltaY !== 0) {
             const selectableColors = ALL_COLORS.filter(c => this.availableColors.has(c));
             if(selectableColors.length === 0) return;
 
             const currentIndex = selectableColors.indexOf(this.currentColor);
             let nextIndex;
-            if (input.wheelDeltaY > 0) { // Scroll down
+            if (input.wheelDeltaY > 0) {
                 nextIndex = (currentIndex + 1) % selectableColors.length;
-            } else { // Scroll up
+            } else {
                 nextIndex = (currentIndex - 1 + selectableColors.length) % selectableColors.length;
             }
             this.updateAvailableColors(selectableColors[nextIndex]);
@@ -185,7 +189,7 @@ export class Player {
 
     private applyBulletUpgrades(bullet: Bullet) {
         bullet.damage *= this.bulletDamageMultiplier;
-        // More complex effects like ignite would be applied here too
+
     }
 
     private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void) {
@@ -193,16 +197,17 @@ export class Player {
             const direction = input.mousePos.sub(this.pos);
             const spreadAngle = (Math.random() - 0.5) * this.getBulletSpread();
             const finalDirection = direction.rotate(spreadAngle);
-            
+
             const bullet = new Bullet(this.pos, finalDirection, this.currentColor);
             this.applyBulletUpgrades(bullet);
             createBullet(bullet);
+            this.soundManager.play(SoundType.PlayerShoot);
             this.shootTimer = this.getShootCooldown();
         }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
-        // Draw dashing effect
+
         if (this.isDashing) {
             ctx.save();
             ctx.shadowColor = 'white';
@@ -215,13 +220,13 @@ export class Player {
             ctx.restore();
         }
 
-        // Draw player body
+
         ctx.fillStyle = '#E2E8F0';
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Draw Dash Cooldown Indicator
+
+
         if (this.dashCooldownTimer > 0) {
             this.drawDashIndicator(ctx);
         }
@@ -229,7 +234,7 @@ export class Player {
         if (this.radialMenu.active) {
             this.radialMenu.draw(ctx);
         } else {
-            // Draw aiming reticle only when radial menu is closed
+
             const input = InputHandler.getInstance();
             const aimDir = input.mousePos.sub(this.pos).normalize();
             const reticlePos = this.pos.add(aimDir.scale(this.radius + 10));
@@ -240,7 +245,7 @@ export class Player {
             ctx.restore();
         }
     }
-    
+
      private drawDashIndicator(ctx: CanvasRenderingContext2D) {
         ctx.save();
         const indicatorWidth = 20;
@@ -250,33 +255,34 @@ export class Player {
 
         const progress = 1 - (this.dashCooldownTimer / this.getDashCooldown());
 
-        // Background
+
         ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
         ctx.fillRect(indicatorX, indicatorY, indicatorWidth, indicatorHeight);
-        
-        // Cooldown Progress with Gradient
+
+
         const gradient = ctx.createLinearGradient(indicatorX, indicatorY, indicatorX + (indicatorWidth * progress), indicatorY);
-        gradient.addColorStop(0, '#ff4d4d'); // Red
-        gradient.addColorStop(0.5, '#ffff66'); // Yellow
-        gradient.addColorStop(1, '#4d94ff'); // Blue
-        
+        gradient.addColorStop(0, '#ff4d4d');
+        gradient.addColorStop(0.5, '#ffff66');
+        gradient.addColorStop(1, '#4d94ff');
+
         ctx.fillStyle = gradient;
         ctx.fillRect(indicatorX, indicatorY, indicatorWidth * progress, indicatorHeight);
 
         ctx.restore();
     }
-    
+
     takeDamage(amount: number) {
-        if (this.isDashing) return; // Invulnerable while dashing
+        if (this.isDashing) return;
         this.health -= amount;
+        this.soundManager.play(SoundType.PlayerDamage);
         if (this.health <= 0) {
             this.health = 0;
             this.isAlive = false;
         }
     }
-    
+
     applyUpgrade(upgrade: Upgrade) {
-        this.upgradeManager.apply(upgrade, 1); // Level isn't used by the new fallback system directly, but good to pass.
+        this.upgradeManager.apply(upgrade, 1);
     }
 
     public getMaxHealth(): number {
@@ -294,7 +300,7 @@ export class Player {
     public getShootCooldown(): number {
         return this.shootCooldown * this.shootCooldownModifier;
     }
-    
+
     public getBulletSpread(): number {
         return this.baseBulletSpread * this.accuracyModifier;
     }

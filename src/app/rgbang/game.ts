@@ -9,6 +9,7 @@ import { getRandomElement, PRIMARY_COLORS, GameColor, ALL_COLORS } from './color
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
+import { SoundManager, SoundType } from './sound-manager';
 
 class EnemySpawner {
     private spawnInterval = 120;
@@ -75,6 +76,7 @@ export class Game {
     public particles: ParticleSystem;
     private enemySpawner: EnemySpawner;
     private ui: UI;
+    private soundManager: SoundManager;
 
     private score = 0;
     private nextBossScoreThreshold = 150;
@@ -90,13 +92,15 @@ export class Game {
         onGameOver: (finalScore: number) => void,
         onFragmentCollected: (color: GameColor | null) => void,
         initialState: SavedGameState,
+        soundManager: SoundManager,
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
         this.onFragmentCollected = onFragmentCollected;
+        this.soundManager = soundManager;
 
-        this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor);
+        this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor, this.soundManager);
         this.enemySpawner = new EnemySpawner(canvas.width, this.canvas.height);
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();
@@ -143,7 +147,10 @@ export class Game {
     }
 
     private createEnemy = (enemy: Enemy) => {
-        enemy.onSplit = this.createEnemy;
+        enemy.onSplit = (newEnemy) => {
+            this.soundManager.play(SoundType.EnemySplit);
+            this.createEnemy(newEnemy);
+        };
         this.enemies.push(enemy);
     }
 
@@ -156,7 +163,8 @@ export class Game {
             bossY,
             this.createBullet,
             this.canvas.width,
-            this.canvas.height
+            this.canvas.height,
+            this.soundManager
         );
         this.enemies = [];
     }
@@ -167,7 +175,6 @@ export class Game {
 
         this.bullets.forEach(bullet => bullet.update());
         this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
-        this.fragments.forEach(fragment => fragment.update(this.player));
         this.boss?.update();
 
 
@@ -182,6 +189,7 @@ export class Game {
 
         if (this.boss) {
             if (!this.boss.isAlive) {
+                this.soundManager.play(SoundType.BossDestroy);
                 this.particles.add(this.boss.pos, this.boss.color, 100);
                 this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null));
                 this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5);
@@ -251,8 +259,10 @@ export class Game {
                     const hitSuccess = enemy.takeDamage(bullet.damage, bullet.color);
 
                     if (hitSuccess) {
+                        this.soundManager.play(SoundType.EnemyHit);
                         this.applySpecialEffects(bullet, enemy);
                         if (!enemy.isAlive) {
+                           this.soundManager.play(SoundType.EnemyDestroy);
                            this.score += enemy.points;
                            this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
                         }
@@ -279,6 +289,7 @@ export class Game {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(enemy.damage);
                 enemy.isAlive = false;
+                this.soundManager.play(SoundType.EnemyDestroy);
                 this.particles.add(enemy.pos, enemy.color, 10);
 
             }
@@ -294,6 +305,7 @@ export class Game {
         for (let i = this.fragments.length - 1; i >= 0; i--) {
             const fragment = this.fragments[i];
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
+                this.soundManager.play(SoundType.FragmentCollect);
                 this.onFragmentCollected(fragment.color);
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
                 fragment.isAlive = false;

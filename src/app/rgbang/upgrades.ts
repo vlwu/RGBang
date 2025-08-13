@@ -1,4 +1,3 @@
-
 import { GameColor } from './color';
 import { Player } from './player';
 
@@ -6,6 +5,10 @@ export enum UpgradeType {
     GUN,
     PLAYER_STAT,
     GENERAL
+}
+
+export interface UpgradeProgress {
+    level: number;
 }
 
 export interface Upgrade {
@@ -20,7 +23,7 @@ export interface Upgrade {
 }
 
 export const ALL_UPGRADES: Upgrade[] = [
-    // --- PLAYER_STAT Upgrades (from White/Boss Fragments) ---
+
     {
         id: 'max-health',
         name: 'Vitality Boost',
@@ -30,8 +33,8 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 20 * level,
         apply: (player, level) => {
-            player.flatHealthIncrease += 20; // This is additive
-            player.health += 20; // Heal for the same amount
+            player.flatHealthIncrease += 20;
+            player.health += 20;
         }
     },
     {
@@ -59,7 +62,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         }
     },
 
-    // --- GENERAL Upgrades (Can appear for any color) ---
+
     {
         id: 'bullet-damage',
         name: 'Power Shot',
@@ -68,7 +71,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         color: null,
         getMaxLevel: () => 5,
         getValue: (level) => 1 + (0.1 * level),
-        apply: (player, level) => { 
+        apply: (player, level) => {
             player.bulletDamageMultiplier *= 1.10;
         }
     },
@@ -110,7 +113,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     },
 
 
-    // --- GUN-Specific Upgrades ---
+
     {
         id: 'ice-spiker',
         name: 'Ice Spiker',

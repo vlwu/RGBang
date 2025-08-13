@@ -1,6 +1,3 @@
-
-"use client"
-
 import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
@@ -13,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Keybindings } from "./input-handler";
+import { soundManager, SoundType } from './sound-manager';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -39,6 +37,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
 
     const handleSetBinding = useCallback((newKey: string) => {
         if (editingKey) {
+            soundManager.play(SoundType.ButtonClick);
             setLocalKeybindings(prev => ({
                 ...prev,
                 [editingKey]: newKey,
@@ -56,7 +55,7 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         e.preventDefault();
         handleSetBinding(`mouse${e.button}`);
     }, [handleSetBinding]);
-    
+
     useEffect(() => {
         if (editingKey) {
             window.addEventListener('keydown', handleKeyDown);
@@ -69,15 +68,17 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
     }, [editingKey, handleKeyDown, handleMouseDown]);
 
     const handleSave = () => {
+        soundManager.play(SoundType.ButtonClick);
         onKeybindingsChange(localKeybindings);
         onClose();
     };
 
     const handleCancel = () => {
-        setLocalKeybindings(keybindings); // Revert changes
+        soundManager.play(SoundType.ButtonClick);
+        setLocalKeybindings(keybindings);
         onClose();
     };
-    
+
     const keybindDisplayMap: Record<KeybindingAction, string> = {
         up: "Move Up",
         down: "Move Down",
@@ -98,10 +99,12 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
         if (key === 'mouse0') return 'LMB';
         if (key === 'mouse1') return 'MMB';
         if (key === 'mouse2') return 'RMB';
-        // Add more for other mouse buttons if needed
+
         if (key.startsWith('mouse')) return `MOUSE ${parseInt(key.slice(5)) + 1}`;
         return key.toUpperCase();
     }
+
+    const playHoverSound = () => soundManager.play(SoundType.ButtonHover);
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -118,10 +121,11 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
                             <Label htmlFor={action} className="text-right">
                                 {label}
                             </Label>
-                             <Button 
+                             <Button
                                 variant="outline"
                                 className="col-span-3"
-                                onClick={() => setEditingKey(action as KeybindingAction)}
+                                onClick={() => { soundManager.play(SoundType.ButtonClick); setEditingKey(action as KeybindingAction); }}
+                                onMouseEnter={playHoverSound}
                             >
                                {editingKey === action ? 'Press a key...' : getKeyDisplay(localKeybindings[action as KeybindingAction])}
                             </Button>
@@ -129,8 +133,8 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
                     ))}
                 </div>
                 <DialogFooter>
-                    <Button variant="secondary" onClick={handleCancel}>Cancel</Button>
-                    <Button onClick={handleSave}>Save Changes</Button>
+                    <Button variant="secondary" onClick={handleCancel} onMouseEnter={playHoverSound}>Cancel</Button>
+                    <Button onClick={handleSave} onMouseEnter={playHoverSound}>Save Changes</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

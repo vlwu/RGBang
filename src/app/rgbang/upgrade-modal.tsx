@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from 'react';
@@ -15,6 +14,7 @@ import { GameColor, COLOR_DETAILS } from './color';
 import { PlayerUpgradeData, UpgradeProgress } from './upgrade-data';
 import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair, Award } from "lucide-react";
 import { cn } from '@/lib/utils';
+import { soundManager, SoundType } from './sound-manager';
 
 interface UpgradeModalProps {
     isOpen: boolean;
@@ -41,16 +41,16 @@ export const iconMap: { [key: string]: React.ElementType } = {
 };
 
 
-const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: { 
-    upgrade: Upgrade, 
-    onSelect: (upgrade: Upgrade) => void, 
-    progress?: UpgradeProgress, 
+const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
+    upgrade: Upgrade,
+    onSelect: (upgrade: Upgrade) => void,
+    progress?: UpgradeProgress,
     isSelectable: boolean,
     runLevel: number
 }) => {
     const Icon = iconMap[upgrade.id] || iconMap['default'];
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
-    
+
     const isFallback = upgrade.id.startsWith('fallback-');
     const displayLevel = isFallback ? 0 : runLevel;
     const maxLevel = upgrade.getMaxLevel();
@@ -62,14 +62,21 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
             : "opacity-60 cursor-not-allowed"
     );
 
+    const handleMouseEnter = () => {
+        if (isSelectable) {
+            soundManager.play(SoundType.UpgradeHover);
+        }
+    };
+
     return (
-        <Card 
+        <Card
             className={cardClasses}
             onClick={() => {
                 if (isSelectable) {
                     onSelect(upgrade);
                 }
             }}
+            onMouseEnter={handleMouseEnter}
             style={{ '--card-glow-color': colorHex } as React.CSSProperties}
         >
             <CardHeader className="items-center pb-4">
@@ -105,15 +112,15 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
             setIsSelectable(false);
             const timer = setTimeout(() => {
                 setIsSelectable(true);
-            }, 500); // 0.5-second delay to prevent accidental clicks
+            }, 500);
 
-            return () => clearTimeout(timer); // Cleanup on close
+            return () => clearTimeout(timer);
         }
     }, [isOpen]);
 
     return (
         <Dialog open={isOpen}>
-            <DialogContent 
+            <DialogContent
                 className="sm:max-w-4xl bg-background/90 backdrop-blur-lg border-primary/20 text-foreground"
                 hideCloseButton={true}
             >
@@ -125,9 +132,9 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
                 </DialogHeader>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
                     {options.map(opt => (
-                        <UpgradeCard 
-                            key={opt.id} 
-                            upgrade={opt} 
+                        <UpgradeCard
+                            key={opt.id}
+                            upgrade={opt}
                             onSelect={onSelect}
                             progress={upgradeData.upgradeProgress.get(opt.id)}
                             isSelectable={isSelectable}
@@ -139,5 +146,3 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
         </Dialog>
     );
 }
-
-    

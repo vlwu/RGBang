@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -10,11 +9,12 @@ import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
-import type { Upgrade } from './rgbang/upgrades';
+import type { Upgrade, UpgradeProgress } from './rgbang/upgrades';
 import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData } from './rgbang/upgrade-data';
 import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/save-state';
 import { UpgradesOverviewModal } from './rgbang/upgrades-overview-modal';
 import { useToast } from '@/hooks/use-toast';
+import { soundManager, SoundType } from './rgbang/sound-manager';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,10 +29,10 @@ import {
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
-const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
+const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
 
-function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, initialGameState }: { 
-    onGameOver: (score: number) => void, 
+function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, initialGameState }: {
+    onGameOver: (score: number) => void,
     onFragmentCollected: (color: GameColor | null) => void,
     width: number,
     height: number,
@@ -41,22 +41,22 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
 }) {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const inputHandler = InputHandler.getInstance();
-    
+
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
         inputHandler.setCanvas(canvas);
 
-        const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState);
+        const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState, soundManager);
         gameRef.current = game;
         game.start();
 
         return () => {
             game.stop();
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [initialGameState]);
-    
+
     useEffect(() => {
         if (!canvasRef.current) return;
         canvasRef.current.width = GAME_WIDTH;
@@ -71,33 +71,33 @@ export default function Home() {
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
-    const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set(), upgradeProgress: new Map() });
-    const [runUpgrades, setRunUpgrades] = useState<Map<string, number>>(new Map());
-    
-    // UI Modals State
+    const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set<string>(), upgradeProgress: new Map<string, UpgradeProgress>() });
+    const [runUpgrades, setRunUpgrades] = useState<Map<string, number>>(new Map<string, number>());
+
+
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [isUpgradeOverviewOpen, setIsUpgradeOverviewOpen] = useState(false);
     const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
-    
+
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
     const gameRef = useRef<Game | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
     const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE);
     const { toast } = useToast();
 
-    // Use a ref to store upgradeData to prevent callback recreation
+
     const upgradeDataRef = useRef(upgradeData);
     useEffect(() => {
         upgradeDataRef.current = upgradeData;
     }, [upgradeData]);
-    
+
     const keybindingsRef = useRef(keybindings);
     useEffect(() => {
         keybindingsRef.current = keybindings;
     }, [keybindings]);
-    
+
     const inputHandlerRef = useRef(InputHandler.getInstance());
 
     const updateCanvasSize = useCallback(() => {
@@ -112,7 +112,7 @@ export default function Home() {
             newHeight = windowHeight;
             newWidth = newHeight * aspectRatio;
         }
-        
+
         if(newWidth > GAME_WIDTH) {
             newWidth = GAME_WIDTH;
             newHeight = GAME_HEIGHT;
@@ -122,14 +122,15 @@ export default function Home() {
     }, []);
 
     const loadInitialData = useCallback(async () => {
+        soundManager.loadSounds();
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
         const savedRun = await loadGameState();
         if (savedRun && savedRun.score > 0) {
             setSavedGame(savedRun);
         } else {
-            setSavedGame(null); // Explicitly clear if no valid saved game
+            setSavedGame(null);
         }
-        setGameState('menu'); // Always start at the menu
+        setGameState('menu');
 
         const data = await getPlayerUpgradeData();
         setUpgradeData(data);
@@ -149,7 +150,7 @@ export default function Home() {
         const handleBeforeUnload = () => {
              if (gameRef.current) {
                 const stateToSave = gameRef.current.getCurrentState();
-                if (stateToSave.score > 0) { // Don't save empty games
+                if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
                 }
              }
@@ -167,8 +168,8 @@ export default function Home() {
         inputHandlerRef.current.setKeybindings(keybindings);
         localStorage.setItem('rgBangKeybindings', JSON.stringify(keybindings));
     }, [keybindings]);
-    
-    // Main Game Loop
+
+
     useEffect(() => {
         let animationFrameId: number | null = null;
 
@@ -176,12 +177,12 @@ export default function Home() {
             animationFrameId = requestAnimationFrame(gameLoop);
             if (!gameRef.current) return;
 
-            const isPaused = 
-                gameState === 'paused' || 
-                gameState === 'upgrading' || 
-                isUpgradeOverviewOpen || 
+            const isPaused =
+                gameState === 'paused' ||
+                gameState === 'upgrading' ||
+                isUpgradeOverviewOpen ||
                 (gameRef.current?.player.isRadialMenuOpen ?? false);
-            
+
             if (isPaused) {
                 gameRef.current.player.update(inputHandlerRef.current, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height);
                 gameRef.current.draw();
@@ -194,13 +195,13 @@ export default function Home() {
         };
 
         gameLoop();
-        
+
         return () => {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
             }
         };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, [gameState, isUpgradeOverviewOpen]);
 
     useEffect(() => {
@@ -211,8 +212,10 @@ export default function Home() {
                     setIsInfoOpen(false);
                 } else if (gameState === 'playing') {
                     setGameState('paused');
+                    soundManager.play(SoundType.GamePause);
                 } else if (gameState === 'paused') {
                     setGameState('playing');
+                    soundManager.play(SoundType.GameResume);
                 }
             }
              if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase()) {
@@ -248,15 +251,16 @@ export default function Home() {
             setIsUpgradeModalOpen(true);
         }
     }, []);
-    
+
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
+        soundManager.play(SoundType.UpgradeSelect);
         if (gameRef.current) {
             const addScoreCallback = (amount: number) => {
                 if (gameRef.current) {
                     gameRef.current.addScore(amount);
                 }
             };
-            
+
             const isFallback = upgrade.id.startsWith('fallback-');
 
             if (isFallback) {
@@ -267,11 +271,11 @@ export default function Home() {
                  setRunUpgrades(new Map(runUpgrades.set(upgrade.id, currentLevel + 1)));
             }
         }
-        
+
         if (!upgrade.id.startsWith('fallback-')) {
             await unlockUpgrade(upgrade.id);
             const finalData = await levelUpUpgrade(upgrade.id);
-            setUpgradeData(finalData); // Update permanent data state
+            setUpgradeData(finalData);
             upgradeDataRef.current = finalData;
         }
 
@@ -286,15 +290,15 @@ export default function Home() {
             localStorage.setItem('rgBangHighScore', finalScore.toString());
             setHighScore(finalScore);
         }
-        clearGameState(); // Clear saved run on game over
-        gameRef.current = null; // Clear the game ref
+        clearGameState();
+        gameRef.current = null;
     }, [highScore]);
-    
+
     const resetGameAndUpgradeState = () => {
-        const freshUpgradeData = { unlockedUpgradeIds: new Set(), upgradeProgress: new Map() };
+        const freshUpgradeData: PlayerUpgradeData = { unlockedUpgradeIds: new Set<string>(), upgradeProgress: new Map<string, UpgradeProgress>() };
         setUpgradeData(freshUpgradeData);
         upgradeDataRef.current = freshUpgradeData;
-        setRunUpgrades(new Map());
+        setRunUpgrades(new Map<string, number>());
         setScore(0);
         setSavedGame(null);
     };
@@ -307,8 +311,9 @@ export default function Home() {
         setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor });
         setGameState('playing');
     };
-    
+
     const handlePlayClick = () => {
+        soundManager.play(SoundType.ButtonClick);
         if (savedGame) {
             setGameState('continuePrompt');
         } else {
@@ -318,6 +323,7 @@ export default function Home() {
 
 
     const continueRun = async () => {
+        soundManager.play(SoundType.ButtonClick);
         const savedRun = await loadGameState();
         if (savedRun) {
             const data = await getPlayerUpgradeData();
@@ -331,14 +337,15 @@ export default function Home() {
             startNewRun();
         }
     };
-    
+
     const quitToMenu = () => {
+        soundManager.play(SoundType.ButtonClick);
         if (gameRef.current) {
             const currentState = gameRef.current.getCurrentState();
             if (currentState.score > 0) {
                  saveGameState(currentState);
             } else {
-                 clearGameState(); // Clear if they quit with 0 score
+                 clearGameState();
             }
 
             if (currentState.score > highScore) {
@@ -348,16 +355,18 @@ export default function Home() {
             setScore(currentState.score);
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
         }
-        gameRef.current = null; // Clear the game ref
+        gameRef.current = null;
         setInitialGameState(DEFAULT_GAME_STATE);
         loadInitialData();
     };
 
     const resumeGame = () => {
+        soundManager.play(SoundType.GameResume);
         setGameState('playing');
     };
 
     const handleResetData = async () => {
+        soundManager.play(SoundType.ButtonClick);
         await resetAllUpgradeData();
         await clearGameState();
         localStorage.removeItem('rgBangHighScore');
@@ -370,15 +379,17 @@ export default function Home() {
         });
     }
 
+    const playHoverSound = () => soundManager.play(SoundType.ButtonHover);
+
     return (
         <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
-             <SettingsModal 
+             <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
                 keybindings={keybindings}
                 onKeybindingsChange={setKeybindings}
             />
-            <InfoModal 
+            <InfoModal
                 isOpen={isInfoOpen}
                 onClose={() => setIsInfoOpen(false)}
             />
@@ -402,21 +413,21 @@ export default function Home() {
                         <span>ang</span>
                     </h1>
                     <div className="flex flex-col gap-4 w-64">
-                        <Button size="lg" onClick={handlePlayClick} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
+                        <Button size="lg" onClick={handlePlayClick} onMouseEnter={playHoverSound} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
                             <Gamepad2 className="mr-2" />
                             Play
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)}>
+                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsSettingsOpen(true); }} onMouseEnter={playHoverSound}>
                             <Settings className="mr-2" />
                             Settings
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => setIsInfoOpen(true)}>
+                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsInfoOpen(true); }} onMouseEnter={playHoverSound}>
                             <Info className="mr-2" />
                             How to Play
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button size="lg" variant="destructive">
+                                <Button size="lg" variant="destructive" onMouseEnter={playHoverSound}>
                                     <Trash2 className="mr-2" />
                                     Reset Progress
                                 </Button>
@@ -429,8 +440,8 @@ export default function Home() {
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleResetData}>
+                                <AlertDialogCancel onClick={() => soundManager.play(SoundType.ButtonClick)} onMouseEnter={playHoverSound}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleResetData} onMouseEnter={playHoverSound}>
                                     Yes, reset everything
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -445,7 +456,7 @@ export default function Home() {
                     </div>
                 </div>
             )}
-            
+
             {gameState === 'continuePrompt' && savedGame && (
                  <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
                     <h1 className="text-6xl font-bold tracking-tighter font-headline">
@@ -456,15 +467,15 @@ export default function Home() {
                         <p>Score: <span className="font-bold text-accent">{savedGame.score}</span></p>
                     </div>
                     <div className="flex flex-col gap-4 w-64">
-                        <Button size="lg" onClick={continueRun} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
+                        <Button size="lg" onClick={continueRun} onMouseEnter={playHoverSound} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
                             <History className="mr-2" />
                             Continue Run
                         </Button>
-                        <Button size="lg" variant="destructive" onClick={startNewRun}>
+                        <Button size="lg" variant="destructive" onClick={() => { soundManager.play(SoundType.ButtonClick); startNewRun(); }} onMouseEnter={playHoverSound}>
                             <Gamepad2 className="mr-2" />
                             Start Fresh
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => setGameState('menu')}>
+                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setGameState('menu'); }} onMouseEnter={playHoverSound}>
                             Main Menu
                         </Button>
                     </div>
@@ -475,8 +486,8 @@ export default function Home() {
             {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && (
                 <div className="relative">
                     <GameCanvas
-                        key={initialGameState.score + initialGameState.playerHealth + initialGameState.initialColor} 
-                        onGameOver={handleGameOver} 
+                        key={initialGameState.score + initialGameState.playerHealth + initialGameState.initialColor}
+                        onGameOver={handleGameOver}
                         onFragmentCollected={handleFragmentCollected}
                         width={canvasSize.width}
                         height={canvasSize.height}
@@ -486,21 +497,21 @@ export default function Home() {
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
                              <div className="absolute top-4 right-4">
-                                <Button size="icon" variant="ghost" onClick={resumeGame}>
+                                <Button size="icon" variant="ghost" onClick={resumeGame} onMouseEnter={playHoverSound}>
                                     <X/>
                                 </Button>
                              </div>
                              <h2 className="text-6xl font-bold font-headline tracking-tighter mb-8 text-glow">Paused</h2>
                              <div className="flex flex-col space-y-4 w-52">
-                                <Button size="lg" onClick={resumeGame} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
+                                <Button size="lg" onClick={resumeGame} onMouseEnter={playHoverSound} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
                                     <Play className="mr-2" />
                                     Resume
                                 </Button>
-                                <Button size="lg" variant="secondary" onClick={() => setIsSettingsOpen(true)}>
+                                <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsSettingsOpen(true); }} onMouseEnter={playHoverSound}>
                                     <Settings className="mr-2" />
                                     Settings
                                 </Button>
-                                <Button size="lg" onClick={quitToMenu} variant="destructive" className="font-bold text-lg">
+                                <Button size="lg" onClick={quitToMenu} variant="destructive" onMouseEnter={playHoverSound} className="font-bold text-lg">
                                      <LogOut className="mr-2" />
                                      Save and Quit
                                  </Button>
@@ -522,7 +533,7 @@ export default function Home() {
                            <span>High Score: {highScore}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={() => { loadInitialData(); setGameState('menu'); }} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
+                     <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); loadInitialData(); setGameState('menu'); }} onMouseEnter={playHoverSound} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>

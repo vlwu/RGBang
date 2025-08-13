@@ -1,7 +1,7 @@
-
 import { Vec2, lerp, drawShapeForColor } from './utils';
 import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
 import { Bullet } from './bullet';
+import { SoundManager, SoundType } from './sound-manager';
 
 enum BossState {
     IDLE,
@@ -16,27 +16,28 @@ export class Boss {
     maxHealth = 1000;
     color: GameColor;
     isAlive = true;
-    points = 0; // Boss no longer gives points
-    damage = 30; // Collision damage
+    points = 0;
+    damage = 30;
 
     private canvasWidth: number;
     private canvasHeight: number;
-    
+    private soundManager: SoundManager;
+
     private state: BossState = BossState.IDLE;
 
-    // Timers for actions
+
     private colorChangeTimer = 0;
-    private readonly colorChangeInterval = 300; // 5 seconds
+    private readonly colorChangeInterval = 300;
 
     private stateTimer = 0;
-    private readonly idleTime = 60; // 1 second
-    private readonly telegraphTime = 120; // 2 seconds
+    private readonly idleTime = 60;
+    private readonly telegraphTime = 120;
 
     private targetPos: Vec2;
     private moveSpeed = 0.05;
 
     private attackTimer = 0;
-    private readonly attackInterval = 120; // 2 seconds
+    private readonly attackInterval = 120;
 
     private createBullet: (bullet: Bullet) => void;
 
@@ -45,7 +46,8 @@ export class Boss {
         y: number,
         createBullet: (bullet: Bullet) => void,
         canvasWidth: number,
-        canvasHeight: number
+        canvasHeight: number,
+        soundManager: SoundManager,
     ) {
         this.pos = new Vec2(x, y);
         this.targetPos = new Vec2(x, y);
@@ -54,18 +56,19 @@ export class Boss {
         this.createBullet = createBullet;
         this.canvasWidth = canvasWidth;
         this.canvasHeight = canvasHeight;
+        this.soundManager = soundManager;
         this.stateTimer = this.idleTime;
     }
 
     update() {
         if (!this.isAlive) return;
 
-        // Universal timers
+
         this.colorChangeTimer--;
         this.attackTimer--;
         this.stateTimer--;
 
-        // Universal actions that happen regardless of state
+
         if (this.colorChangeTimer <= 0) {
             this.changeColor();
             this.colorChangeTimer = this.colorChangeInterval;
@@ -75,7 +78,7 @@ export class Boss {
             this.attackTimer = this.attackInterval;
         }
 
-        // State-specific logic
+
         switch (this.state) {
             case BossState.IDLE:
                 if (this.stateTimer <= 0) {
@@ -84,26 +87,26 @@ export class Boss {
                     this.setNewTargetPosition();
                 }
                 break;
-            
+
             case BossState.TELEGRAPHING_MOVE:
                 if (this.stateTimer <= 0) {
                     this.state = BossState.MOVING;
-                    // No timer for moving, it's based on distance
+
                 }
                 break;
-            
+
             case BossState.MOVING:
                 this.move();
-                // Transition is handled inside the move() method
+
                 break;
         }
     }
-    
+
     private move() {
         this.pos.x = lerp(this.pos.x, this.targetPos.x, this.moveSpeed);
         this.pos.y = lerp(this.pos.y, this.targetPos.y, this.moveSpeed);
-        
-        // If we are close enough, snap to target and change state
+
+
         if (this.pos.sub(this.targetPos).magnitude() < 1) {
             this.pos = this.targetPos;
             this.state = BossState.IDLE;
@@ -120,11 +123,12 @@ export class Boss {
         const padding = 100;
         this.targetPos = new Vec2(
              Math.random() * (this.canvasWidth - padding * 2) + padding,
-             Math.random() * (this.canvasHeight / 2 - padding) + padding // Move in top half
+             Math.random() * (this.canvasHeight / 2 - padding) + padding
         );
     }
-    
+
     private attack() {
+        this.soundManager.play(SoundType.BossAttack);
         const numBullets = 16;
         for (let i = 0; i < numBullets; i++) {
             const angle = (i / numBullets) * (Math.PI * 2);
@@ -137,19 +141,20 @@ export class Boss {
     takeDamage(amount: number, damageColor: GameColor) {
         if (damageColor === this.color) {
             this.health -= amount;
+            this.soundManager.play(SoundType.BossDamage);
             if (this.health <= 0) {
                 this.health = 0;
                 this.isAlive = false;
             }
         }
     }
-    
+
     private drawMoveTelegraph(ctx: CanvasRenderingContext2D) {
         const hexColor = COLOR_DETAILS[this.color].hex;
 
         ctx.save();
-        
-        // Dashed line
+
+
         ctx.strokeStyle = hexColor;
         ctx.lineWidth = 2;
         ctx.setLineDash([10, 15]);
@@ -158,14 +163,14 @@ export class Boss {
         ctx.moveTo(this.pos.x, this.pos.y);
         ctx.lineTo(this.targetPos.x, this.targetPos.y);
         ctx.stroke();
-        
-        // Pulsing target circle
+
+
         const pulse = Math.abs(Math.sin(Date.now() / 200));
         ctx.strokeStyle = hexColor;
         ctx.fillStyle = hexColor;
         ctx.lineWidth = 3;
         ctx.globalAlpha = 0.3 + pulse * 0.4;
-        
+
         ctx.beginPath();
         ctx.arc(this.targetPos.x, this.targetPos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
@@ -181,23 +186,23 @@ export class Boss {
         ctx.save();
         const hexColor = COLOR_DETAILS[this.color].hex;
 
-        // Draw telegraph if in that state
+
         if (this.state === BossState.TELEGRAPHING_MOVE) {
             this.drawMoveTelegraph(ctx);
         }
 
-        // Pulsing glow effect
+
         const pulse = Math.abs(Math.sin(Date.now() / 300));
         ctx.shadowColor = hexColor;
         ctx.shadowBlur = 20 + pulse * 10;
 
-        // Main body
+
         ctx.fillStyle = hexColor;
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Shape Overlay
+
+
         drawShapeForColor(ctx, this.pos, this.radius, this.color, 'black');
 
         ctx.restore();
