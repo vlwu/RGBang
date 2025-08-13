@@ -34,7 +34,6 @@ export const ALL_UPGRADES: Upgrade[] = [
         getValue: (level) => 20 * level,
         apply: (player, level) => {
             player.flatHealthIncrease += 20;
-            player.health += 20;
         }
     },
     {

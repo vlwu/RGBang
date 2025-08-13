@@ -165,6 +165,7 @@ export class UpgradeManager {
     }
 
     recalculatePlayerStats() {
+        const oldMaxHealth = this.player.getMaxHealth();
 
         this.player.movementSpeedMultiplier = 1;
         this.player.bulletDamageMultiplier = 1;
@@ -173,7 +174,6 @@ export class UpgradeManager {
         this.player.expGainMultiplier = 1;
         this.player.accuracyModifier = 1;
         this.player.flatHealthIncrease = 0;
-        this.player.maxHealth = 100;
 
 
         this.player.chainLightningLevel = 0;
@@ -187,8 +187,13 @@ export class UpgradeManager {
             }
         });
 
+        const newMaxHealth = this.player.getMaxHealth();
+        const healthIncrease = newMaxHealth - oldMaxHealth;
 
-        this.player.maxHealth += this.player.flatHealthIncrease;
+        if (healthIncrease > 0) {
+            this.player.health += healthIncrease;
+        }
+        this.player.health = Math.min(this.player.health, newMaxHealth);
     }
 
     getUpgradeLevel(upgradeId: string): number {

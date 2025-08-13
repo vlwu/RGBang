@@ -67,6 +67,9 @@ export class Player {
     update(input: InputHandler, createBullet: (bullet: Bullet) => void, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number, isGamePaused = false) {
         if (!this.isAlive) return;
 
+        if (this.shootTimer > 0) this.shootTimer--;
+        if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
+
         this.handleColorSelection(input, createBullet);
 
         if (this.isRadialMenuOpen) {
@@ -78,9 +81,6 @@ export class Player {
 
         this.handleMovement(input, particleSystem, canvasWidth, canvasHeight);
         this.handleShooting(input, createBullet);
-
-        if (this.shootTimer > 0) this.shootTimer--;
-        if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
     }
 
     private updateAvailableColors(newColor: GameColor, isInitialCall = false) {
