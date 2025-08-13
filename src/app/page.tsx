@@ -141,7 +141,7 @@ export default function Home() {
         } else {
             setSavedGame(null);
         }
-        
+
         const data = await getPlayerUpgradeData();
         setUpgradeData(data);
         upgradeDataRef.current = data;
@@ -153,7 +153,7 @@ export default function Home() {
         setGameState('menu');
     }, []);
 
-    // ** MODIFIED **: This effect now ONLY runs once for initial setup.
+
     useEffect(() => {
         loadInitialData();
         updateCanvasSize();
@@ -163,9 +163,9 @@ export default function Home() {
             window.removeEventListener('resize', updateCanvasSize);
         };
     }, [loadInitialData, updateCanvasSize]);
-    
-    // ** ADDED **: This new effect handles saving the game state when the tab is closed.
-    // It correctly depends on gameState to ensure it has the latest data.
+
+
+
     useEffect(() => {
         const handleBeforeUnload = () => {
             if (gameRef.current && gameState === 'playing') {
@@ -198,24 +198,25 @@ export default function Home() {
             if (!gameRef.current) return;
 
             const isPausedForModal = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen;
-            
-            // The player's radial menu can pause input, but the game still needs to draw.
-            const isInputPaused = gameRef.current.player.isRadialMenuOpen || isPausedForModal;
-            
-            gameRef.current.player.update(inputHandler, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height, isInputPaused);
 
+            // Only run the main game update loop if the game is actively being played
             if (!isPausedForModal) {
-                 gameRef.current.update(inputHandler);
+                gameRef.current.update(inputHandler);
+            } else {
+                // When paused, we still need to process player inputs for things like the radial menu
+                // and keep the player object aware of the paused state.
+                const isInputPaused = gameRef.current.player.isRadialMenuOpen || isPausedForModal;
+                gameRef.current.player.update(inputHandler, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height, isInputPaused);
             }
-            
+
             gameRef.current.draw();
 
             inputHandler.resetEvents();
             animationFrameId = requestAnimationFrame(gameLoop);
         };
-        
-        // Start the loop only when playing
-        if(gameState === 'playing'){
+
+
+        if(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading'){
             animationFrameId = requestAnimationFrame(gameLoop);
         }
 
