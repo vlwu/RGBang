@@ -1,20 +1,20 @@
-
 import { Vec2, lerp } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 import { Player } from './player';
+import { ParticleSystem } from './particle';
 
 export class PrismFragment {
     pos: Vec2;
-    radius = 8; // Increased size
+    radius = 8;
     isAlive = true;
-    color: GameColor | null; // null for white/boss fragment
+    color: GameColor | null;
     hexColor: string;
 
-    private lifespan = 480; // 8 seconds
+    private lifespan = 480;
     private attractRadius = 100;
     private attractSpeed = 0.08;
     private canAttract = false;
-    private attractDelay = 30; // 0.5 seconds
+    private attractDelay = 30;
 
     private angle = Math.random() * Math.PI * 2;
     private rotationSpeed = (Math.random() - 0.5) * 0.1;
@@ -26,13 +26,13 @@ export class PrismFragment {
         this.hexColor = color ? COLOR_DETAILS[color].hex : '#FFFFFF';
     }
 
-    update(player: Player) {
+    update(player: Player, particles: ParticleSystem) {
         if (!this.isAlive) return;
-        
+
         this.lifespan--;
         this.attractDelay--;
         this.angle += this.rotationSpeed;
-        
+
         if (this.attractDelay <= 0) {
             this.canAttract = true;
         }
@@ -40,8 +40,8 @@ export class PrismFragment {
         if (this.lifespan <= 0) {
             this.isAlive = false;
         }
-        
-        // Attraction logic
+
+
         if (this.canAttract) {
             const distVec = player.pos.sub(this.pos);
             const dist = distVec.magnitude();
@@ -50,31 +50,33 @@ export class PrismFragment {
                 this.pos.y = lerp(this.pos.y, player.pos.y, this.attractSpeed);
             }
         }
+        
+        particles.addFragmentParticle(this.pos, this.hexColor);
     }
 
     draw(ctx: CanvasRenderingContext2D) {
         if (!this.isAlive) return;
-        
+
         ctx.save();
-        
+
         const pulse = (Math.sin(this.lifespan / 20) + 1) / 2;
-        
-        // Glow - Increased glow effect
+
+
         ctx.shadowColor = this.hexColor;
         ctx.shadowBlur = 10 + pulse * 10;
-        
-        // Flashing and fading logic
-        if (this.lifespan < 120) { // Start flashing in the last 2 seconds
-            const flash = Math.abs(Math.sin(this.lifespan * 0.1)); // Slower oscillation for flash
+
+
+        if (this.lifespan < 120) {
+            const flash = Math.abs(Math.sin(this.lifespan * 0.1));
             ctx.globalAlpha = flash;
         } else {
             ctx.globalAlpha = 1;
         }
-        
+
         ctx.translate(this.pos.x, this.pos.y);
         ctx.rotate(this.angle);
 
-        // Main Shape
+
         ctx.fillStyle = this.hexColor;
         ctx.beginPath();
         const points = 5;

@@ -175,6 +175,7 @@ export class Game {
         this.bullets.forEach(bullet => bullet.update());
         this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
         this.boss?.update();
+        this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
 
 
         this.handleCollisions();
