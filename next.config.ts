@@ -1,9 +1,7 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-
   output: 'export',
-
   assetPrefix: './',
   typescript: {
     ignoreBuildErrors: true,
@@ -14,6 +12,10 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // Ensure public assets are properly handled
+  trailingSlash: true,
+  // Make sure static files are copied
+  distDir: 'out',
 };
 
 export default nextConfig;
