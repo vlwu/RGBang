@@ -14,67 +14,6 @@ function fixNext() {
         console.log('✓ Renamed _next directory to next_assets');
     }
 
-    // Process HTML files to extract inline scripts
-    const htmlFilePath = path.join(outDir, 'index.html');
-    if (fs.existsSync(htmlFilePath)) {
-        let htmlContent = fs.readFileSync(htmlFilePath, 'utf8');
-        const inlineScriptRegex = /<script id="__NEXT_DATA__" type="application\/json">.*?<\/script>|<script>(.*?)<\/script>/gs;
-        const nextDataRegex = /<script id="__NEXT_DATA__" type="application\/json">.*?<\/script>/gs;
-        
-        let inlineScripts = [];
-        let nextDataScript = '';
-        let match;
-
-        // First, find and preserve the __NEXT_DATA__ script
-        htmlContent = htmlContent.replace(nextDataRegex, (scriptTag) => {
-            nextDataScript = scriptTag;
-            return '<!-- __NEXT_DATA__ placeholder -->';
-        });
-
-        // Then, extract and remove other inline scripts
-        while ((match = inlineScriptRegex.exec(htmlContent)) !== null) {
-            if (match[1] && match[1].trim().length > 0) {
-                inlineScripts.push(match[1]);
-            }
-        }
-        
-        htmlContent = htmlContent.replace(inlineScriptRegex, (match, scriptContent) => {
-             return (scriptContent && scriptContent.trim().length > 0) ? '' : match;
-        });
-
-        // Restore the __NEXT_DATA__ script
-        htmlContent = htmlContent.replace('<!-- __NEXT_DATA__ placeholder -->', nextDataScript);
-        
-        // Create a new file for the extracted scripts
-        if (inlineScripts.length > 0) {
-            let combinedScripts = inlineScripts.join('\n\n');
-
-            // **THE FIX**: Replace the problematic forEach with a standard for loop
-            const problematicCode = 'document.querySelectorAll("link[data-precedence]").forEach(function(e){';
-            const fixedCode = 'var a=document.querySelectorAll("link[data-precedence]");for(var i=0;i<a.length;i++){var e=a[i];';
-            
-            if (combinedScripts.includes(problematicCode)) {
-                combinedScripts = combinedScripts.replace(problematicCode, fixedCode);
-                console.log('✓ Patched NodeList.forEach issue in runtime script.');
-            }
-            
-            const externalScriptDir = path.join(outDir, 'next_assets', 'static', 'runtime');
-            if (!fs.existsSync(externalScriptDir)) {
-                fs.mkdirSync(externalScriptDir, { recursive: true });
-            }
-            const externalScriptFile = path.join(externalScriptDir, 'inline-scripts.js');
-            fs.writeFileSync(externalScriptFile, combinedScripts, 'utf8');
-            console.log(`✓ Extracted inline scripts to inline-scripts.js`);
-
-            // Add a script tag to load the new external script file
-            const scriptTag = `<script src="./next_assets/static/runtime/inline-scripts.js" defer></script>`;
-            htmlContent = htmlContent.replace('</body>', `${scriptTag}\n</body>`);
-            console.log(`✓ Added script tag for inline-scripts.js to index.html`);
-        }
-
-        fs.writeFileSync(htmlFilePath, htmlContent, 'utf8');
-    }
-
     // Recursively find and replace asset paths in built files
     function patchFileContent(directory) {
         if (!fs.existsSync(directory)) return;
@@ -112,7 +51,7 @@ function fixNext() {
                     const srcFile = path.join(src, file);
                     const destFile = path.join(dest, file);
                     fs.copyFileSync(srcFile, destFile);
-                    console.log(`✓ Copied ${assetPath.replace(/\/$/, '')}: ${file}`);
+                    console.log(`✓ Copied ${assetPath.slice(0,-1)}: ${file}`);
                 });
             } else {
                 fs.copyFileSync(src, dest);
@@ -125,8 +64,8 @@ function fixNext() {
 
     copyAsset('manifest.json');
     copyAsset('background.js');
-    copyAsset('icons/', true);
-    copyAsset('sounds/', true);
+    copyAsset('icons', true);
+    copyAsset('sounds', true);
     
     console.log('✓ Build fix complete');
 }
