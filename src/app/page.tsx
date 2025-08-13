@@ -579,7 +579,7 @@ export default function Home() {
                  <div className="flex flex-col items-center text-center space-y-6 animate-fade-in">
                     <h2 className="text-7xl font-bold font-headline text-glow">Game Over</h2>
                     <p className="text-4xl font-semibold">
-                        Final Score: <span className="font-bold text-accent">{score}</span>
+                        Final Score: <span className="font-bold text-accent">{Math.round(score)}</span>
                     </p>
                     <div className="pt-4 text-2xl font-semibold text-foreground/80">
                         <div className="flex items-center gap-2">
