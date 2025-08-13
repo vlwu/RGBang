@@ -33,7 +33,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 20 * level,
         apply: (player, level) => {
-            player.flatHealthIncrease += 20;
+            player.flatHealthIncrease += 20 * level;
         }
     },
     {
@@ -45,7 +45,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 - (0.08 * level),
         apply: (player, level) => {
-            player.dashCooldownModifier *= 0.92;
+            player.dashCooldownModifier *= Math.pow(0.92, level);
         }
     },
      {
@@ -57,7 +57,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 + (0.05 * level),
         apply: (player, level) => {
-            player.movementSpeedMultiplier *= 1.05;
+            player.movementSpeedMultiplier *= Math.pow(1.05, level);
         }
     },
 
@@ -71,7 +71,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 + (0.1 * level),
         apply: (player, level) => {
-            player.bulletDamageMultiplier *= 1.10;
+            player.bulletDamageMultiplier *= Math.pow(1.10, level);
         }
     },
     {
@@ -83,7 +83,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 - (0.1 * level),
         apply: (player, level) => {
-            player.shootCooldownModifier *= 0.9;
+            player.shootCooldownModifier *= Math.pow(0.9, level);
         }
     },
     {
@@ -95,7 +95,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 + (0.2 * level),
         apply: (player, level) => {
-            player.expGainMultiplier *= 1.2;
+            player.expGainMultiplier *= Math.pow(1.2, level);
         }
     },
     {
@@ -107,7 +107,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 - (0.15 * level),
         apply: (player, level) => {
-            player.accuracyModifier *= 0.85;
+            player.accuracyModifier *= Math.pow(0.85, level);
         }
     },
 
@@ -121,7 +121,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         color: GameColor.BLUE,
         getMaxLevel: () => 5,
         getValue: (level) => level,
-        apply: (player) => { player.iceSpikerLevel += 1; }
+        apply: (player, level) => { player.iceSpikerLevel += level; }
     },
     {
         id: 'chain-lightning',
@@ -131,7 +131,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         color: GameColor.YELLOW,
         getMaxLevel: () => 5,
         getValue: (level) => level,
-        apply: (player) => { player.chainLightningLevel += 1; }
+        apply: (player, level) => { player.chainLightningLevel += level; }
     },
     {
         id: 'ignite',
@@ -141,6 +141,6 @@ export const ALL_UPGRADES: Upgrade[] = [
         color: GameColor.RED,
         getMaxLevel: () => 5,
         getValue: (level) => level,
-        apply: (player) => { player.igniteLevel += 1; }
+        apply: (player, level) => { player.igniteLevel += level; }
     }
 ];

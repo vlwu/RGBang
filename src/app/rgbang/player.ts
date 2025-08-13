@@ -300,11 +300,11 @@ export class Player {
     }
 
     public getDashCooldown(): number {
-        return this.baseDashCooldown * this.dashCooldownModifier;
+        return Math.round(this.baseDashCooldown * this.dashCooldownModifier);
     }
 
     public getShootCooldown(): number {
-        return this.shootCooldown * this.shootCooldownModifier;
+        return Math.round(this.shootCooldown * this.shootCooldownModifier);
     }
 
     public getBulletSpread(): number {

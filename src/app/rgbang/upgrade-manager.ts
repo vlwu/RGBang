@@ -182,9 +182,7 @@ export class UpgradeManager {
 
 
         this.activeUpgrades.forEach(({ upgrade, level }) => {
-            for(let i = 0; i < level; i++) {
-                upgrade.apply(this.player, i + 1);
-            }
+            upgrade.apply(this.player, level);
         });
 
         const newMaxHealth = this.player.getMaxHealth();
