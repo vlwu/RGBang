@@ -61,7 +61,7 @@ export class Player {
         this.radialMenu = new RadialMenu();
         this.upgradeManager = new UpgradeManager(this);
         this.soundManager = soundManager;
-        this.updateAvailableColors(initialColor);
+        this.updateAvailableColors(initialColor, true);
     }
 
     update(input: InputHandler, createBullet: (bullet: Bullet) => void, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number, isGamePaused = false) {
@@ -83,7 +83,11 @@ export class Player {
         if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
     }
 
-    private updateAvailableColors(newColor: GameColor) {
+    private updateAvailableColors(newColor: GameColor, isInitialCall = false) {
+        if (!isInitialCall && this.currentColor !== newColor) {
+            this.soundManager.play(SoundType.GunSwitch);
+        }
+
         this.currentColor = newColor;
         if (isSecondaryColor(newColor)) {
             const components = COLOR_DETAILS[newColor].components;

@@ -13,6 +13,7 @@ export enum SoundType {
     GameResume = 'gameResume',
     GameOver = 'gameOver',
     GameQuit = 'gameQuit',
+    GunSwitch = 'gunSwitch',
 }
 
 const soundPaths: Record<SoundType, string> = {
@@ -30,6 +31,7 @@ const soundPaths: Record<SoundType, string> = {
     [SoundType.GameResume]: '/sounds/game-resume.mp3',
     [SoundType.GameOver]: '/sounds/game-over.mp3',
     [SoundType.GameQuit]: '/sounds/game-quit.mp3',
+    [SoundType.GunSwitch]: '/sounds/gun-switch.mp3',
 };
 
 export class SoundManager {
