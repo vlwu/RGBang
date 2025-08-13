@@ -47,7 +47,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
 
-        // Set canvas width and height before game initialization
+
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;
 
@@ -61,7 +61,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
             game.stop();
         };
 
-    }, [initialGameState, onGameOver, onFragmentCollected, gameRef]);
+    }, [initialGameState, onGameOver, onFragmentCollected, gameRef, inputHandler]); // Added inputHandler to dependency array
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
@@ -160,7 +160,7 @@ export default function Home() {
         updateCanvasSize();
 
         const handleBeforeUnload = () => {
-             if (gameRef.current) {
+             if (gameRef.current && gameState === 'playing') { // Only save if actively playing
                 const stateToSave = gameRef.current.getCurrentState();
                 if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
@@ -174,7 +174,7 @@ export default function Home() {
             window.removeEventListener('resize', updateCanvasSize);
             window.removeEventListener('beforeunload', handleBeforeUnload);
         }
-    }, [loadInitialData, updateCanvasSize]);
+    }, [loadInitialData, updateCanvasSize, gameState]); // Added gameState dependency
 
     useEffect(() => {
         inputHandlerRef.current.setKeybindings(keybindings);
@@ -187,27 +187,26 @@ export default function Home() {
 
         const gameLoop = () => {
             animationFrameId = requestAnimationFrame(gameLoop);
-            if (!gameRef.current) return;
-
-            const isModalPaused =
-                gameState === 'paused' ||
-                gameState === 'upgrading' ||
-                isUpgradeOverviewOpen;
-
-            const isPaused = isModalPaused || (gameRef.current?.player.isRadialMenuOpen ?? false);
-
-            if (isPaused) {
-                gameRef.current.player.update(inputHandlerRef.current, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height, isModalPaused);
-                gameRef.current.draw();
-            } else {
-                gameRef.current.update(inputHandlerRef.current);
-                gameRef.current.draw();
+            if (!gameRef.current || gameState !== 'playing') { // Simplified condition
+                 if(gameRef.current && (gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen)){
+                    gameRef.current.draw();
+                 }
+                 return;
             }
+            
+            const isInputPaused = gameRef.current.player.isRadialMenuOpen;
 
+            if (!isInputPaused) {
+                gameRef.current.update(inputHandlerRef.current);
+            }
+            
+            gameRef.current.draw();
             inputHandlerRef.current.resetEvents();
         };
 
-        gameLoop();
+        if(gameState === 'playing') {
+             gameLoop();
+        }
 
         return () => {
             if (animationFrameId) {
@@ -220,6 +219,7 @@ export default function Home() {
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
+                e.preventDefault();
                 if (isSettingsOpen || isInfoOpen || isUpgradeModalOpen) {
                     setIsSettingsOpen(false);
                     setIsInfoOpen(false);
@@ -231,8 +231,8 @@ export default function Home() {
                     soundManager.play(SoundType.GameResume);
                 }
             }
-             if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase()) {
-                if((gameState === 'playing' || gameState === 'paused') && !isUpgradeOverviewOpen) {
+             if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase() && !isUpgradeOverviewOpen) {
+                 if(gameState === 'playing' || gameState === 'paused') {
                     setIsUpgradeOverviewOpen(true);
                 }
             }
@@ -305,6 +305,7 @@ export default function Home() {
 
         setIsUpgradeModalOpen(false);
         setGameState('playing');
+        soundManager.play(SoundType.GameResume);
     }, [runUpgrades]);
 
     const handleGameOver = useCallback((finalScore: number) => {
@@ -332,7 +333,9 @@ export default function Home() {
         await clearGameState();
         resetGameAndUpgradeState();
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
-        setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor });
+        // Generate a random number to ensure the key is always unique for a new run
+        const uniqueKey = Math.random(); 
+        setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor, score: uniqueKey }); // Use score as a key part
         setGameState('playing');
     };
 
@@ -526,7 +529,7 @@ export default function Home() {
             {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && (
                 <div className="relative">
                     <GameCanvas
-                        key={initialGameState.score + initialGameState.playerHealth + initialGameState.initialColor}
+                        key={`${initialGameState.score}-${initialGameState.playerHealth}`}
                         onGameOver={handleGameOver}
                         onFragmentCollected={handleFragmentCollected}
                         width={canvasSize.width}

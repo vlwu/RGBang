@@ -2,7 +2,7 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   output: 'export',
-  assetPrefix: './',
+  // assetPrefix: './', // REMOVED: This will be handled by the build script.
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -12,16 +12,11 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  // Ensure public assets are properly handled
-  trailingSlash: true,
-  // Make sure static files are copied
+  // trailingSlash: true, // REMOVED: Use default Next.js pathing for simplicity.
   distDir: 'out',
-  // Disable problematic Next.js features for Chrome extensions
   generateBuildId: () => 'build',
-  // Disable service worker and other problematic features
-  experimental: {
-    // Disable features that might generate problematic files
-  },
+  reactStrictMode: false, // ADDED: Helps prevent hydration errors in the extension environment.
+  experimental: {},
 };
 
 export default nextConfig;
