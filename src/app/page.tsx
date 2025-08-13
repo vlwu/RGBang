@@ -61,7 +61,7 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
             game.stop();
         };
 
-    }, [initialGameState, onGameOver, onFragmentCollected, gameRef, inputHandler]); // Added inputHandler to dependency array
+    }, [initialGameState, onGameOver, onFragmentCollected, gameRef, inputHandler]);
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
@@ -88,7 +88,6 @@ export default function Home() {
     const { toast } = useToast();
     const [volume, setVolume] = useState(1.0);
     const [isMuted, setIsMuted] = useState(false);
-
 
     const upgradeDataRef = useRef(upgradeData);
     useEffect(() => {
@@ -142,8 +141,7 @@ export default function Home() {
         } else {
             setSavedGame(null);
         }
-        setGameState('menu');
-
+        
         const data = await getPlayerUpgradeData();
         setUpgradeData(data);
         upgradeDataRef.current = data;
@@ -152,29 +150,39 @@ export default function Home() {
         const currentKeybindings = savedKeybindings ? JSON.parse(savedKeybindings) : defaultKeybindings;
         setKeybindings(currentKeybindings);
         inputHandlerRef.current.setKeybindings(currentKeybindings);
+        setGameState('menu');
     }, []);
 
+    // ** MODIFIED **: This effect now ONLY runs once for initial setup.
     useEffect(() => {
         loadInitialData();
-        window.addEventListener('resize', updateCanvasSize);
         updateCanvasSize();
+        window.addEventListener('resize', updateCanvasSize);
 
+        return () => {
+            window.removeEventListener('resize', updateCanvasSize);
+        };
+    }, [loadInitialData, updateCanvasSize]);
+    
+    // ** ADDED **: This new effect handles saving the game state when the tab is closed.
+    // It correctly depends on gameState to ensure it has the latest data.
+    useEffect(() => {
         const handleBeforeUnload = () => {
-             if (gameRef.current && gameState === 'playing') { // Only save if actively playing
+            if (gameRef.current && gameState === 'playing') {
                 const stateToSave = gameRef.current.getCurrentState();
                 if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
                 }
-             }
+            }
         };
 
         window.addEventListener('beforeunload', handleBeforeUnload);
 
         return () => {
-            window.removeEventListener('resize', updateCanvasSize);
             window.removeEventListener('beforeunload', handleBeforeUnload);
-        }
-    }, [loadInitialData, updateCanvasSize, gameState]); // Added gameState dependency
+        };
+    }, [gameState]);
+
 
     useEffect(() => {
         inputHandlerRef.current.setKeybindings(keybindings);
@@ -184,28 +192,31 @@ export default function Home() {
 
     useEffect(() => {
         let animationFrameId: number | null = null;
+        const inputHandler = inputHandlerRef.current;
 
         const gameLoop = () => {
-            animationFrameId = requestAnimationFrame(gameLoop);
-            if (!gameRef.current || gameState !== 'playing') { // Simplified condition
-                 if(gameRef.current && (gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen)){
-                    gameRef.current.draw();
-                 }
-                 return;
-            }
-            
-            const isInputPaused = gameRef.current.player.isRadialMenuOpen;
+            if (!gameRef.current) return;
 
-            if (!isInputPaused) {
-                gameRef.current.update(inputHandlerRef.current);
+            const isPausedForModal = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen;
+            
+            // The player's radial menu can pause input, but the game still needs to draw.
+            const isInputPaused = gameRef.current.player.isRadialMenuOpen || isPausedForModal;
+            
+            gameRef.current.player.update(inputHandler, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height, isInputPaused);
+
+            if (!isPausedForModal) {
+                 gameRef.current.update(inputHandler);
             }
             
             gameRef.current.draw();
-            inputHandlerRef.current.resetEvents();
-        };
 
-        if(gameState === 'playing') {
-             gameLoop();
+            inputHandler.resetEvents();
+            animationFrameId = requestAnimationFrame(gameLoop);
+        };
+        
+        // Start the loop only when playing
+        if(gameState === 'playing'){
+            animationFrameId = requestAnimationFrame(gameLoop);
         }
 
         return () => {
@@ -328,14 +339,12 @@ export default function Home() {
         setSavedGame(null);
     };
 
-
     const startNewRun = async () => {
         await clearGameState();
         resetGameAndUpgradeState();
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
-        // Generate a random number to ensure the key is always unique for a new run
-        const uniqueKey = Math.random(); 
-        setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor, score: uniqueKey }); // Use score as a key part
+        const uniqueKey = Math.random();
+        setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor, score: uniqueKey });
         setGameState('playing');
     };
 
@@ -383,7 +392,6 @@ export default function Home() {
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
         }
         gameRef.current = null;
-        setInitialGameState(DEFAULT_GAME_STATE);
         loadInitialData();
     };
 
@@ -413,6 +421,8 @@ export default function Home() {
         soundManager.setMasterVolume(newVolume);
         localStorage.setItem('rgBangVolume', newVolume.toString());
     };
+
+
 
     const handleMuteChange = (newMute: boolean) => {
         setIsMuted(newMute);
@@ -529,7 +539,7 @@ export default function Home() {
             {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && (
                 <div className="relative">
                     <GameCanvas
-                        key={`${initialGameState.score}-${initialGameState.playerHealth}`}
+                        key={`${initialGameState.score}-${initialGameState.playerHealth}-${initialGameState.initialColor}`}
                         onGameOver={handleGameOver}
                         onFragmentCollected={handleFragmentCollected}
                         width={canvasSize.width}
@@ -576,7 +586,7 @@ export default function Home() {
                            <span>High Score: {highScore}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); loadInitialData(); setGameState('menu'); }} onMouseEnter={playHoverSound} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
+                     <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); loadInitialData();}} onMouseEnter={playHoverSound} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>
