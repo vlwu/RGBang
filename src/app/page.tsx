@@ -10,7 +10,8 @@ import { InfoModal } from './rgbang/info-modal';
 import { GameColor } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade, UpgradeProgress } from './rgbang/upgrades';
-import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData } from './rgbang/upgrade-data';
+import { ALL_UPGRADES } from './rgbang/upgrades';
+import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData, savePlayerUpgradeData } from './rgbang/upgrade-data';
 import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/save-state';
 import { UpgradesOverviewModal } from './rgbang/upgrades-overview-modal';
 import { useToast } from '@/hooks/use-toast';
@@ -274,22 +275,33 @@ export default function Home() {
                 }
             };
 
-            const isFallback = upgrade.id.startsWith('fallback-');
+            if (upgrade.id.startsWith('max-out-')) {
+                const originalId = upgrade.id.replace('max-out-', '');
+                const originalUpgrade = ALL_UPGRADES.find(u => u.id === originalId);
 
-            if (isFallback) {
+                if (originalUpgrade) {
+                    gameRef.current.player.upgradeManager.applyMax(originalUpgrade);
+                    setRunUpgrades(new Map(runUpgrades.set(originalId, originalUpgrade.getMaxLevel())));
+                    
+                    const data = await getPlayerUpgradeData();
+                    data.unlockedUpgradeIds.add(originalId);
+                    data.upgradeProgress.set(originalId, { level: originalUpgrade.getMaxLevel() });
+                    await savePlayerUpgradeData(data);
+                    setUpgradeData(data);
+                    upgradeDataRef.current = data;
+                }
+            } else if (upgrade.id.startsWith('fallback-')) {
                 upgrade.apply(gameRef.current.player, 1, addScoreCallback);
             } else {
                  gameRef.current.player.applyUpgrade(upgrade);
                  const currentLevel = runUpgrades.get(upgrade.id) || 0;
                  setRunUpgrades(new Map(runUpgrades.set(upgrade.id, currentLevel + 1)));
-            }
-        }
 
-        if (!upgrade.id.startsWith('fallback-')) {
-            await unlockUpgrade(upgrade.id);
-            const finalData = await levelUpUpgrade(upgrade.id);
-            setUpgradeData(finalData);
-            upgradeDataRef.current = finalData;
+                 await unlockUpgrade(upgrade.id);
+                 const finalData = await levelUpUpgrade(upgrade.id);
+                 setUpgradeData(finalData);
+                 upgradeDataRef.current = finalData;
+            }
         }
 
         setIsUpgradeModalOpen(false);

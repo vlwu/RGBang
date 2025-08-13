@@ -1,4 +1,3 @@
-
 import { Player } from './player';
 import { ALL_UPGRADES, Upgrade, UpgradeType } from './upgrades';
 import { GameColor } from './color';
@@ -7,49 +6,12 @@ import { PlayerUpgradeData } from './upgrade-data';
 export class UpgradeManager {
     private player: Player;
     public activeUpgrades: Map<string, { upgrade: Upgrade, level: number }> = new Map();
-    
+
     constructor(player: Player) {
         this.player = player;
     }
 
     getUpgradeOptions(color: GameColor | null, upgradeData: PlayerUpgradeData, addScoreCallback: (amount: number) => void): Upgrade[] {
-        let pool: Upgrade[];
-
-        if (color === null) { // Boss/white fragment
-            const playerStatUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.PLAYER_STAT);
-            pool = [...playerStatUpgrades];
-        } else {
-            const gunUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GUN && u.color === color);
-            const generalUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GENERAL);
-            pool = [...gunUpgrades, ...generalUpgrades];
-        }
-
-        // Filter out upgrades the player has at max level for this run
-        const availablePool = pool.filter(u => {
-            const runLevel = this.getUpgradeLevel(u.id);
-            const maxLevel = u.getMaxLevel();
-            return runLevel < maxLevel;
-        });
-        
-        const options: Upgrade[] = [];
-
-        // Special handling for unique gun upgrades to ensure they appear
-        const gunUpgrades = availablePool.filter(u => u.type === UpgradeType.GUN);
-        if (gunUpgrades.length > 0) {
-            // Only add if not already in options
-            if (!options.some(opt => opt.id === gunUpgrades[0].id)) {
-                options.push(gunUpgrades[0]);
-            }
-        }
-
-        // Filter out the gun upgrades from the main pool to avoid duplication
-        const remainingPool = availablePool.filter(u => !options.some(opt => opt.id === u.id));
-
-        // Separate into seen and unseen upgrades from the remaining pool
-        const seenUpgrades = remainingPool.filter(u => upgradeData.unlockedUpgradeIds.has(u.id));
-        const unseenUpgrades = remainingPool.filter(u => !upgradeData.unlockedUpgradeIds.has(u.id));
-
-        // Fisher-Yates shuffle for both pools
         const shuffle = (arr: Upgrade[]) => {
             for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -58,15 +20,64 @@ export class UpgradeManager {
             return arr;
         }
 
+        if (color === null) {
+            const choicePool = ALL_UPGRADES.filter(u => {
+                if (u.type !== UpgradeType.GENERAL && u.type !== UpgradeType.PLAYER_STAT) {
+                    return false;
+                }
+                const currentLevel = this.getUpgradeLevel(u.id);
+                return currentLevel < u.getMaxLevel();
+            });
+
+            const options = shuffle(choicePool).slice(0, 3);
+
+            return options.map(opt => ({
+                ...opt,
+                id: `max-out-${opt.id}`,
+                name: `MAX ${opt.name}`,
+                description: `Instantly raises ${opt.name} to Level ${opt.getMaxLevel()}.`,
+            }));
+        }
+
+        let pool: Upgrade[];
+        const gunUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GUN && u.color === color);
+        const generalUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.GENERAL);
+        const playerStatUpgrades = ALL_UPGRADES.filter(u => u.type === UpgradeType.PLAYER_STAT);
+        pool = [...gunUpgrades, ...generalUpgrades, ...playerStatUpgrades];
+
+
+        const availablePool = pool.filter(u => {
+            const runLevel = this.getUpgradeLevel(u.id);
+            const maxLevel = u.getMaxLevel();
+            return runLevel < maxLevel;
+        });
+
+        const options: Upgrade[] = [];
+
+
+        if (gunUpgrades.length > 0) {
+            const gunUpgradeInPool = availablePool.find(u => u.type === UpgradeType.GUN);
+            if (gunUpgradeInPool && !options.some(opt => opt.id === gunUpgradeInPool.id)) {
+                options.push(gunUpgradeInPool);
+            }
+        }
+
+
+        const remainingPool = availablePool.filter(u => !options.some(opt => opt.id === u.id));
+
+
+        const seenUpgrades = remainingPool.filter(u => upgradeData.unlockedUpgradeIds.has(u.id));
+        const unseenUpgrades = remainingPool.filter(u => !upgradeData.unlockedUpgradeIds.has(u.id));
+
         shuffle(seenUpgrades);
         shuffle(unseenUpgrades);
-        
-        // Prioritize showing at least one new upgrade
+
+
         if (unseenUpgrades.length > 0 && options.length < 3) {
             options.push(unseenUpgrades.pop()!);
         }
 
-        // Fill the rest of the options
+
         while (options.length < 3 && (seenUpgrades.length > 0 || unseenUpgrades.length > 0)) {
             if (seenUpgrades.length > 0) {
                  const next = seenUpgrades.pop()!;
@@ -79,11 +90,11 @@ export class UpgradeManager {
                    options.push(next);
                 }
             } else {
-                break; // No more upgrades to offer
+                break;
             }
         }
-        
-        // If there are still not enough options, add fallbacks.
+
+
         if (options.length < 3) {
             const healUpgrade: Upgrade = {
                 id: 'fallback-heal',
@@ -112,10 +123,10 @@ export class UpgradeManager {
                 getValue: () => 500,
                 getMaxLevel: () => 1
             };
-            
-            // Pass the callback to the apply function
+
+
             scoreUpgrade.apply = scoreUpgrade.apply.bind(null, this.player, 1, addScoreCallback);
-            
+
             if (options.length === 0) return [healUpgrade, scoreUpgrade];
 
             if (!options.some(opt => opt.id === healUpgrade.id)) options.push(healUpgrade);
@@ -133,22 +144,28 @@ export class UpgradeManager {
             upgrade.apply(this.player, 1);
             return;
         }
-        
+
         this.activeUpgrades.set(upgrade.id, { upgrade, level: currentLevel + 1 });
         this.recalculatePlayerStats();
     }
-    
+
+    applyMax(upgradeToMax: Upgrade) {
+        const maxLevel = upgradeToMax.getMaxLevel();
+        this.activeUpgrades.set(upgradeToMax.id, { upgrade: upgradeToMax, level: maxLevel });
+        this.recalculatePlayerStats();
+    }
+
     applyById(upgradeId: string, level: number) {
         const upgrade = ALL_UPGRADES.find(u => u.id === upgradeId);
         if (upgrade) {
-            // This is for loading from save state, so we set the level directly
+
             this.activeUpgrades.set(upgradeId, { upgrade, level });
             this.recalculatePlayerStats();
         }
     }
 
     recalculatePlayerStats() {
-        // Reset all modifiers to base values
+
         this.player.movementSpeedMultiplier = 1;
         this.player.bulletDamageMultiplier = 1;
         this.player.dashCooldownModifier = 1;
@@ -158,21 +175,19 @@ export class UpgradeManager {
         this.player.flatHealthIncrease = 0;
         this.player.maxHealth = 100;
 
-        // Reset gun-specific effects
+
         this.player.chainLightningLevel = 0;
         this.player.igniteLevel = 0;
         this.player.iceSpikerLevel = 0;
-        
-        // Apply all active upgrades
+
+
         this.activeUpgrades.forEach(({ upgrade, level }) => {
-            // The apply function in upgrades.ts should handle the logic based on the new total level.
-            // We call apply with the level to ensure stats are recalculated correctly based on the new total level.
-             for(let i = 0; i < level; i++) {
+            for(let i = 0; i < level; i++) {
                 upgrade.apply(this.player, i + 1);
             }
         });
 
-        // Recalculate max health
+
         this.player.maxHealth += this.player.flatHealthIncrease;
     }
 
@@ -183,7 +198,7 @@ export class UpgradeManager {
     getActiveUpgradeDetails(): Upgrade[] {
         return Array.from(this.activeUpgrades.values()).map(item => item.upgrade);
     }
-    
+
     getActiveUpgradeMap(): Map<string, number> {
         const map = new Map<string, number>();
         this.activeUpgrades.forEach(({level}, id) => {

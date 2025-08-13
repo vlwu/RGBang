@@ -1,8 +1,7 @@
-
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upgrade } from "./upgrades";
+import { Upgrade, UpgradeType } from "./upgrades";
 import { COLOR_DETAILS } from './color';
 import { UpgradeManager } from './upgrade-manager';
 import { iconMap } from './upgrade-modal';
@@ -41,19 +40,44 @@ export function UpgradesOverviewModal({ isOpen, upgradeManager }: UpgradesOvervi
 
     const activeUpgrades = upgradeManager.getActiveUpgradeDetails();
 
+    const gunUpgrades = activeUpgrades.filter(u => u.type === UpgradeType.GUN);
+    const playerUpgrades = activeUpgrades.filter(u => u.type === UpgradeType.PLAYER_STAT || u.type === UpgradeType.GENERAL);
+
     return (
         <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center animate-fade-in z-50">
             <div className="w-full max-w-2xl p-6">
-                <h2 className="text-3xl font-bold text-center text-primary mb-6 font-headline tracking-wider">Current Upgrades</h2>
+                <h2 className="text-3xl font-bold text-center text-primary mb-8 font-headline tracking-wider">Current Upgrades</h2>
                 {activeUpgrades.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {activeUpgrades.map(upgrade => (
-                            <UpgradeInfoCard
-                                key={upgrade.id}
-                                upgrade={upgrade}
-                                level={upgradeManager.getUpgradeLevel(upgrade.id)}
-                            />
-                        ))}
+                    <div className="space-y-8">
+                        {gunUpgrades.length > 0 && (
+                            <div>
+                                <h3 className="text-2xl font-semibold text-center text-accent mb-4">Gun Upgrades</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {gunUpgrades.map(upgrade => (
+                                        <UpgradeInfoCard
+                                            key={upgrade.id}
+                                            upgrade={upgrade}
+                                            level={upgradeManager.getUpgradeLevel(upgrade.id)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {playerUpgrades.length > 0 && (
+                            <div>
+                                <h3 className="text-2xl font-semibold text-center text-accent mb-4">Player Upgrades</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    {playerUpgrades.map(upgrade => (
+                                        <UpgradeInfoCard
+                                            key={upgrade.id}
+                                            upgrade={upgrade}
+                                            level={upgradeManager.getUpgradeLevel(upgrade.id)}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <p className="text-center text-muted-foreground text-lg">No upgrades acquired yet. Collect fragments to get started!</p>
@@ -62,4 +86,3 @@ export function UpgradesOverviewModal({ isOpen, upgradeManager }: UpgradesOvervi
         </div>
     );
 }
-
