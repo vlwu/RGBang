@@ -209,6 +209,10 @@ export default function Home() {
                 gameRef.current.player.update(inputHandler, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height, isInputPaused);
             }
 
+            if (!gameRef.current) {
+                return;
+            }
+
             gameRef.current.draw();
 
             inputHandler.resetEvents();
