@@ -17,21 +17,21 @@ export enum SoundType {
 }
 
 const soundPaths: Record<SoundType, string> = {
-    [SoundType.PlayerShoot]: '/sounds/player-shoot.mp3',
-    [SoundType.PlayerDash]: '/sounds/player-dash.mp3',
-    [SoundType.PlayerDamage]: '/sounds/player-damage.mp3',
-    [SoundType.EnemyHit]: '/sounds/enemy-hit.mp3',
-    [SoundType.BossDestroy]: '/sounds/boss-destroy.mp3',
-    [SoundType.FragmentCollect]: '/sounds/fragment-collect.mp3',
-    [SoundType.UpgradeSelect]: '/sounds/upgrade-select.mp3',
-    [SoundType.UpgradeHover]: '/sounds/upgrade-hover.mp3',
-    [SoundType.ButtonClick]: '/sounds/button-click.mp3',
-    [SoundType.ButtonHover]: '/sounds/button-hover.mp3',
-    [SoundType.GamePause]: '/sounds/game-pause.mp3',
-    [SoundType.GameResume]: '/sounds/game-resume.mp3',
-    [SoundType.GameOver]: '/sounds/game-over.mp3',
-    [SoundType.GameQuit]: '/sounds/game-quit.mp3',
-    [SoundType.GunSwitch]: '/sounds/gun-switch.mp3',
+    [SoundType.PlayerShoot]: 'sounds/player-shoot.mp3',
+    [SoundType.PlayerDash]: 'sounds/player-dash.mp3',
+    [SoundType.PlayerDamage]: 'sounds/player-damage.mp3',
+    [SoundType.EnemyHit]: 'sounds/enemy-hit.mp3',
+    [SoundType.BossDestroy]: 'sounds/boss-destroy.mp3',
+    [SoundType.FragmentCollect]: 'sounds/fragment-collect.mp3',
+    [SoundType.UpgradeSelect]: 'sounds/upgrade-select.mp3',
+    [SoundType.UpgradeHover]: 'sounds/upgrade-hover.mp3',
+    [SoundType.ButtonClick]: 'sounds/button-click.mp3',
+    [SoundType.ButtonHover]: 'sounds/button-hover.mp3',
+    [SoundType.GamePause]: 'sounds/game-pause.mp3',
+    [SoundType.GameResume]: 'sounds/game-resume.mp3',
+    [SoundType.GameOver]: 'sounds/game-over.mp3',
+    [SoundType.GameQuit]: 'sounds/game-quit.mp3',
+    [SoundType.GunSwitch]: 'sounds/gun-switch.mp3',
 };
 
 export class SoundManager {
