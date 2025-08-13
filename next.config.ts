@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
   trailingSlash: true,
   // Make sure static files are copied
   distDir: 'out',
+  // Disable problematic Next.js features for Chrome extensions
+  generateBuildId: () => 'build',
+  // Disable service worker and other problematic features
+  experimental: {
+    // Disable features that might generate problematic files
+  },
 };
 
 export default nextConfig;

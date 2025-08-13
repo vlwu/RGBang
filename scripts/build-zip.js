@@ -12,6 +12,40 @@ function fixNext() {
         fs.mkdirSync(outDir, { recursive: true });
     }
     
+    // Remove problematic Next.js files that Chrome extensions don't allow
+    const filesToRemove = [
+        '_next',
+        '*next*'
+    ];
+    
+    function removeProblematicFiles(dir) {
+        if (!fs.existsSync(dir)) return;
+        
+        const items = fs.readdirSync(dir);
+        items.forEach(item => {
+            const fullPath = path.join(dir, item);
+            const stat = fs.statSync(fullPath);
+            
+            // Remove files/directories starting with * or containing problematic patterns
+            if (item.startsWith('*') || item.includes('*next*')) {
+                if (stat.isDirectory()) {
+                    fs.rmSync(fullPath, { recursive: true, force: true });
+                } else {
+                    fs.unlinkSync(fullPath);
+                }
+                console.log(`✓ Removed problematic file: ${item}`);
+                return;
+            }
+            
+            // Recursively check subdirectories
+            if (stat.isDirectory() && item !== 'icons' && item !== 'sounds') {
+                removeProblematicFiles(fullPath);
+            }
+        });
+    }
+    
+    removeProblematicFiles(outDir);
+    
     // Copy manifest.json
     const manifestSrc = path.join(publicDir, 'manifest.json');
     const manifestDest = path.join(outDir, 'manifest.json');
@@ -90,7 +124,30 @@ function createZip() {
         });
         
         archive.pipe(output);
-        archive.directory('out/', false);
+        
+        // Only include files that Chrome extensions allow
+        const outDir = path.join(__dirname, '..', 'out');
+        const allowedFiles = [
+            'index.html',
+            'manifest.json',
+            'background.js',
+            'icons',
+            'sounds',
+            '_next/static'  // Static assets are usually OK
+        ];
+        
+        allowedFiles.forEach(file => {
+            const fullPath = path.join(outDir, file);
+            if (fs.existsSync(fullPath)) {
+                const stat = fs.statSync(fullPath);
+                if (stat.isDirectory()) {
+                    archive.directory(fullPath + '/', file === 'icons' || file === 'sounds' ? file + '/' : file + '/');
+                } else {
+                    archive.file(fullPath, { name: file });
+                }
+            }
+        });
+        
         archive.finalize();
     });
 }
