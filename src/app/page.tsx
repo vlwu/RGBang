@@ -177,14 +177,15 @@ export default function Home() {
             animationFrameId = requestAnimationFrame(gameLoop);
             if (!gameRef.current) return;
 
-            const isPaused =
+            const isModalPaused =
                 gameState === 'paused' ||
                 gameState === 'upgrading' ||
-                isUpgradeOverviewOpen ||
-                (gameRef.current?.player.isRadialMenuOpen ?? false);
+                isUpgradeOverviewOpen;
+
+            const isPaused = isModalPaused || (gameRef.current?.player.isRadialMenuOpen ?? false);
 
             if (isPaused) {
-                gameRef.current.player.update(inputHandlerRef.current, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height);
+                gameRef.current.player.update(inputHandlerRef.current, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height, isModalPaused);
                 gameRef.current.draw();
             } else {
                 gameRef.current.update(inputHandlerRef.current);
