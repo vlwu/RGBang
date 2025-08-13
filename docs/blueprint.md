@@ -1,4 +1,4 @@
-# **App Name**: Chroma Clash
+# **App Name**: RGBang
 
 ## Core Features:
 
