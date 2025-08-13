@@ -166,7 +166,7 @@ export class UI {
         this.ctx.shadowColor = 'black';
         this.ctx.shadowBlur = 5;
 
-        this.ctx.fillText(`Score: ${score}`, this.canvas.width - 20, isBossActive ? 60 : 20);
+        this.ctx.fillText(`Score: ${Math.round(score)}`, this.canvas.width - 20, isBossActive ? 60 : 20);
         this.ctx.restore();
     }
 }

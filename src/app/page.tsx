@@ -168,7 +168,7 @@ export default function Home() {
 
     useEffect(() => {
         const handleBeforeUnload = () => {
-            if (gameRef.current && gameState === 'playing') {
+            if (gameRef.current && (gameState === 'playing' || gameState === 'paused')) {
                 const stateToSave = gameRef.current.getCurrentState();
                 if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
@@ -199,12 +199,12 @@ export default function Home() {
 
             const isPausedForModal = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen;
 
-            // Only run the main game update loop if the game is actively being played
+
             if (!isPausedForModal) {
                 gameRef.current.update(inputHandler);
             } else {
-                // When paused, we still need to process player inputs for things like the radial menu
-                // and keep the player object aware of the paused state.
+
+
                 const isInputPaused = gameRef.current.player.isRadialMenuOpen || isPausedForModal;
                 gameRef.current.player.update(inputHandler, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height, isInputPaused);
             }
