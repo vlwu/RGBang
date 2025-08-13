@@ -1,4 +1,3 @@
-
 import { Player } from './player';
 import { Bullet } from './bullet';
 import { Enemy } from './enemy';
@@ -12,7 +11,7 @@ import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
 
 class EnemySpawner {
-    private spawnInterval = 120; // frames
+    private spawnInterval = 120;
     private spawnTimer = 0;
     private maxEnemies = 20;
 
@@ -23,7 +22,7 @@ class EnemySpawner {
         if (this.spawnTimer <= 0 && currentEnemyCount < this.maxEnemies) {
             this.spawnEnemy(createEnemy, upgradeCount, firstBossDefeated);
             this.spawnTimer = this.spawnInterval;
-            
+
             if (this.spawnInterval > 30) {
                 this.spawnInterval *= 0.995;
             }
@@ -33,16 +32,16 @@ class EnemySpawner {
     private spawnEnemy(createEnemy: (enemy: Enemy) => void, upgradeCount: number, firstBossDefeated: boolean) {
         const edge = Math.floor(Math.random() * 4);
         let x, y;
-        if (edge === 0) { // Top
+        if (edge === 0) {
             x = Math.random() * this.canvasWidth;
             y = -30;
-        } else if (edge === 1) { // Right
+        } else if (edge === 1) {
             x = this.canvasWidth + 30;
             y = Math.random() * this.canvasHeight;
-        } else if (edge === 2) { // Bottom
+        } else if (edge === 2) {
             x = Math.random() * this.canvasWidth;
             y = this.canvasHeight + 30;
-        } else { // Left
+        } else {
             x = -30;
             y = Math.random() * this.canvasHeight;
         }
@@ -50,12 +49,12 @@ class EnemySpawner {
         const availableColors = firstBossDefeated ? ALL_COLORS : PRIMARY_COLORS;
         const color = getRandomElement(availableColors);
         const radius = 15;
-        
-        // Dynamic difficulty scaling
-        const healthMultiplier = 1 + upgradeCount * 0.15; // 15% more health per upgrade
-        const speedMultiplier = 1 + upgradeCount * 0.05; // 5% more speed per upgrade
-        const pointsMultiplier = 1 + upgradeCount * 0.2;  // 20% more points per upgrade
-        
+
+
+        const healthMultiplier = 1 + upgradeCount * 0.15;
+        const speedMultiplier = 1 + upgradeCount * 0.05;
+        const pointsMultiplier = 1 + upgradeCount * 0.2;
+
         const health = Math.round(30 * healthMultiplier);
         const speed = 1.5 * speedMultiplier;
         const points = Math.round(10 * pointsMultiplier);
@@ -82,12 +81,12 @@ export class Game {
     private firstBossDefeated = false;
     public isRunning = false;
     private isBossSpawning = false;
-    
+
     private onGameOver: (finalScore: number) => void;
     private onFragmentCollected: (color: GameColor | null) => void;
 
     constructor(
-        canvas: HTMLCanvasElement, 
+        canvas: HTMLCanvasElement,
         onGameOver: (finalScore: number) => void,
         onFragmentCollected: (color: GameColor | null) => void,
         initialState: SavedGameState,
@@ -101,14 +100,14 @@ export class Game {
         this.enemySpawner = new EnemySpawner(canvas.width, this.canvas.height);
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();
-        
-        // Restore state
+
+
         this.score = initialState.score;
         this.player.health = initialState.playerHealth;
         this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
-        this.firstBossDefeated = initialState.nextBossScoreThreshold > 150; 
+        this.firstBossDefeated = initialState.nextBossScoreThreshold > 150;
 
-        // CRITICAL FIX: Apply all saved upgrades when the game starts
+
         if (initialState.activeUpgrades) {
             initialState.activeUpgrades.forEach((level, id) => {
                 this.player.upgradeManager.applyById(id, level);
@@ -124,7 +123,7 @@ export class Game {
     public stop() {
         this.isRunning = false;
     }
-    
+
     public getCurrentState(): SavedGameState {
         return {
             score: this.score,
@@ -134,7 +133,7 @@ export class Game {
             initialColor: this.player.currentColor,
         };
     }
-    
+
     public addScore(amount: number) {
         this.score += amount;
     }
@@ -142,12 +141,12 @@ export class Game {
     public createBullet = (bullet: Bullet) => {
         this.bullets.push(bullet);
     }
-    
+
     private createEnemy = (enemy: Enemy) => {
-        enemy.onSplit = this.createEnemy; // Assign the callback here
+        enemy.onSplit = this.createEnemy;
         this.enemies.push(enemy);
     }
-    
+
     private spawnBoss() {
         if (this.boss) return;
         const bossX = this.canvas.width / 2;
@@ -159,84 +158,80 @@ export class Game {
             this.canvas.width,
             this.canvas.height
         );
-        this.enemies = []; // Clear existing enemies
+        this.enemies = [];
     }
 
     public update(inputHandler: InputHandler) {
-        // 1. Update entities
+
         this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
-        
+
         this.bullets.forEach(bullet => bullet.update());
         this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
         this.fragments.forEach(fragment => fragment.update(this.player));
         this.boss?.update();
 
-        // 2. Handle collisions
+
         this.handleCollisions();
-        
-        // 3. Update particle effects
+
+
         this.particles.update();
 
-        // 4. Remove dead entities and out-of-bounds bullets
+
         this.cleanupEntities();
 
-        // 5. Spawn new enemies or boss
+
         if (this.boss) {
             if (!this.boss.isAlive) {
                 this.particles.add(this.boss.pos, this.boss.color, 100);
-                this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null)); // null for white/special
-                this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5); // Increase threshold by 50%
+                this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null));
+                this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5);
                 this.boss = null;
                 this.firstBossDefeated = true;
-                this.isBossSpawning = false; // Reset flag
+                this.isBossSpawning = false;
             }
         } else if (!this.isBossSpawning) {
-            // No boss active, spawn regular enemies
+
             const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
             this.enemySpawner.update(this.enemies.length, upgradeCount, this.firstBossDefeated, this.createEnemy);
-            // Check if it's time to spawn a boss
+
             if (this.score >= this.nextBossScoreThreshold) {
                 this.isBossSpawning = true;
                 this.spawnBoss();
             }
         }
-        
-        // 6. Check for game over condition
+
+
         if (!this.player.isAlive) {
             this.stop();
             this.onGameOver(this.score);
         }
     }
-    
+
     private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
         const chainRange = 100 + this.player.chainLightningLevel * 20;
 
         if (this.player.igniteLevel > 0 && bullet.color === GameColor.RED) {
             const igniteDamage = 1 + this.player.igniteLevel;
-            const igniteDuration = 120 + this.player.igniteLevel * 30; // 2s + 0.5s per level
+            const igniteDuration = 120 + this.player.igniteLevel * 30;
             enemy.applyIgnite(igniteDamage, igniteDuration);
         }
         if (this.player.iceSpikerLevel > 0 && bullet.color === GameColor.BLUE) {
-            const freezeDuration = 60 + this.player.iceSpikerLevel * 15; // 1s + 0.25s per level
+            const freezeDuration = 60 + this.player.iceSpikerLevel * 15;
             enemy.applyFreeze(freezeDuration);
         }
         if (this.player.chainLightningLevel > 0 && bullet.color === GameColor.YELLOW) {
             const maxChains = this.player.chainLightningLevel;
             const chainDamage = 5 + this.player.chainLightningLevel;
-            // Chain lightning is now applied on the enemy itself to find the next target
-            enemy.chainHit = true;
-            enemy.chainHitMaxChains = maxChains;
-            enemy.chainHitDamage = chainDamage;
-            enemy.chainHitRange = chainRange;
+            enemy.triggerChainLightning(maxChains, chainDamage, chainRange);
         }
     }
 
     private handleCollisions() {
-        // Bullet-Enemy Collisions
+
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             let bulletRemoved = false;
-            
+
             if (bullet.isFromBoss) {
                 if (this.player.isAlive && circleCollision(bullet, this.player)) {
                     this.player.takeDamage(bullet.damage);
@@ -245,16 +240,16 @@ export class Game {
                 }
                 continue;
             }
-            
-            // Player bullet collisions
+
+
             for (let j = this.enemies.length - 1; j >= 0; j--) {
                 const enemy = this.enemies[j];
-                
+
                 if (enemy.isAlive && circleCollision(bullet, enemy)) {
                     this.particles.add(bullet.pos, bullet.color, 10);
-                    
+
                     const hitSuccess = enemy.takeDamage(bullet.damage, bullet.color);
-                    
+
                     if (hitSuccess) {
                         this.applySpecialEffects(bullet, enemy);
                         if (!enemy.isAlive) {
@@ -262,15 +257,15 @@ export class Game {
                            this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
                         }
                     }
-                    
+
                     this.bullets.splice(i, 1);
                     bulletRemoved = true;
-                    break; 
+                    break;
                 }
             }
             if (bulletRemoved) continue;
-            
-            // Check collision with boss
+
+
             if (this.boss && this.boss.isAlive && circleCollision(bullet, this.boss)) {
                 this.particles.add(bullet.pos, bullet.color, 15);
                 this.boss.takeDamage(bullet.damage, bullet.color);
@@ -279,23 +274,23 @@ export class Game {
             }
         }
 
-        // Player-Enemy Collisions
+
         for (const enemy of this.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(enemy.damage);
-                enemy.isAlive = false; // Enemy dies on collision with player
+                enemy.isAlive = false;
                 this.particles.add(enemy.pos, enemy.color, 10);
-                // No fragment drop on collision
+
             }
         }
 
-        // Player-Boss Collision
+
         if (this.boss && this.boss.isAlive && this.player.isAlive && circleCollision(this.player, this.boss)) {
             this.player.takeDamage(this.boss.damage);
-            // Boss doesn't die from collision, just damages player
+
         }
 
-        // Player-Fragment Collision
+
         for (let i = this.fragments.length - 1; i >= 0; i--) {
             const fragment = this.fragments[i];
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
@@ -306,7 +301,7 @@ export class Game {
         }
 
 
-        // Enemy-Enemy Collisions for separation
+
         for (let i = 0; i < this.enemies.length; i++) {
             for (let j = i + 1; j < this.enemies.length; j++) {
                 const enemy1 = this.enemies[i];
@@ -318,7 +313,7 @@ export class Game {
             }
         }
     }
-    
+
     private cleanupEntities() {
         this.enemies.forEach(enemy => {
             if (!enemy.isAlive) {
@@ -329,12 +324,12 @@ export class Game {
             }
         });
 
-        // Remove dead enemies
+
         this.enemies = this.enemies.filter(e => e.isAlive);
         this.fragments = this.fragments.filter(f => f.isAlive);
-        
-        // Remove off-screen bullets
-        this.bullets = this.bullets.filter((bullet) => 
+
+
+        this.bullets = this.bullets.filter((bullet) =>
             !(bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height)
         );
     }
@@ -350,19 +345,19 @@ export class Game {
             enemy2.pos = enemy2.pos.sub(resolveVec);
         }
     }
-    
+
     public draw() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
+
         this.particles.draw(this.ctx);
         this.boss?.draw(this.ctx);
         this.enemies.forEach(e => e.draw(this.ctx));
         this.fragments.forEach(p => p.draw(this.ctx));
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx);
-        
+
         this.ui.draw(this.player, this.score, this.boss);
     }
 }
