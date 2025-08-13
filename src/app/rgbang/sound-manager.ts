@@ -36,6 +36,7 @@ export class SoundManager {
     private audioContext: AudioContext | null = null;
     private audioBuffers: Map<SoundType, AudioBuffer> = new Map();
     private isMuted = false;
+    private masterVolume = 1.0;
 
     constructor() {
         if (typeof window !== 'undefined') {
@@ -82,7 +83,7 @@ export class SoundManager {
         source.buffer = audioBuffer;
 
         const gainNode = this.audioContext.createGain();
-        gainNode.gain.setValueAtTime(volume, this.audioContext.currentTime);
+        gainNode.gain.setValueAtTime(volume * this.masterVolume, this.audioContext.currentTime);
 
         source.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
@@ -91,6 +92,10 @@ export class SoundManager {
 
     setMuted(muted: boolean) {
         this.isMuted = muted;
+    }
+
+    setMasterVolume(volume: number) {
+        this.masterVolume = Math.max(0, Math.min(1, volume));
     }
 }
 

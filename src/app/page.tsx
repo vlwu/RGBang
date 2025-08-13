@@ -86,6 +86,8 @@ export default function Home() {
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
     const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE);
     const { toast } = useToast();
+    const [volume, setVolume] = useState(1.0);
+    const [isMuted, setIsMuted] = useState(false);
 
 
     const upgradeDataRef = useRef(upgradeData);
@@ -124,6 +126,16 @@ export default function Home() {
     const loadInitialData = useCallback(async () => {
         soundManager.loadSounds();
         setHighScore(parseInt(localStorage.getItem('rgBangHighScore') || '0'));
+
+        const savedVolume = localStorage.getItem('rgBangVolume');
+        const savedMute = localStorage.getItem('rgBangMuted');
+        const currentVolume = savedVolume ? parseFloat(savedVolume) : 1.0;
+        const currentMute = savedMute ? JSON.parse(savedMute) : false;
+        setVolume(currentVolume);
+        setIsMuted(currentMute);
+        soundManager.setMasterVolume(currentVolume);
+        soundManager.setMuted(currentMute);
+
         const savedRun = await loadGameState();
         if (savedRun && savedRun.score > 0) {
             setSavedGame(savedRun);
@@ -382,6 +394,18 @@ export default function Home() {
 
     const playHoverSound = () => soundManager.play(SoundType.ButtonHover);
 
+    const handleVolumeChange = (newVolume: number) => {
+        setVolume(newVolume);
+        soundManager.setMasterVolume(newVolume);
+        localStorage.setItem('rgBangVolume', newVolume.toString());
+    };
+
+    const handleMuteChange = (newMute: boolean) => {
+        setIsMuted(newMute);
+        soundManager.setMuted(newMute);
+        localStorage.setItem('rgBangMuted', JSON.stringify(newMute));
+    };
+
     return (
         <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
              <SettingsModal
@@ -389,6 +413,10 @@ export default function Home() {
                 onClose={() => setIsSettingsOpen(false)}
                 keybindings={keybindings}
                 onKeybindingsChange={setKeybindings}
+                volume={volume}
+                isMuted={isMuted}
+                onVolumeChange={handleVolumeChange}
+                onMuteChange={handleMuteChange}
             />
             <InfoModal
                 isOpen={isInfoOpen}

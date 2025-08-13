@@ -13,29 +13,57 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Keybindings } from "./input-handler";
 import { soundManager, SoundType } from './sound-manager';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Volume2 } from 'lucide-react';
 
 interface SettingsModalProps {
     isOpen: boolean;
     onClose: () => void;
     keybindings: Keybindings;
     onKeybindingsChange: (newKeybindings: Keybindings) => void;
+    volume: number;
+    isMuted: boolean;
+    onVolumeChange: (volume: number) => void;
+    onMuteChange: (isMuted: boolean) => void;
 }
 
 type KeybindingAction = keyof Keybindings;
 
-export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChange }: SettingsModalProps) {
+export function SettingsModal({
+    isOpen,
+    onClose,
+    keybindings,
+    onKeybindingsChange,
+    volume,
+    isMuted,
+    onVolumeChange,
+    onMuteChange
+}: SettingsModalProps) {
     const [localKeybindings, setLocalKeybindings] = useState(keybindings);
     const [editingKey, setEditingKey] = useState<KeybindingAction | null>(null);
+    const [localVolume, setLocalVolume] = useState(volume);
+    const [localIsMuted, setLocalIsMuted] = useState(isMuted);
 
     useEffect(() => {
-        setLocalKeybindings(keybindings);
-    }, [keybindings]);
+        if (isOpen) {
+            setLocalKeybindings(keybindings);
+            setLocalVolume(volume);
+            setLocalIsMuted(isMuted);
+        }
+    }, [isOpen, keybindings, volume, isMuted]);
 
     useEffect(() => {
         if (!isOpen) {
             setEditingKey(null);
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        // Apply local settings to the sound manager for real-time feedback
+        soundManager.setMasterVolume(localVolume);
+        soundManager.setMuted(localIsMuted);
+    }, [localVolume, localIsMuted]);
 
     const handleSetBinding = useCallback((newKey: string) => {
         if (editingKey) {
@@ -72,14 +100,28 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
     const handleSave = () => {
         soundManager.play(SoundType.ButtonClick);
         onKeybindingsChange(localKeybindings);
+        onVolumeChange(localVolume);
+        onMuteChange(localIsMuted);
         onClose();
+    };
+    
+    const handleTestSound = () => {
+        soundManager.play(SoundType.EnemyHit);
+    };
+
+    const handleOpenChange = (open: boolean) => {
+        if (!open) {
+            // Revert sound manager to original settings from props on any close action
+            soundManager.setMasterVolume(volume);
+            soundManager.setMuted(isMuted);
+            onClose();
+        }
     };
 
     const handleCancel = () => {
         soundManager.play(SoundType.ButtonClick);
-        setLocalKeybindings(keybindings);
-        onClose();
-    };
+        handleOpenChange(false);
+    }
 
     const keybindDisplayMap: Record<KeybindingAction, string> = {
         up: "Move Up",
@@ -109,30 +151,69 @@ export function SettingsModal({ isOpen, onClose, keybindings, onKeybindingsChang
     const playHoverSound = () => soundManager.play(SoundType.ButtonHover);
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-[425px] bg-background text-foreground">
                 <DialogHeader>
                     <DialogTitle className="text-primary">Settings</DialogTitle>
                     <DialogDescription>
-                        Customize your controls. Click a button and press any key or mouse button to rebind.
+                        Customize your controls and audio settings.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                   {Object.entries(keybindDisplayMap).map(([action, label]) => (
-                        <div key={action} className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor={action} className="text-right">
-                                {label}
-                            </Label>
-                             <Button
-                                variant="outline"
+                <div className="grid gap-6 py-4">
+                    <div className="space-y-4">
+                        <h4 className="font-semibold text-muted-foreground text-sm">Sound</h4>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label className="text-right">Volume</Label>
+                            <Slider
+                                value={[localVolume]}
+                                onValueChange={(value) => setLocalVolume(value[0])}
+                                max={1}
+                                step={0.05}
                                 className="col-span-3"
-                                onClick={() => { soundManager.play(SoundType.ButtonClick); setEditingKey(action as KeybindingAction); }}
-                                onMouseEnter={playHoverSound}
-                            >
-                               {editingKey === action ? 'Press a key...' : getKeyDisplay(localKeybindings[action as KeybindingAction])}
-                            </Button>
+                                disabled={localIsMuted}
+                            />
                         </div>
-                    ))}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="mute-checkbox" className="text-right">Mute</Label>
+                            <div className="col-span-3 flex items-center space-x-2">
+                                <Checkbox
+                                    id="mute-checkbox"
+                                    checked={localIsMuted}
+                                    onCheckedChange={(checked) => setLocalIsMuted(Boolean(checked))}
+                                />
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleTestSound}
+                                    disabled={localIsMuted}
+                                    onMouseEnter={playHoverSound}
+                                    className="ml-auto"
+                                >
+                                    <Volume2 className="mr-2 h-4 w-4" />
+                                    Test
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h4 className="font-semibold text-muted-foreground text-sm">Controls</h4>
+                        {Object.entries(keybindDisplayMap).map(([action, label]) => (
+                            <div key={action} className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor={action} className="text-right">
+                                    {label}
+                                </Label>
+                                <Button
+                                    variant="outline"
+                                    className="col-span-3"
+                                    onClick={() => { soundManager.play(SoundType.ButtonClick); setEditingKey(action as KeybindingAction); }}
+                                    onMouseEnter={playHoverSound}
+                                >
+                                {editingKey === action ? 'Press a key...' : getKeyDisplay(localKeybindings[action as KeybindingAction])}
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
                 <DialogFooter>
                     <Button variant="secondary" onClick={handleCancel} onMouseEnter={playHoverSound}>Cancel</Button>
