@@ -50,17 +50,28 @@ export class SoundManager {
         }
     }
 
+    // New method to be called by a user gesture
+    unlockAudio() {
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            this.audioContext.resume();
+        }
+    }
+
     async loadSounds() {
         if (!this.audioContext) return;
 
         const soundPromises = Object.entries(soundPaths).map(async ([key, path]) => {
+            // Type-safe check for chrome extension environment
+            const isExtension = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL;
+            const soundUrl = isExtension ? chrome.runtime.getURL(path) : path;
+
             try {
-                const response = await fetch(path);
+                const response = await fetch(soundUrl);
                 const arrayBuffer = await response.arrayBuffer();
                 const audioBuffer = await this.audioContext!.decodeAudioData(arrayBuffer);
                 this.audioBuffers.set(key as SoundType, audioBuffer);
             } catch (error) {
-                console.error(`Failed to load sound: ${key} from ${path}`, error);
+                console.error(`Failed to load sound: ${key} from ${soundUrl}`, error);
             }
         });
 

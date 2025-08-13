@@ -46,23 +46,24 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
     useEffect(() => {
         if (!canvasRef.current) return;
         const canvas = canvasRef.current;
-        inputHandler.setCanvas(canvas);
 
+        // Set dimensions FIRST to avoid race condition
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
+
+        // Then, initialize the game with correct canvas dimensions
+        inputHandler.setCanvas(canvas);
         const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState, soundManager);
         gameRef.current = game;
         game.start();
 
         return () => {
-            game.stop();
+            if (game) {
+                game.stop();
+            }
         };
-
-    }, [initialGameState]);
-
-    useEffect(() => {
-        if (!canvasRef.current) return;
-        canvasRef.current.width = GAME_WIDTH;
-        canvasRef.current.height = GAME_HEIGHT;
-    }, []);
+    // The dependencies now correctly reflect what should trigger a game re-initialization.
+    }, [initialGameState, onGameOver, onFragmentCollected, gameRef, inputHandler]);
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
@@ -282,7 +283,7 @@ export default function Home() {
                 if (originalUpgrade) {
                     gameRef.current.player.upgradeManager.applyMax(originalUpgrade);
                     setRunUpgrades(new Map(runUpgrades.set(originalId, originalUpgrade.getMaxLevel())));
-                    
+
                     const data = await getPlayerUpgradeData();
                     data.unlockedUpgradeIds.add(originalId);
                     data.upgradeProgress.set(originalId, { level: originalUpgrade.getMaxLevel() });
@@ -338,6 +339,7 @@ export default function Home() {
     };
 
     const handlePlayClick = () => {
+        soundManager.unlockAudio();
         soundManager.play(SoundType.ButtonClick);
         if (savedGame) {
             setGameState('continuePrompt');
@@ -348,6 +350,7 @@ export default function Home() {
 
 
     const continueRun = async () => {
+        soundManager.unlockAudio();
         soundManager.play(SoundType.ButtonClick);
         const savedRun = await loadGameState();
         if (savedRun) {
