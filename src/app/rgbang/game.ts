@@ -297,6 +297,7 @@ export class Game {
 
         if (this.boss && this.boss.isAlive && this.player.isAlive && circleCollision(this.player, this.boss)) {
             this.player.takeDamage(this.boss.damage);
+            this.player.applyKnockback(this.boss.pos, 15);
 
         }
 

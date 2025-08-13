@@ -53,6 +53,9 @@ export class Player {
     private baseDashCooldown = 180;
     private dashCooldownTimer = 0;
 
+    private knockbackVelocity = new Vec2(0, 0);
+    private knockbackDamping = 0.95;
+
     constructor(x: number, y: number, initialColor: GameColor, soundManager: SoundManager) {
         this.pos = new Vec2(x, y);
         this.health = this.maxHealth;
@@ -109,6 +112,14 @@ export class Player {
             this.dashTimer = this.dashDuration;
             this.dashCooldownTimer = this.getDashCooldown();
             this.soundManager.play(SoundType.PlayerDash);
+            this.knockbackVelocity = new Vec2(0, 0);
+        }
+
+        if (this.knockbackVelocity.magnitude() > 0.1) {
+            this.pos = this.pos.add(this.knockbackVelocity);
+            this.knockbackVelocity = this.knockbackVelocity.scale(this.knockbackDamping);
+        } else {
+            this.knockbackVelocity = new Vec2(0, 0);
         }
 
         let currentSpeed = this.getSpeed();
@@ -285,6 +296,12 @@ export class Player {
             this.health = 0;
             this.isAlive = false;
         }
+    }
+
+    applyKnockback(from: Vec2, force: number) {
+        if (this.isDashing) return;
+        const direction = this.pos.sub(from).normalize();
+        this.knockbackVelocity = direction.scale(force);
     }
 
     applyUpgrade(upgrade: Upgrade) {
