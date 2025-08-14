@@ -27,17 +27,17 @@ export class Boss {
 
 
     private colorChangeTimer = 0;
-    private readonly colorChangeInterval = 300;
+    private readonly colorChangeInterval = 240;
 
     private stateTimer = 0;
-    private readonly idleTime = 60;
-    private readonly telegraphTime = 120;
+    private readonly idleTime = 45;
+    private readonly telegraphTime = 90;
 
     private targetPos: Vec2;
-    private moveSpeed = 0.05;
+    private moveSpeed = 0.1;
 
     private attackTimer = 0;
-    private readonly attackInterval = 120;
+    private readonly attackInterval = 100;
 
     private createBullet: (bullet: Bullet) => void;
 
@@ -128,7 +128,7 @@ export class Boss {
     }
 
     private attack() {
-        const numBullets = 16;
+        const numBullets = 20;
         for (let i = 0; i < numBullets; i++) {
             const angle = (i / numBullets) * (Math.PI * 2);
             const direction = new Vec2(Math.cos(angle), Math.sin(angle));
