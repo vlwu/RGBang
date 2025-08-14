@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History, X } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
-import { GameColor, PRIMARY_COLORS, getRandomElement, COLOR_DETAILS } from './rgbang/color'; // ADDED COLOR_DETAILS
+import { GameColor, PRIMARY_COLORS, getRandomElement, COLOR_DETAILS } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade, UpgradeProgress } from './rgbang/upgrades';
 import { ALL_UPGRADES } from './rgbang/upgrades';
@@ -67,6 +67,11 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
         isGamePausedRef.current = isGamePausedExternally;
     }, [isGamePausedExternally]);
 
+    const drawParamsRef = useRef({ currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves });
+    useEffect(() => {
+        drawParamsRef.current = { currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves };
+    }, [currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves]);
+
 
     const gameLoop = useCallback(() => {
         if (!gameInstanceRef.current || !canvasRef.current) {
@@ -77,11 +82,11 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
         gameInstanceRef.current.update(inputHandler, isGamePausedRef.current);
 
-
+        const { currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves } = drawParamsRef.current;
         gameInstanceRef.current.draw(currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves);
         inputHandler.resetEvents();
         animationFrameIdRef.current = requestAnimationFrame(gameLoop);
-    }, [inputHandler, currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves]);
+    }, [inputHandler]);
 
 
     useImperativeHandle(ref, () => ({
@@ -133,8 +138,7 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
             inputHandler.destroy();
         };
-    }, [width, height, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, inputHandler, gameLoop, soundManager]);
-
+    }, [width, height, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, inputHandler, gameLoop]);
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 });
@@ -509,6 +513,7 @@ export default function Home() {
 
         const newInitialGameState = { ...DEFAULT_GAME_STATE, initialColor: lastColor, currentWave: 0 };
         setInitialGameState(newInitialGameState);
+        setCurrentWave(1);
         setGameState('playing');
     };
 
