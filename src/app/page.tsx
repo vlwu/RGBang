@@ -586,7 +586,7 @@ export default function Home() {
 
     return (
         <main
-            className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative"
+            className="flex flex-col items-center justify-center min-h-screen text-foreground p-4 relative bg-soft-gradient bg-200% animate-background-pan"
             onContextMenu={handleContextMenu}
         >
              <SettingsModal
