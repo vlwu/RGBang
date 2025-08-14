@@ -4,7 +4,7 @@ import { Enemy, PunishmentType } from './enemy';
 import { Boss } from './boss';
 import { UI } from './ui';
 import { ParticleSystem } from './particle';
-import { circleCollision, Vec2, distance } from './utils';
+import { circleCollision, Vec2, distance, ObjectPool, Quadtree } from './utils';
 import { getRandomElement, PRIMARY_COLORS, GameColor, ALL_COLORS, COLOR_DETAILS } from './color';
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
@@ -137,6 +137,8 @@ export class Game {
     private ctx!: CanvasRenderingContext2D;
     public player!: Player;
     private bullets: Bullet[] = [];
+    private bulletPool!: ObjectPool<Bullet>;
+    private quadtree!: Quadtree;
     private enemies: Enemy[] = [];
     private boss: Boss | null = null;
     private fragments: PrismFragment[] = [];
@@ -151,7 +153,6 @@ export class Game {
     public isRunning = false;
     private isBossSpawning = false;
 
-
     private vortexes: {pos: Vec2, radius: number, strength: number, lifespan: number}[] = [];
 
     public currentWave = 0;
@@ -160,7 +161,6 @@ export class Game {
     private bankedUpgrades = 0;
 
     constructor() {
-        // Constructor is now lightweight, initialization happens in `initialize`.
         this.particles = new ParticleSystem();
     }
 
@@ -172,6 +172,9 @@ export class Game {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.soundManager = soundManager;
+
+        this.bulletPool = new ObjectPool<Bullet>(() => new Bullet(new Vec2(), new Vec2(), GameColor.RED), 100);
+        this.quadtree = new Quadtree({ x: 0, y: 0, width: canvas.width, height: canvas.height }, 4);
 
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor, this.soundManager);
 
@@ -230,7 +233,17 @@ export class Game {
     }
 
     public createBullet = (bullet: Bullet) => {
-        this.bullets.push(bullet);
+        const pooledBullet = this.bulletPool.get(bullet.pos, bullet.vel.normalize(), bullet.color, bullet.isFromBoss);
+        
+        pooledBullet.damage = bullet.damage;
+        pooledBullet.penetrationsLeft = bullet.penetrationsLeft;
+        pooledBullet.ricochetsLeft = bullet.ricochetsLeft;
+        pooledBullet.isSeeking = bullet.isSeeking;
+        pooledBullet.isSlowing = bullet.isSlowing;
+        pooledBullet.isFission = bullet.isFission;
+        pooledBullet.isVoid = bullet.isVoid;
+        
+        this.bullets.push(pooledBullet);
     }
 
     private createEnemy = (enemy: Enemy) => {
@@ -243,6 +256,7 @@ export class Game {
     public startWave(waveNumber: number) {
         this.currentWave = waveNumber;
         this.enemies = [];
+        this.bullets.forEach(b => { if(b.isActive) this.bulletPool.release(b) });
         this.bullets = [];
         this.fragments = [];
         this.vortexes = [];
@@ -283,7 +297,10 @@ export class Game {
             this.boss = new Boss(
                 bossX,
                 bossY,
-                this.createBullet,
+                (bullet) => {
+                    const pooledBullet = this.bulletPool.get(bullet.pos, bullet.vel, bullet.color, bullet.isFromBoss);
+                    this.bullets.push(pooledBullet);
+                },
                 this.canvas.width,
                 this.canvas.height,
                 this.soundManager
@@ -317,8 +334,23 @@ export class Game {
             if (v.lifespan <= 0) this.vortexes.splice(i, 1);
         });
         
+        this.quadtree.clear();
+        for (const enemy of this.enemies) {
+            if (enemy.isAlive) {
+                this.quadtree.insert({
+                    x: enemy.pos.x,
+                    y: enemy.pos.y,
+                    width: enemy.radius * 2,
+                    height: enemy.radius * 2,
+                    ...enemy 
+                });
+            }
+        }
+
         if (!isGamePaused) {
-            this.bullets.forEach(bullet => bullet.update(this.enemies, this.canvas.width, this.canvas.height));
+            this.bullets.forEach(bullet => {
+                if(bullet.isActive) bullet.update(this.enemies, this.canvas.width, this.canvas.height)
+            });
             this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles, this.vortexes));
             this.boss?.update();
             this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
@@ -372,7 +404,6 @@ export class Game {
     }
 
     private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
-
         if (bullet.isVoid) {
             enemy.applyVoid(120 + this.player.voidLevel * 60);
         }
@@ -409,26 +440,34 @@ export class Game {
     }
 
     private handleCollisions() {
-        for (let i = this.bullets.length - 1; i >= 0; i--) {
-            const bullet = this.bullets[i];
-            let bulletRemoved = false;
+        for (const bullet of this.bullets) {
+            if (!bullet.isActive) continue;
 
             if (bullet.isFromBoss) {
                 if (this.player.isAlive && circleCollision(bullet, this.player)) {
                     this.player.takeDamage(bullet.damage);
                     this.particles.add(bullet.pos, bullet.color, 10);
-                    this.bullets.splice(i, 1);
+                    bullet.isActive = false;
                 }
                 continue;
             }
 
-            for (let j = this.enemies.length - 1; j >= 0; j--) {
-                const enemy = this.enemies[j];
+            const potentialColliders = this.quadtree.query({
+                x: bullet.pos.x,
+                y: bullet.pos.y,
+                width: bullet.radius * 2,
+                height: bullet.radius * 2
+            }) as unknown as Enemy[];
+
+            for (const enemy of potentialColliders) {
                 if (!enemy.isAlive || bullet.hitEnemies.has(enemy)) continue;
 
                 if (circleCollision(bullet, enemy)) {
-                    if (bullet.penetrationsLeft === 0) bulletRemoved = true;
-                    else bullet.penetrationsLeft--;
+                    if (bullet.penetrationsLeft <= 0) {
+                        bullet.isActive = false;
+                    } else {
+                        bullet.penetrationsLeft--;
+                    }
                     bullet.hitEnemies.add(enemy);
 
                     let damageToDeal = bullet.damage;
@@ -473,18 +512,15 @@ export class Game {
                     }
 
                     this.particles.add(bullet.pos, bullet.color, 10);
-                    if(bulletRemoved) break;
+                    if(!bullet.isActive) break;
                 }
             }
-            if (bulletRemoved) {
-                this.bullets.splice(i, 1);
-                continue;
-            }
+            if (!bullet.isActive) continue;
 
             if (this.boss && this.boss.isAlive && circleCollision(bullet, this.boss)) {
                 this.particles.add(bullet.pos, bullet.color, 15);
                 this.boss.takeDamage(bullet.damage, bullet.color);
-                this.bullets.splice(i, 1);
+                bullet.isActive = false;
             }
         }
 
@@ -540,9 +576,20 @@ export class Game {
         this.enemies = this.enemies.filter(e => e.isAlive);
         this.fragments = this.fragments.filter(f => f.isAlive);
 
-        this.bullets = this.bullets.filter((bullet) =>
-            (bullet.pos.x >= 0 && bullet.pos.x <= this.canvas.width && bullet.pos.y >= 0 && bullet.pos.y <= this.canvas.height) || bullet.ricochetsLeft > 0
-        );
+        const activeBullets: Bullet[] = [];
+        for (const bullet of this.bullets) {
+            const isOutOfBounds = bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height;
+            
+            if (bullet.isActive && (!isOutOfBounds || bullet.ricochetsLeft > 0)) {
+                activeBullets.push(bullet);
+            } else if (bullet.isActive) { 
+                bullet.isActive = false;
+                this.bulletPool.release(bullet);
+            } else { 
+                this.bulletPool.release(bullet);
+            }
+        }
+        this.bullets = activeBullets;
     }
 
     private resolveEnemyCollision(enemy1: Enemy, enemy2: Enemy) {
@@ -576,7 +623,9 @@ export class Game {
         this.boss?.draw(this.ctx);
         this.enemies.forEach(e => e.draw(this.ctx));
         this.fragments.forEach(p => p.draw(this.ctx));
-        this.bullets.forEach(b => b.draw(this.ctx));
+        this.bullets.forEach(b => {
+            if (b.isActive) b.draw(this.ctx);
+        });
         this.player.draw(this.ctx);
 
         this.ui.draw(this.player, this.score, this.boss, currentWaveToDisplay, this.enemies, currentWaveCountdown, isBetweenWaves);

@@ -1,4 +1,3 @@
-
 import { GameColor, COLOR_DETAILS, Shape } from './color';
 
 export class Vec2 {
@@ -25,7 +24,7 @@ export class Vec2 {
         if (mag === 0) return new Vec2(0, 0);
         return new Vec2(this.x / mag, this.y / mag);
     }
-    
+
     rotate(angle: number): Vec2 {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
@@ -48,9 +47,6 @@ export function lerp(start: number, end: number, t: number): number {
     return start * (1 - t) + end * t;
 }
 
-/**
- * Draws a rectangle with rounded corners.
- */
 export function roundRect(
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -68,7 +64,6 @@ export function roundRect(
     ctx.arcTo(x, y, x + width, y, radius);
     ctx.closePath();
 }
-
 
 function drawTriangle(ctx: CanvasRenderingContext2D, pos: Vec2, size: number) {
     const height = size * (Math.sqrt(3) / 2);
@@ -97,7 +92,6 @@ function drawCross(ctx: CanvasRenderingContext2D, pos: Vec2, size: number) {
     ctx.lineTo(pos.x, pos.y + size / 2);
 }
 
-
 export function drawShape(ctx: CanvasRenderingContext2D, pos: Vec2, radius: number, shape: Shape, style: string, stroke = false) {
     ctx.save();
     const size = radius * 0.8;
@@ -119,7 +113,6 @@ export function drawShape(ctx: CanvasRenderingContext2D, pos: Vec2, radius: numb
             drawSquare(ctx, pos, size);
             break;
         case 'mixed':
-             // For mixed colors, we can draw a simple cross for now
             drawCross(ctx, pos, size);
             break;
     }
@@ -132,14 +125,144 @@ export function drawShape(ctx: CanvasRenderingContext2D, pos: Vec2, radius: numb
 export function drawShapeForColor(ctx: CanvasRenderingContext2D, pos: Vec2, radius: number, color: GameColor, style: string, stroke = false) {
     const detail = COLOR_DETAILS[color];
     if (detail.shape === 'mixed' && detail.components) {
-        // Draw two smaller shapes for mixed colors
         const size = radius * 0.5;
         const offset = size * 0.4;
         const [comp1, comp2] = detail.components;
         drawShape(ctx, pos.add(new Vec2(-offset, 0)), size, COLOR_DETAILS[comp1].shape, style, stroke);
         drawShape(ctx, pos.add(new Vec2(offset, 0)), size, COLOR_DETAILS[comp2].shape, style, stroke);
-
     } else {
         drawShape(ctx, pos, radius, detail.shape, style, stroke);
+    }
+}
+
+export class ObjectPool<T extends { reset: (...args: any[]) => void; isActive: boolean }> {
+    private pool: T[] = [];
+    private createFn: () => T;
+
+    constructor(createFn: () => T, initialSize: number = 0) {
+        this.createFn = createFn;
+        for (let i = 0; i < initialSize; i++) {
+            const obj = this.createFn();
+            obj.isActive = false;
+            this.pool.push(obj);
+        }
+    }
+
+    get(...args: Parameters<T['reset']>): T {
+        let obj = this.pool.pop();
+        if (!obj) {
+            obj = this.createFn();
+        }
+        obj.isActive = true;
+        obj.reset(...args);
+        return obj;
+    }
+
+    release(obj: T) {
+        obj.isActive = false;
+        this.pool.push(obj);
+    }
+}
+
+interface Boundary {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+}
+
+interface QuadtreeObject extends Boundary {
+    entity: any;
+}
+
+export class Quadtree {
+    private boundary: Boundary;
+    private capacity: number;
+    private objects: QuadtreeObject[] = [];
+    private divided = false;
+    private northeast!: Quadtree;
+    private northwest!: Quadtree;
+    private southeast!: Quadtree;
+    private southwest!: Quadtree;
+
+    constructor(boundary: Boundary, capacity: number) {
+        this.boundary = boundary;
+        this.capacity = capacity;
+    }
+
+    private subdivide() {
+        const { x, y, width, height } = this.boundary;
+        const hw = width / 2;
+        const hh = height / 2;
+
+        this.northeast = new Quadtree({ x: x + hw, y: y, width: hw, height: hh }, this.capacity);
+        this.northwest = new Quadtree({ x: x, y: y, width: hw, height: hh }, this.capacity);
+        this.southeast = new Quadtree({ x: x + hw, y: y + hh, width: hw, height: hh }, this.capacity);
+        this.southwest = new Quadtree({ x: x, y: y + hh, width: hw, height: hh }, this.capacity);
+
+        this.divided = true;
+    }
+
+    insert(obj: QuadtreeObject): boolean {
+        if (!this.intersects(obj)) {
+            return false;
+        }
+
+        if (this.objects.length < this.capacity) {
+            this.objects.push(obj);
+            return true;
+        }
+
+        if (!this.divided) {
+            this.subdivide();
+        }
+
+        if (this.northeast.insert(obj)) return true;
+        if (this.northwest.insert(obj)) return true;
+        if (this.southeast.insert(obj)) return true;
+        if (this.southwest.insert(obj)) return true;
+
+        return false;
+    }
+
+    private intersects(range: Boundary): boolean {
+        return !(
+            range.x - range.width/2 > this.boundary.x + this.boundary.width ||
+            range.x + range.width/2 < this.boundary.x ||
+            range.y - range.height/2 > this.boundary.y + this.boundary.height ||
+            range.y + range.height/2 < this.boundary.y
+        );
+    }
+
+    query(range: Boundary, found: QuadtreeObject[] = []): QuadtreeObject[] {
+        if (!this.intersects(range)) {
+            return found;
+        }
+
+        for (const obj of this.objects) {
+             if (this.intersects(obj)) {
+                found.push(obj);
+            }
+        }
+
+        if (this.divided) {
+            this.northwest.query(range, found);
+            this.northeast.query(range, found);
+            this.southwest.query(range, found);
+            this.southeast.query(range, found);
+        }
+
+        return found;
+    }
+
+    clear() {
+        this.objects = [];
+        this.divided = false;
+        if (this.northeast) {
+            this.northeast.clear();
+            this.northwest.clear();
+            this.southeast.clear();
+            this.southwest.clear();
+        }
     }
 }

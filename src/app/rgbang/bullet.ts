@@ -10,8 +10,8 @@ export class Bullet {
     hexColor: string;
     damage = 10;
     isFromBoss: boolean;
+    isActive = true;
 
-    // Upgrade properties
     public penetrationsLeft = 0;
     public ricochetsLeft = 0;
     public isSeeking = false;
@@ -30,6 +30,27 @@ export class Bullet {
         this.hexColor = COLOR_DETAILS[color].hex;
         this.isFromBoss = isFromBoss;
         if(isFromBoss) this.radius = 8;
+    }
+
+    reset(pos: Vec2, direction: Vec2, color: GameColor, isFromBoss = false) {
+        this.pos.x = pos.x;
+        this.pos.y = pos.y;
+        this.vel = direction.normalize().scale(isFromBoss ? 4 : 10);
+        this.color = color;
+        this.hexColor = COLOR_DETAILS[color].hex;
+        this.isFromBoss = isFromBoss;
+        this.radius = isFromBoss ? 8 : 5;
+        this.damage = 10;
+        this.isActive = true;
+
+        this.penetrationsLeft = 0;
+        this.ricochetsLeft = 0;
+        this.isSeeking = false;
+        this.isSlowing = false;
+        this.isFission = false;
+        this.isVoid = false;
+        this.hitEnemies.clear();
+        this.trailPoints = [];
     }
 
     update(enemies?: Enemy[], canvasWidth?: number, canvasHeight?: number) {
