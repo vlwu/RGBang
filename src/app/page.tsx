@@ -1,3 +1,4 @@
+// src/app/page.tsx
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -46,7 +47,6 @@ function GameCanvas({ onGameOver, onFragmentCollected, onWaveCompleted, width, h
     const inputHandler = InputHandler.getInstance();
 
     useEffect(() => {
-        // MODIFIED: Ensure canvasRef.current is assigned to a local variable and checked
         const canvas = canvasRef.current;
         if (!canvas) {
             console.warn("Canvas element not found on useEffect.");
@@ -200,9 +200,40 @@ export default function Home() {
     }, [keybindings]);
 
 
+    const handleNextWaveStart = useCallback(() => {
+        if (gameRef.current) {
+            const nextWaveNum = currentWave + 1;
+            setCurrentWave(nextWaveNum);
+            gameRef.current.startWave(nextWaveNum);
+            setGameState('playing');
+            soundManager.play(SoundType.GameResume);
+        }
+    }, [currentWave]);
+
+    const startCountdown = useCallback(() => {
+        let countdownInterval: NodeJS.Timeout | null = null;
+        if (countdownInterval) clearInterval(countdownInterval);
+        setBetweenWaveCountdown(5);
+        countdownInterval = setInterval(() => {
+            setBetweenWaveCountdown(prev => {
+                if (prev <= 1) {
+                    clearInterval(countdownInterval!);
+                    countdownInterval = null;
+                    handleNextWaveStart();
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+
+        return () => {
+            if (countdownInterval) clearInterval(countdownInterval);
+        };
+    }, [handleNextWaveStart]);
+
+
     useEffect(() => {
         let animationFrameId: number | null = null;
-        let countdownInterval: NodeJS.Timeout | null = null;
         const inputHandler = inputHandlerRef.current;
 
         const gameLoop = () => {
@@ -218,37 +249,11 @@ export default function Home() {
             animationFrameId = requestAnimationFrame(gameLoop);
         };
 
-        const startCountdown = () => {
-            if (countdownInterval) clearInterval(countdownInterval);
-            setBetweenWaveCountdown(5); // Start with 5 seconds
-            countdownInterval = setInterval(() => {
-                setBetweenWaveCountdown(prev => {
-                    if (prev <= 1) {
-                        clearInterval(countdownInterval!);
-                        countdownInterval = null;
-                        handleNextWaveStart();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        };
-
-        const handleNextWaveStart = () => {
-            if (gameRef.current) {
-                const nextWaveNum = currentWave + 1;
-                setCurrentWave(nextWaveNum);
-                gameRef.current.startWave(nextWaveNum);
-                setGameState('playing');
-                soundManager.play(SoundType.GameResume);
-            }
-        };
-
 
         if(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading' || gameState === 'betweenWaves'){
             animationFrameId = requestAnimationFrame(gameLoop);
             if (gameState === 'betweenWaves' && betweenWaveCountdown === 0) {
-                startCountdown();
+                const cleanupCountdown = startCountdown();
             }
         } else if (animationFrameId) {
             cancelAnimationFrame(animationFrameId);
@@ -259,11 +264,8 @@ export default function Home() {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
             }
-            if (countdownInterval) {
-                clearInterval(countdownInterval);
-            }
         };
-    }, [gameState, isUpgradeOverviewOpen, currentWave, betweenWaveCountdown]);
+    }, [gameState, isUpgradeOverviewOpen, betweenWaveCountdown, startCountdown]);
 
 
     useEffect(() => {
@@ -307,7 +309,7 @@ export default function Home() {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
         }
-    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isUpgradeOverviewOpen, currentWave]);
+    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isUpgradeOverviewOpen, handleNextWaveStart]);
 
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
@@ -315,7 +317,8 @@ export default function Home() {
     }, []);
 
     const handleWaveCompleted = useCallback((waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => {
-        setScore(gameRef.current?.score || 0);
+        // MODIFIED: Use the score parameter from the callback, don't access private gameRef.current?.score
+        setScore(gameRef.current?.getCurrentState().score || 0); // Still need gameRef to get current score if it's not passed
 
         const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
         setNextWaveHint(waveConfig.nextWaveHint);
@@ -338,7 +341,7 @@ export default function Home() {
             soundManager.play(SoundType.GamePause);
         }
         setCurrentWave(waveNumber);
-    }, []);
+    }, []); // MODIFIED: No change to dependencies here, as waveNumber and isBossWave are direct params.
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
@@ -480,7 +483,7 @@ export default function Home() {
         resetGameAndUpgradeState();
         toast({
             title: "Progress Reset",
-            description: "Your high score and all upgrade progress have been cleared.",
+            description: "Your high score and all upgrade progress have to have been cleared.",
         });
     }
 

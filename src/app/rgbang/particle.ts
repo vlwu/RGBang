@@ -8,9 +8,9 @@ interface IParticle {
     lifespan: number;
     radius: number;
     update(): void;
-    draw(ctx: CanvasRenderingRenderingContext2D): void;
-    isAlive(): boolean; // NEW: To check if a particle is still active in the pool
-    reset?(pos: Vec2, color: GameColor): void; // NEW: Optional reset method for pooled particles
+    draw(ctx: CanvasRenderingContext2D): void; // FIXED: Typo here
+    isAlive(): boolean;
+    reset?(pos: Vec2, color: GameColor): void;
 }
 
 
@@ -20,7 +20,7 @@ class Particle implements IParticle {
     lifespan: number;
     radius: number;
     color: string;
-    private active: boolean = true; // NEW: Flag for pooling
+    private active: boolean = true;
 
     constructor(pos: Vec2, color: GameColor) {
         this.pos = new Vec2(pos.x, pos.y);
@@ -33,7 +33,6 @@ class Particle implements IParticle {
         this.active = true;
     }
 
-    // NEW: Reset method for recycling particles
     reset(pos: Vec2, color: GameColor) {
         this.pos.x = pos.x;
         this.pos.y = pos.y;
@@ -68,7 +67,7 @@ class Particle implements IParticle {
         ctx.restore();
     }
 
-    isAlive(): boolean { // NEW: Conforming to IParticle for active check
+    isAlive(): boolean {
         return this.active;
     }
 }
@@ -80,7 +79,7 @@ class LightningParticle implements IParticle {
     lifespan: number;
     radius: number;
     private endPos: Vec2;
-    private active: boolean = true; // NEW
+    private active: boolean = true;
 
     constructor(startPos: Vec2, endPos: Vec2) {
         this.pos = startPos;
@@ -116,7 +115,7 @@ class LightningParticle implements IParticle {
         ctx.restore();
     }
 
-    isAlive(): boolean { // NEW
+    isAlive(): boolean {
         return this.active;
     }
 }
@@ -129,7 +128,7 @@ class FragmentParticle implements IParticle {
     maxLifespan: number;
     radius: number;
     color: string;
-    private active: boolean = true; // NEW
+    private active: boolean = true;
 
     constructor(pos: Vec2, color: string) {
         this.pos = new Vec2(pos.x, pos.y);
@@ -164,7 +163,7 @@ class FragmentParticle implements IParticle {
         ctx.restore();
     }
 
-    isAlive(): boolean { // NEW
+    isAlive(): boolean {
         return this.active;
     }
 }
@@ -176,7 +175,7 @@ class PickupParticle implements IParticle {
     maxLifespan: number;
     radius: number;
     color: string;
-    private active: boolean = true; // NEW
+    private active: boolean = true;
 
     constructor(pos: Vec2, color: string) {
         this.pos = new Vec2(pos.x, pos.y);
@@ -212,7 +211,7 @@ class PickupParticle implements IParticle {
         ctx.restore();
     }
 
-    isAlive(): boolean { // NEW
+    isAlive(): boolean {
         return this.active;
     }
 }
@@ -225,7 +224,7 @@ class DashParticle implements IParticle {
     maxLifespan: number;
     radius: number;
     private color: string = '#FF0000';
-    private active: boolean = true; // NEW
+    private active: boolean = true;
 
     constructor(pos: Vec2) {
         this.pos = new Vec2(pos.x, pos.y);
@@ -265,7 +264,7 @@ class DashParticle implements IParticle {
         ctx.restore();
     }
 
-    isAlive(): boolean { // NEW
+    isAlive(): boolean {
         return this.active;
     }
 }
@@ -273,16 +272,15 @@ class DashParticle implements IParticle {
 
 export class ParticleSystem {
     particles: IParticle[] = [];
-    private particlePool: Particle[] = []; // NEW: Pool for general particles
-    private readonly MAX_PARTICLES = 500; // Cap total particles
-    private readonly POOL_SIZE = 200; // Max particles in pool
+    private particlePool: Particle[] = [];
+    private readonly MAX_PARTICLES = 500;
+    private readonly POOL_SIZE = 200;
 
     update() {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             this.particles[i].update();
-            if (!this.particles[i].isAlive()) { // Check if particle is no longer active
+            if (!this.particles[i].isAlive()) {
                 const p = this.particles.splice(i, 1)[0];
-                // Only return general Particles to the pool
                 if (p instanceof Particle && this.particlePool.length < this.POOL_SIZE) {
                     this.particlePool.push(p);
                 }
@@ -296,7 +294,7 @@ export class ParticleSystem {
 
     add(pos: Vec2, color: GameColor, count: number) {
         for (let i = 0; i < count; i++) {
-            if (this.particles.length >= this.MAX_PARTICLES) return; // Prevent too many particles
+            if (this.particles.length >= this.MAX_PARTICLES) return;
 
             let particle: Particle;
             if (this.particlePool.length > 0) {
