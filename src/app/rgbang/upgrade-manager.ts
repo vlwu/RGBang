@@ -1,7 +1,6 @@
-// src/app/rgbang/upgrade-manager.ts
 import { Player } from './player';
 import { ALL_UPGRADES, Upgrade, UpgradeType } from './upgrades';
-import { GameColor, PRIMARY_COLORS, getRandomElement } from './color'; // MODIFIED: Import PRIMARY_COLORS and getRandomElement
+import { GameColor, PRIMARY_COLORS, getRandomElement } from './color';
 import { PlayerUpgradeData } from './upgrade-data';
 
 export class UpgradeManager {
@@ -12,7 +11,7 @@ export class UpgradeManager {
         this.player = player;
     }
 
-    // MODIFIED: Refined logic for getting upgrade options based on fragment color/type
+
     getUpgradeOptions(fragmentColor: GameColor | null, upgradeData: PlayerUpgradeData, addScoreCallback: (amount: number) => void): Upgrade[] {
         const shuffle = (arr: Upgrade[]) => {
             for (let i = arr.length - 1; i > 0; i--) {
@@ -25,11 +24,11 @@ export class UpgradeManager {
         const options: Upgrade[] = [];
         const availableUpgrades = ALL_UPGRADES.filter(u => this.getUpgradeLevel(u.id) < u.getMaxLevel());
 
-        // Scenario 1: Boss Fragment (fragmentColor === null)
+
         if (fragmentColor === null) {
             const maxOutCandidates = availableUpgrades.filter(u => u.type === UpgradeType.GENERAL || u.type === UpgradeType.PLAYER_STAT);
 
-            // Create 'max out' versions of up to 3 random candidates
+
             const shuffledMaxOutCandidates = shuffle(maxOutCandidates);
             for (let i = 0; i < Math.min(3, shuffledMaxOutCandidates.length); i++) {
                 const originalUpgrade = shuffledMaxOutCandidates[i];
@@ -38,24 +37,24 @@ export class UpgradeManager {
                     id: `max-out-${originalUpgrade.id}`,
                     name: `MAX: ${originalUpgrade.name}`,
                     description: `Instantly raises '${originalUpgrade.name}' to Level ${originalUpgrade.getMaxLevel()}.`,
-                    apply: () => {}, // Apply logic handled by applyMax in Game/Home
+                    apply: () => {},
                     getValue: originalUpgrade.getValue,
                     getMaxLevel: originalUpgrade.getMaxLevel,
                 });
             }
         } else {
-            // Scenario 2: Regular Fragment (specific fragmentColor)
 
-            // 1. Try to offer one relevant GUN upgrade (matching fragmentColor)
+
+
             const relevantGunUpgrades = availableUpgrades.filter(u => u.type === UpgradeType.GUN && u.color === fragmentColor);
             if (relevantGunUpgrades.length > 0) {
                 options.push(getRandomElement(relevantGunUpgrades));
             }
 
-            // 2. Fill remaining slots with General and Player Stat upgrades, prioritizing unseen
+
             const otherUpgrades = availableUpgrades.filter(u =>
                 (u.type === UpgradeType.GENERAL || u.type === UpgradeType.PLAYER_STAT) &&
-                !options.some(opt => opt.id === u.id) // Ensure no duplicates
+                !options.some(opt => opt.id === u.id)
             );
 
             const seenUpgrades = otherUpgrades.filter(u => upgradeData.unlockedUpgradeIds.has(u.id));
@@ -73,7 +72,7 @@ export class UpgradeManager {
             }
         }
 
-        // 3. Ensure exactly 3 options, filling with fallback upgrades if necessary
+
         const fallbackHeal: Upgrade = {
             id: 'fallback-heal',
             name: 'First Aid',
@@ -94,7 +93,7 @@ export class UpgradeManager {
             type: UpgradeType.GENERAL,
             color: null,
             apply: (player, level, addScore) => {
-                if (addScore) { // Use the addScoreCallback passed from Game/Home
+                if (addScore) {
                     addScore(500);
                 }
             },
@@ -109,24 +108,24 @@ export class UpgradeManager {
             options.push(fallbackScore);
         }
 
-        // Ensure we always return 3 options, even if it means duplicating fallbacks
+
         while (options.length < 3) {
-            options.push(fallbackHeal); // Or choose a random fallback if more are added
+            options.push(fallbackHeal);
         }
 
-        return shuffle(options.slice(0,3)); // Shuffle final options and take top 3
+        return shuffle(options.slice(0,3));
     }
 
     apply(upgrade: Upgrade, level: number) {
         const currentLevel = this.getUpgradeLevel(upgrade.id);
 
         if (upgrade.id.startsWith('fallback-')) {
-            // Fallback upgrades are applied immediately and don't affect stored activeUpgrades map
+
             upgrade.apply(this.player, 1);
             return;
         }
 
-        // Apply regular upgrades
+
         this.activeUpgrades.set(upgrade.id, { upgrade, level: currentLevel + 1 });
         this.recalculatePlayerStats();
     }
@@ -148,12 +147,12 @@ export class UpgradeManager {
     recalculatePlayerStats() {
         const oldMaxHealth = this.player.getMaxHealth();
 
-        // Reset all player stats to base values or default multipliers
+
         this.player.movementSpeedMultiplier = 1;
         this.player.bulletDamageMultiplier = 1;
         this.player.dashCooldownModifier = 1;
         this.player.shootCooldownModifier = 1;
-        this.player.expGainMultiplier = 1; // Currently unused, will be used later
+        this.player.scoreMultiplier = 1;
         this.player.accuracyModifier = 1;
         this.player.flatHealthIncrease = 0;
 
@@ -161,19 +160,21 @@ export class UpgradeManager {
         this.player.igniteLevel = 0;
         this.player.iceSpikerLevel = 0;
 
-        // Apply active upgrades
+
         this.activeUpgrades.forEach(({ upgrade, level }) => {
-            upgrade.apply(this.player, level);
+            for (let i = 0; i < level; i++) {
+                upgrade.apply(this.player, 1);
+            }
         });
 
         const newMaxHealth = this.player.getMaxHealth();
         const healthIncrease = newMaxHealth - oldMaxHealth;
 
-        // Adjust current health if max health increased
+
         if (healthIncrease > 0) {
             this.player.health += healthIncrease;
         }
-        // Ensure health doesn't exceed new max
+
         this.player.health = Math.min(this.player.health, newMaxHealth);
     }
 

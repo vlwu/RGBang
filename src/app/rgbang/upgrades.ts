@@ -1,4 +1,3 @@
-// src/app/rgbang/upgrades.ts
 import { GameColor } from './color';
 import { Player } from './player';
 
@@ -34,7 +33,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 20 * level,
         apply: (player, level) => {
-            player.flatHealthIncrease += 20 * level;
+            player.flatHealthIncrease += 20;
         }
     },
     {
@@ -46,7 +45,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 - (0.08 * level),
         apply: (player, level) => {
-            player.dashCooldownModifier *= Math.pow(0.92, level);
+            player.dashCooldownModifier *= 0.92;
         }
     },
      {
@@ -58,7 +57,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 + (0.05 * level),
         apply: (player, level) => {
-            player.movementSpeedMultiplier *= Math.pow(1.05, level);
+            player.movementSpeedMultiplier *= 1.05;
         }
     },
 
@@ -72,7 +71,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 + (0.1 * level),
         apply: (player, level) => {
-            player.bulletDamageMultiplier *= Math.pow(1.10, level);
+            player.bulletDamageMultiplier *= 1.10;
         }
     },
     {
@@ -84,19 +83,19 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 - (0.1 * level),
         apply: (player, level) => {
-            player.shootCooldownModifier *= Math.pow(0.9, level);
+            player.shootCooldownModifier *= 0.9;
         }
     },
     {
         id: 'prism-exp-gain',
         name: 'Prism Magnetism',
-        description: 'Increases score gained from enemies by 20% per level.', // MODIFIED DESCRIPTION
+        description: 'Increases score gained from enemies by 20% per level.',
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
         getValue: (level) => 1 + (0.2 * level),
         apply: (player, level) => {
-            player.scoreMultiplier *= Math.pow(1.2, level); // MODIFIED: Apply to scoreMultiplier
+            player.scoreMultiplier *= 1.2;
         }
     },
     {
@@ -108,7 +107,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => 1 - (0.15 * level),
         apply: (player, level) => {
-            player.accuracyModifier *= Math.pow(0.85, level);
+            player.accuracyModifier *= 0.85;
         }
     },
 
@@ -122,7 +121,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         color: GameColor.BLUE,
         getMaxLevel: () => 5,
         getValue: (level) => level,
-        apply: (player, level) => { player.iceSpikerLevel += level; }
+        apply: (player, level) => { player.iceSpikerLevel += 1; }
     },
     {
         id: 'chain-lightning',
@@ -132,7 +131,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         color: GameColor.YELLOW,
         getMaxLevel: () => 5,
         getValue: (level) => level,
-        apply: (player, level) => { player.chainLightningLevel += level; }
+        apply: (player, level) => { player.chainLightningLevel += 1; }
     },
     {
         id: 'ignite',
@@ -142,6 +141,6 @@ export const ALL_UPGRADES: Upgrade[] = [
         color: GameColor.RED,
         getMaxLevel: () => 5,
         getValue: (level) => level,
-        apply: (player, level) => { player.igniteLevel += level; }
+        apply: (player, level) => { player.igniteLevel += 1; }
     }
 ];

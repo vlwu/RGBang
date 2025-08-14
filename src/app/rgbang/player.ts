@@ -28,7 +28,6 @@ export class Player {
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
     public shootCooldownModifier = 1;
-    public expGainMultiplier = 1;
     public accuracyModifier = 1;
     public scoreMultiplier = 1;
 

@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useImperativeHandle } from 'react';
@@ -61,16 +60,21 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
 
     const isGamePausedRef = useRef(isGamePausedExternally);
-
+    const onGameOverRef = useRef(onGameOver);
+    const onFragmentCollectedRef = useRef(onFragmentCollected);
+    const onWaveCompletedRef = useRef(onWaveCompleted);
+    const drawParamsRef = useRef({ currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves });
 
     useEffect(() => {
         isGamePausedRef.current = isGamePausedExternally;
     }, [isGamePausedExternally]);
 
-    const drawParamsRef = useRef({ currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves });
     useEffect(() => {
+        onGameOverRef.current = onGameOver;
+        onFragmentCollectedRef.current = onFragmentCollected;
+        onWaveCompletedRef.current = onWaveCompleted;
         drawParamsRef.current = { currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves };
-    }, [currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves]);
+    });
 
 
     const gameLoop = useCallback(() => {
@@ -112,9 +116,9 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
         console.log("Creating new Game instance with initialGameState:", initialGameState);
         gameInstanceRef.current = new Game(
             canvas,
-            onGameOver,
-            onFragmentCollected,
-            onWaveCompleted,
+            (score) => onGameOverRef.current(score),
+            (color) => onFragmentCollectedRef.current(color),
+            (waveNumber, isBossWave, fragmentsToAward) => onWaveCompletedRef.current(waveNumber, isBossWave, fragmentsToAward),
             initialGameState,
             soundManager
         );
@@ -138,7 +142,8 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
             inputHandler.destroy();
         };
-    }, [width, height, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, inputHandler, gameLoop]);
+    }, [width, height, initialGameState, inputHandler, gameLoop]);
+
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 });
@@ -513,7 +518,6 @@ export default function Home() {
 
         const newInitialGameState = { ...DEFAULT_GAME_STATE, initialColor: lastColor, currentWave: 0 };
         setInitialGameState(newInitialGameState);
-        setCurrentWave(1);
         setGameState('playing');
     };
 
