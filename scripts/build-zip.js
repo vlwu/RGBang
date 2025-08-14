@@ -3,31 +3,27 @@ const path = require('path');
 const archiver = require('archiver');
 const crypto = require('crypto');
 
-/**
- * Creates a short hash from a string to generate a unique filename.
- * @param {string} data The content to hash.
- * @returns {string} A 16-character hex hash.
- */
+
+
+
 function sha256(data) {
     return crypto.createHash('sha256').update(data, 'utf8').digest('hex').substring(0, 16);
 }
 
-/**
- * A comprehensive function to fix the Next.js output for Chrome Extension CSP.
- */
+
 function fixNextForCSP() {
     const outDir = path.join(__dirname, '..', 'out');
     const publicDir = path.join(__dirname, '..', 'public');
 
     console.log('--- Starting Next.js build fix for Chrome Extension ---');
 
-    // **Step 1: Verify the `out` directory exists**
+
     if (!fs.existsSync(outDir)) {
         console.error("✗ Error: Build directory 'out' not found. Please run 'next build' first.");
         process.exit(1);
     }
 
-    // **Step 2: Rename `_next` to `next_assets` to avoid Chrome's reserved names**
+
     const oldNextDir = path.join(outDir, '_next');
     const newNextDir = path.join(outDir, 'next_assets');
 
@@ -38,7 +34,7 @@ function fixNextForCSP() {
         console.log('✓ `_next` directory not found, assuming it is already renamed.');
     }
 
-    // **Step 3: Recursively process and patch all files**
+
     function patchDirectory(directory) {
         const items = fs.readdirSync(directory);
         for (const item of items) {
@@ -55,25 +51,28 @@ function fixNextForCSP() {
         let content = fs.readFileSync(filePath, 'utf8');
         let wasModified = false;
 
-        // Replace all absolute `/_next/` paths with relative ones
+
         const pathFixedContent = content.replace(/\/(_next|next_assets)\//g, './next_assets/');
         if (content !== pathFixedContent) {
             content = pathFixedContent;
             wasModified = true;
         }
 
-        // For HTML files, extract inline scripts
+
         if (path.extname(filePath) === '.html') {
-            const scriptRegex = /<script>([\s\S]+?)<\/script>/gi;
+            // Modified regex to match script tags that do NOT have a 'src' attribute,
+            // ensuring all inline executable scripts are captured.
+            const scriptRegex = /<script(?![^>]*src)[^>]*>([\s\S]+?)<\/script>/gi;
             const scriptsToReplace = [];
             let match;
             while ((match = scriptRegex.exec(content)) !== null) {
                 const scriptContent = match[1];
+                // Still exclude __NEXT_DATA__ content as it's JSON, not executable JS.
                 if (scriptContent.trim() && !scriptContent.includes('__NEXT_DATA__')) {
                     const scriptHash = sha256(scriptContent);
                     const scriptFileName = `inline-script-${scriptHash}.js`;
                     const scriptPath = path.join(newNextDir, 'static', 'js', scriptFileName);
-                    
+
                     fs.mkdirSync(path.dirname(scriptPath), { recursive: true });
                     fs.writeFileSync(scriptPath, scriptContent, 'utf8');
 
@@ -99,7 +98,7 @@ function fixNextForCSP() {
     console.log('--- Patching build files ---');
     patchDirectory(outDir);
 
-    // **Step 4: Copy files from the `public` folder**
+
     console.log('--- Copying public assets ---');
     ['manifest.json', 'background.js'].forEach(file => {
         const src = path.join(publicDir, file);
@@ -138,7 +137,7 @@ function createZip() {
     });
 }
 
-// Run the fix if the script is called directly
+
 if (require.main === module) {
     fixNextForCSP();
 }
