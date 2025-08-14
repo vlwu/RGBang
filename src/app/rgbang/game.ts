@@ -11,6 +11,7 @@ import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
 import { SoundManager, SoundType } from './sound-manager';
 import { WAVE_CONFIGS, WaveConfig, EnemySpawnConfig, EnemyType, FALLBACK_WAVE_CONFIG, generateProceduralWave } from './wave-data';
+import { gameStateStore } from './gameStateStore';
 
 class EnemySpawner {
     private spawnTimer = 0;
@@ -132,17 +133,17 @@ class EnemySpawner {
 }
 
 export class Game {
-    public canvas: HTMLCanvasElement;
-    private ctx: CanvasRenderingContext2D;
-    public player: Player;
+    public canvas!: HTMLCanvasElement;
+    private ctx!: CanvasRenderingContext2D;
+    public player!: Player;
     private bullets: Bullet[] = [];
     private enemies: Enemy[] = [];
     private boss: Boss | null = null;
     private fragments: PrismFragment[] = [];
     public particles: ParticleSystem;
-    private enemySpawner: EnemySpawner;
-    private ui: UI;
-    private soundManager: SoundManager;
+    private enemySpawner!: EnemySpawner;
+    private ui!: UI;
+    private soundManager!: SoundManager;
 
     private score = 0;
     private nextBossScoreThreshold = 150;
@@ -158,30 +159,24 @@ export class Game {
     private fragmentsCollectedThisWave: number = 0;
     private bankedUpgrades = 0;
 
-    private onGameOver: (finalScore: number) => void;
-    private onFragmentCollected: (color: GameColor | null) => void;
-    public onWaveCompleted: (waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => void;
+    constructor() {
+        // Constructor is now lightweight, initialization happens in `initialize`.
+        this.particles = new ParticleSystem();
+    }
 
-    constructor(
+    public initialize(
         canvas: HTMLCanvasElement,
-        onGameOver: (finalScore: number) => void,
-        onFragmentCollected: (color: GameColor | null) => void,
-        onWaveCompleted: (waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => void,
         initialState: SavedGameState,
         soundManager: SoundManager,
     ) {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
-        this.onGameOver = onGameOver;
-        this.onFragmentCollected = onFragmentCollected;
-        this.onWaveCompleted = onWaveCompleted;
         this.soundManager = soundManager;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor, this.soundManager);
 
         this.enemySpawner = new EnemySpawner(canvas.width, this.canvas.height, this.soundManager);
         this.ui = new UI(canvas);
-        this.particles = new ParticleSystem();
 
         this.score = initialState.score;
         this.player.health = initialState.playerHealth;
@@ -195,6 +190,8 @@ export class Game {
                 this.player.upgradeManager.applyById(id, level);
             });
         }
+        
+        gameStateStore.resetState(this.getCurrentState());
     }
 
     public start() {
@@ -229,6 +226,7 @@ export class Game {
 
     public addScore(amount: number) {
         this.score += amount;
+        gameStateStore.updateState({ score: this.score });
     }
 
     public createBullet = (bullet: Bullet) => {
@@ -260,11 +258,17 @@ export class Game {
         if (waveConfig.bossType) {
             this.spawnBossByType(waveConfig.bossType);
         }
+        gameStateStore.updateState({ currentWave: this.currentWave, isBetweenWaves: false });
     }
 
     private endWave() {
         this.waveInProgress = false;
-        this.onWaveCompleted(this.currentWave, !!this.boss, this.fragmentsCollectedThisWave);
+        const isBossWave = !!this.boss;
+        gameStateStore.updateState({ 
+            isBetweenWaves: true, 
+            waveCompletedFragments: this.fragmentsCollectedThisWave,
+            isBossWave
+        });
         this.boss = null;
         this.isBossSpawning = false;
     }
@@ -312,7 +316,7 @@ export class Game {
             v.lifespan--;
             if (v.lifespan <= 0) this.vortexes.splice(i, 1);
         });
-
+        
         if (!isGamePaused) {
             this.bullets.forEach(bullet => bullet.update(this.enemies, this.canvas.width, this.canvas.height));
             this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles, this.vortexes));
@@ -342,11 +346,16 @@ export class Game {
                 }
             }
         }
+        
+        gameStateStore.updateState({
+            playerHealth: this.player.health,
+            playerMaxHealth: this.player.getMaxHealth()
+        });
 
         if (!this.player.isAlive) {
             this.soundManager.play(SoundType.GameOver);
             this.stop();
-            this.onGameOver(this.score);
+            gameStateStore.updateState({ isGameOver: true, score: this.score });
         }
     }
 
@@ -453,7 +462,7 @@ export class Game {
                     }
 
                     if (result.killed) {
-                        this.score += enemy.points * this.player.scoreMultiplier;
+                        this.addScore(enemy.points * this.player.scoreMultiplier);
                         this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
                         if (this.player.fragmentDuplicationChance > 0 && Math.random() < this.player.fragmentDuplicationChance) {
                              this.fragments.push(new PrismFragment(enemy.pos.x + 10, enemy.pos.y, enemy.color));
@@ -496,7 +505,11 @@ export class Game {
             const fragment = this.fragments[i];
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
                 this.soundManager.play(SoundType.FragmentCollect);
-                this.onFragmentCollected(fragment.color);
+                const currentState = gameStateStore.getSnapshot();
+                gameStateStore.updateState({ 
+                    lastFragmentCollected: fragment.color || 'special',
+                    fragmentCollectCount: currentState.fragmentCollectCount + 1,
+                });
                 this.fragmentsCollectedThisWave++;
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
                 fragment.isAlive = false;
@@ -545,6 +558,7 @@ export class Game {
     }
 
     public draw(currentWaveToDisplay: number, currentWaveCountdown: number, isBetweenWaves: boolean) {
+        if (!this.ctx) return;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
