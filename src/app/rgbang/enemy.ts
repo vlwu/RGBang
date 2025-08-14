@@ -12,7 +12,6 @@ export enum PunishmentType {
     REFLECT_BULLET = 'REFLECT_BULLET',
 }
 
-
 export class Enemy {
     pos: Vec2;
     radius: number;
@@ -26,13 +25,20 @@ export class Enemy {
     isAlive = true;
     damage = 10;
 
-
+    // Status Effect Timers
     isIgnited = false;
     igniteDamage = 0;
     igniteTimer = 0;
 
     isFrozen = false;
     frozenTimer = 0;
+
+    isSlowed = false;
+    slowTimer = 0;
+    slowFactor = 0.5;
+
+    isVoided = false;
+    voidTimer = 0;
 
     chainHit = false;
 
@@ -49,7 +55,6 @@ export class Enemy {
     private chainHitMaxChains = 0;
     private chainHitDamage = 0;
     private chainHitRange = 0;
-
 
     private isChromaSentinel = false;
     private colorShiftTimer = 0;
@@ -75,7 +80,7 @@ export class Enemy {
         }
     }
 
-    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem) {
+    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem, vortexes: {pos: Vec2, radius: number, strength: number}[]) {
         if (!this.isAlive) return;
 
         if (this.activePunishment) {
@@ -85,26 +90,18 @@ export class Enemy {
             }
         }
 
-        if (this.isFrozen) {
-            this.frozenTimer--;
-            if (this.frozenTimer <= 0) {
-                this.isFrozen = false;
-                this.speed = this.baseSpeed;
-            }
+        this.handleStatusEffects();
 
+        if (this.isFrozen) {
             return;
         }
 
-        if (this.isIgnited) {
-            this.igniteTimer--;
-            if (this.igniteTimer % 30 === 0) {
-                this.health -= this.igniteDamage;
-                if (this.health <= 0) {
-                    this.isAlive = false;
-                }
-            }
-            if (this.igniteTimer <= 0) {
-                this.isIgnited = false;
+        for (const vortex of vortexes) {
+            const distVec = vortex.pos.sub(this.pos);
+            const dist = distVec.magnitude();
+            if (dist < vortex.radius) {
+                const force = distVec.normalize().scale(vortex.strength * (1 - dist / vortex.radius));
+                this.pos = this.pos.add(force);
             }
         }
 
@@ -112,7 +109,6 @@ export class Enemy {
             this.applyChainLightning(this.chainHitMaxChains, this.chainHitDamage, this.chainHitRange, allEnemies, particles, this);
             this.chainHit = false;
         }
-
 
         if (this.isChromaSentinel) {
             if (this.colorShiftImmunityTimer > 0) {
@@ -129,53 +125,74 @@ export class Enemy {
             }
         }
 
-
         const direction = player.pos.sub(this.pos).normalize();
         this.pos = this.pos.add(direction.scale(this.speed));
+    }
+    
+    private handleStatusEffects() {
+        if (this.frozenTimer > 0) {
+            this.frozenTimer--;
+            if (this.frozenTimer <= 0) this.isFrozen = false;
+        }
+        if (this.igniteTimer > 0) {
+            this.igniteTimer--;
+            if (this.igniteTimer % 30 === 0) {
+                this.health -= this.igniteDamage;
+                if (this.health <= 0) this.isAlive = false;
+            }
+            if (this.igniteTimer <= 0) this.isIgnited = false;
+        }
+        if (this.voidTimer > 0) {
+            this.voidTimer--;
+            if (this.voidTimer <= 0) this.isVoided = false;
+        }
+        if (this.slowTimer > 0) {
+            this.slowTimer--;
+            if (this.slowTimer <= 0) this.isSlowed = false;
+        }
+
+        let currentSpeed = this.baseSpeed;
+        if (this.isFrozen) currentSpeed *= 0;
+        else if (this.isSlowed) currentSpeed *= this.slowFactor;
+        
+        if (this.activePunishment === PunishmentType.SPEED_BOOST) {
+            currentSpeed *= 1.5;
+        }
+        this.speed = currentSpeed;
     }
 
     draw(ctx: CanvasRenderingContext2D) {
         if (!this.isAlive) return;
 
         ctx.save();
-
-
-        if (this.isFrozen) {
-            ctx.shadowColor = '#4d94ff';
-            ctx.shadowBlur = 15;
-        } else if (this.isReflecting) {
-            ctx.shadowColor = '#7DF9FF';
-            ctx.shadowBlur = 20;
-        } else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) {
-            ctx.shadowColor = 'white';
-            ctx.shadowBlur = 15 + Math.abs(Math.sin(this.colorShiftImmunityTimer / 10) * 10);
-        }
-
+        if (this.isFrozen) ctx.shadowColor = '#4d94ff';
+        else if (this.isReflecting) ctx.shadowColor = '#7DF9FF';
+        else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) ctx.shadowColor = 'white';
+        else if (this.isVoided) ctx.shadowColor = '#d966ff';
+        ctx.shadowBlur = 15;
 
         ctx.fillStyle = this.hexColor;
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
 
-
         drawShapeForColor(ctx, this.pos, this.radius, this.color, 'black');
 
-        if (this.isFrozen) {
-            ctx.strokeStyle = "rgba(173, 216, 230, 0.8)";
-            ctx.lineWidth = 3;
-            ctx.stroke();
-        } else if (this.isReflecting) {
-            ctx.strokeStyle = "rgba(125, 249, 255, 0.8)";
-            ctx.lineWidth = 4;
-            ctx.stroke();
-        } else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) {
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
-            ctx.lineWidth = 3;
-            ctx.stroke();
+        if (this.isFrozen) ctx.strokeStyle = "rgba(173, 216, 230, 0.8)";
+        else if (this.isReflecting) ctx.strokeStyle = "rgba(125, 249, 255, 0.8)";
+        else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+        else if (this.isVoided) ctx.strokeStyle = "rgba(217, 102, 255, 0.8)";
+        if (this.isFrozen || this.isReflecting || (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) || this.isVoided) {
+             ctx.lineWidth = 3;
+             ctx.stroke();
         }
-
+        if (this.isSlowed) {
+            ctx.fillStyle = "rgba(102, 255, 140, 0.3)";
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, this.radius + 3, 0, Math.PI*2);
+            ctx.fill();
+        }
         ctx.restore();
-
 
         if (this.health < this.maxHealth) {
             const barWidth = this.radius * 2;
@@ -185,12 +202,10 @@ export class Enemy {
 
             ctx.fillStyle = '#333';
             ctx.fillRect(barX, barY, barWidth, barHeight);
-
             const healthPercentage = this.health / this.maxHealth;
             ctx.fillStyle = this.isIgnited ? '#ffc266' : 'red';
             ctx.fillRect(barX, barY, barWidth * healthPercentage, barHeight);
         }
-
 
         if (this.activePunishment) {
             ctx.font = 'bold 12px "Space Grotesk"';
@@ -206,18 +221,16 @@ export class Enemy {
         }
     }
 
-    takeDamage(amount: number, damageColor: GameColor): boolean {
+    takeDamage(amount: number, damageColor: GameColor): { hit: boolean, killed: boolean, damageDealt: number } {
         const damageColorDetail = COLOR_DETAILS[damageColor];
-
 
         if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) {
             this.soundManager.play(SoundType.EnemyHit, 0.5);
-            return false;
+            return { hit: false, killed: false, damageDealt: 0 };
         }
 
-        const isEffectiveHit = damageColor === this.color ||
-                               (damageColorDetail.components?.includes(this.color) ?? false);
-
+        const isEffectiveHit = this.isVoided || damageColor === this.color || (damageColorDetail.components?.includes(this.color) ?? false);
+        
         if (isEffectiveHit) {
             this.health -= amount;
             if (this.health <= 0) {
@@ -227,7 +240,7 @@ export class Enemy {
             if (this.isReflecting) {
                 this.deactivatePunishment();
             }
-            return true;
+            return { hit: true, killed: !this.isAlive, damageDealt: amount };
         } else {
             if (!this.isReflecting) {
                 this.wrongHitCounter++;
@@ -236,7 +249,7 @@ export class Enemy {
                     this.wrongHitCounter = 0;
                 }
             }
-            return false;
+            return { hit: false, killed: false, damageDealt: 0 };
         }
     }
 
@@ -256,7 +269,17 @@ export class Enemy {
     applyFreeze(duration: number) {
         this.isFrozen = true;
         this.frozenTimer = duration;
-        this.speed *= 0.5;
+    }
+
+    applySlow(duration: number, factor: number) {
+        this.isSlowed = true;
+        this.slowTimer = Math.max(this.slowTimer, duration);
+        this.slowFactor = factor;
+    }
+    
+    applyVoid(duration: number) {
+        this.isVoided = true;
+        this.voidTimer = duration;
     }
 
     applyChainLightning(maxChains: number, damage: number, range: number, allEnemies: Enemy[], particles: ParticleSystem, originEnemy: Enemy) {
@@ -299,25 +322,20 @@ export class Enemy {
 
         switch (randomPunishment) {
             case PunishmentType.SPEED_BOOST:
-                this.speed = Math.min(this.speed * 1.5, this.baseSpeed * 2);
                 this.soundManager.play(SoundType.EnemySpeedBoost);
                 break;
             case PunishmentType.DAMAGE_BOOST:
                 this.damage = Math.min(this.damage * 2, 40);
-
                 break;
             case PunishmentType.SPLIT:
                  if (this.radius > 10 && this.onSplit) {
                     this.isAlive = false;
-
                     const newRadius = this.radius * 0.7;
                     const newHealth = Math.round(this.maxHealth * 0.6);
                     const newSpeed = this.speed * 1.1;
                     const newPoints = Math.round(this.points * 0.5);
-
                     const enemy1 = new Enemy(this.pos.x - 10, this.pos.y, this.color, newRadius, newHealth, newSpeed, newPoints, this.soundManager);
                     const enemy2 = new Enemy(this.pos.x + 10, this.pos.y, this.color, newRadius, newHealth, newSpeed, newPoints, this.soundManager);
-
                     this.onSplit(enemy1);
                     this.onSplit(enemy2);
                     this.soundManager.play(SoundType.EnemySplit);
@@ -334,9 +352,6 @@ export class Enemy {
         if (!this.activePunishment) return;
 
         switch (this.activePunishment) {
-            case PunishmentType.SPEED_BOOST:
-                this.speed = this.baseSpeed;
-                break;
             case PunishmentType.DAMAGE_BOOST:
                 this.damage = 10;
                 break;

@@ -23,7 +23,7 @@ export interface Upgrade {
 }
 
 export const ALL_UPGRADES: Upgrade[] = [
-
+    // Player Stat Upgrades
     {
         id: 'max-health',
         name: 'Vitality Boost',
@@ -60,8 +60,56 @@ export const ALL_UPGRADES: Upgrade[] = [
             player.movementSpeedMultiplier *= 1.05;
         }
     },
+    {
+        id: 'vampirism',
+        name: 'Vampirism',
+        description: 'Heal for a small percentage of damage dealt.',
+        type: UpgradeType.PLAYER_STAT,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => level * 0.02,
+        apply: (player) => {
+            player.lifestealPercent += 0.02; // 2% lifesteal per level
+        }
+    },
+    {
+        id: 'resilience',
+        name: 'Resilience',
+        description: 'Reduces all incoming damage by a flat amount.',
+        type: UpgradeType.PLAYER_STAT,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.flatDamageReduction += 1;
+        }
+    },
+    {
+        id: 'adrenaline-rush',
+        name: 'Adrenaline Rush',
+        description: 'After taking damage, gain a short burst of speed and fire rate.',
+        type: UpgradeType.PLAYER_STAT,
+        color: null,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.adrenalineRushLevel += 1;
+        }
+    },
+    {
+        id: 'kinetic-shielding',
+        name: 'Kinetic Shielding',
+        description: 'Dashing grants a temporary shield that absorbs one hit.',
+        type: UpgradeType.PLAYER_STAT,
+        color: null,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.kineticShieldLevel += 1;
+        }
+    },
 
-
+    // General Upgrades
     {
         id: 'bullet-damage',
         name: 'Power Shot',
@@ -110,9 +158,56 @@ export const ALL_UPGRADES: Upgrade[] = [
             player.accuracyModifier *= 0.85;
         }
     },
+    {
+        id: 'fragment-duplication',
+        name: 'Fragment Duplication',
+        description: 'Enemies have a small chance to drop an extra fragment.',
+        type: UpgradeType.GENERAL,
+        color: null,
+        getMaxLevel: () => 3,
+        getValue: (level) => level * 0.05,
+        apply: (player) => {
+            player.fragmentDuplicationChance += 0.05; // 5% chance per level
+        }
+    },
+    {
+        id: 'punishment-reversal',
+        name: 'Punishment Reversal',
+        description: 'Wrong hits build a meter. When full, the next correct hit deals massive bonus damage.',
+        type: UpgradeType.GENERAL,
+        color: null,
+        getMaxLevel: () => 3,
+        getValue: (level) => 50 * level,
+        apply: (player) => {
+            player.punishmentReversalLevel += 1;
+        }
+    },
+    {
+        id: 'bullet-penetration',
+        name: 'Bullet Penetration',
+        description: 'Your bullets have a chance to pierce through enemies.',
+        type: UpgradeType.GENERAL,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.bulletPenetrationLevel += 1;
+        }
+    },
+    {
+        id: 'explosive-finish',
+        name: 'Explosive Finish',
+        description: 'Enemies have a chance to explode on death, damaging nearby foes.',
+        type: UpgradeType.GENERAL,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.explosiveFinishLevel += 1;
+        }
+    },
 
-
-
+    // Gun-Specific Upgrades
     {
         id: 'ice-spiker',
         name: 'Ice Spiker',
@@ -122,6 +217,18 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => level,
         apply: (player, level) => { player.iceSpikerLevel += 1; }
+    },
+    {
+        id: 'gravity-well',
+        name: 'Gravity Well',
+        description: 'Blue bullets create a vortex on hit, pulling in nearby enemies.',
+        type: UpgradeType.GUN,
+        color: GameColor.BLUE,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.gravityWellLevel += 1;
+        }
     },
     {
         id: 'chain-lightning',
@@ -134,6 +241,18 @@ export const ALL_UPGRADES: Upgrade[] = [
         apply: (player, level) => { player.chainLightningLevel += 1; }
     },
     {
+        id: 'ricochet-rounds',
+        name: 'Ricochet Rounds',
+        description: 'Yellow bullets bounce off surfaces and enemies.',
+        type: UpgradeType.GUN,
+        color: GameColor.YELLOW,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.ricochetRoundsLevel += 1;
+        }
+    },
+    {
         id: 'ignite',
         name: 'Ignite',
         description: 'Red bullets set enemies on fire, damage and duration increase per level.',
@@ -142,5 +261,53 @@ export const ALL_UPGRADES: Upgrade[] = [
         getMaxLevel: () => 5,
         getValue: (level) => level,
         apply: (player, level) => { player.igniteLevel += 1; }
+    },
+    {
+        id: 'seeking-shards',
+        name: 'Seeking Shards',
+        description: 'Red bullets slightly home-in on nearby targets.',
+        type: UpgradeType.GUN,
+        color: GameColor.RED,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.seekingShardsLevel += 1;
+        }
+    },
+    {
+        id: 'growth-catalyst',
+        name: 'Growth Catalyst',
+        description: 'Green bullets leave a trail that slows enemies.',
+        type: UpgradeType.GUN,
+        color: GameColor.GREEN,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.slowingTrailLevel += 1;
+        }
+    },
+    {
+        id: 'fission-catalyst',
+        name: 'Fission Catalyst',
+        description: 'Orange bullets can split into their primary components on impact.',
+        type: UpgradeType.GUN,
+        color: GameColor.ORANGE,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.fissionLevel += 1;
+        }
+    },
+    {
+        id: 'void-catalyst',
+        name: 'Void Catalyst',
+        description: 'Purple bullets can strip an enemy\'s color, making them vulnerable to all primary colors.',
+        type: UpgradeType.GUN,
+        color: GameColor.PURPLE,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.voidLevel += 1;
+        }
     }
 ];

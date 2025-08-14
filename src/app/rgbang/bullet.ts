@@ -1,6 +1,6 @@
-
 import { Vec2, drawShapeForColor } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
+import { Enemy } from './enemy';
 
 export class Bullet {
     pos: Vec2;
@@ -10,7 +10,19 @@ export class Bullet {
     hexColor: string;
     damage = 10;
     isFromBoss: boolean;
-    
+
+    // Upgrade properties
+    public penetrationsLeft = 0;
+    public ricochetsLeft = 0;
+    public isSeeking = false;
+    public isSlowing = false;
+    public isFission = false;
+    public isVoid = false;
+    public hitEnemies: Set<Enemy> = new Set();
+    public trailPoints: Vec2[] = [];
+
+    private seekForce = 0.3;
+
     constructor(pos: Vec2, direction: Vec2, color: GameColor, isFromBoss = false) {
         this.pos = new Vec2(pos.x, pos.y);
         this.vel = direction.normalize().scale(isFromBoss ? 4 : 10);
@@ -20,22 +32,71 @@ export class Bullet {
         if(isFromBoss) this.radius = 8;
     }
 
-    update() {
+    update(enemies?: Enemy[], canvasWidth?: number, canvasHeight?: number) {
+        if (this.isSlowing) {
+            this.trailPoints.push(this.pos.add(new Vec2(0,0)));
+            if (this.trailPoints.length > 10) {
+                this.trailPoints.shift();
+            }
+        }
+
+        if (this.isSeeking && enemies && enemies.length > 0) {
+            let closestEnemy: Enemy | null = null;
+            let minDistance = Infinity;
+
+            for (const enemy of enemies) {
+                if (!enemy.isAlive) continue;
+                const dist = this.pos.sub(enemy.pos).magnitude();
+                if (dist < minDistance && dist < 250) {
+                    minDistance = dist;
+                    closestEnemy = enemy;
+                }
+            }
+
+            if (closestEnemy) {
+                const desiredDirection = closestEnemy.pos.sub(this.pos).normalize();
+                const steer = desiredDirection.sub(this.vel.normalize()).normalize().scale(this.seekForce);
+                this.vel = this.vel.add(steer).normalize().scale(this.vel.magnitude());
+            }
+        }
+
         this.pos = this.pos.add(this.vel);
+
+        if (this.ricochetsLeft > 0 && canvasWidth && canvasHeight) {
+            if (this.pos.x < this.radius || this.pos.x > canvasWidth - this.radius) {
+                this.vel.x *= -1;
+                this.ricochetsLeft--;
+                this.pos.x = Math.max(this.radius, Math.min(canvasWidth - this.radius, this.pos.x));
+            }
+            if (this.pos.y < this.radius || this.pos.y > canvasHeight - this.radius) {
+                this.vel.y *= -1;
+                this.ricochetsLeft--;
+                this.pos.y = Math.max(this.radius, Math.min(canvasHeight - this.radius, this.pos.y));
+            }
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
         ctx.save();
-        
-        // Main bullet body
+        if (this.isSlowing && this.trailPoints.length > 1) {
+            ctx.beginPath();
+            ctx.moveTo(this.trailPoints[0].x, this.trailPoints[0].y);
+            for (let i = 1; i < this.trailPoints.length; i++) {
+                ctx.lineTo(this.trailPoints[i].x, this.trailPoints[i].y);
+            }
+            ctx.strokeStyle = "rgba(102, 255, 140, 0.3)";
+            ctx.lineWidth = 10;
+            ctx.lineCap = "round";
+            ctx.stroke();
+        }
+
         ctx.fillStyle = this.hexColor;
         ctx.shadowColor = this.hexColor;
         ctx.shadowBlur = 10;
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
-        
-        // Shape Overlay
+
         drawShapeForColor(ctx, this.pos, this.radius, this.color, 'white');
 
         ctx.restore();

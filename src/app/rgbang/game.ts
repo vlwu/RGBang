@@ -4,8 +4,8 @@ import { Enemy, PunishmentType } from './enemy';
 import { Boss } from './boss';
 import { UI } from './ui';
 import { ParticleSystem } from './particle';
-import { circleCollision, Vec2 } from './utils';
-import { getRandomElement, PRIMARY_COLORS, GameColor, ALL_COLORS } from './color';
+import { circleCollision, Vec2, distance } from './utils';
+import { getRandomElement, PRIMARY_COLORS, GameColor, ALL_COLORS, COLOR_DETAILS } from './color';
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
@@ -150,6 +150,9 @@ export class Game {
     public isRunning = false;
     private isBossSpawning = false;
 
+    // New upgrade-related entities
+    private vortexes: {pos: Vec2, radius: number, strength: number, lifespan: number}[] = [];
+
     public currentWave = 0;
     private waveInProgress = false;
     private fragmentsCollectedThisWave: number = 0;
@@ -241,6 +244,7 @@ export class Game {
         this.enemies = [];
         this.bullets = [];
         this.fragments = [];
+        this.vortexes = [];
         this.isBossSpawning = false;
         this.boss = null;
         this.fragmentsCollectedThisWave = 0;
@@ -301,10 +305,14 @@ export class Game {
 
         this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height, isGamePaused);
         this.particles.update();
+        this.vortexes.forEach((v, i) => {
+            v.lifespan--;
+            if (v.lifespan <= 0) this.vortexes.splice(i, 1);
+        });
 
         if (!isGamePaused) {
-            this.bullets.forEach(bullet => bullet.update());
-            this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
+            this.bullets.forEach(bullet => bullet.update(this.enemies, this.canvas.width, this.canvas.height));
+            this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles, this.vortexes));
             this.boss?.update();
             this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
 
@@ -339,9 +347,38 @@ export class Game {
         }
     }
 
-    private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
-        const chainRange = 100 + this.player.chainLightningLevel * 20;
+    private dealAreaDamage(pos: Vec2, radius: number, damage: number, color: GameColor) {
+        this.particles.add(pos, color, 40);
+        this.enemies.forEach(enemy => {
+            if (enemy.isAlive && distance({pos}, enemy) < radius + enemy.radius) {
+                const result = enemy.takeDamage(damage, color);
+                if (result.hit && this.player.lifestealPercent > 0) {
+                    this.player.heal(result.damageDealt * this.player.lifestealPercent);
+                }
+            }
+        });
+    }
 
+    private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
+        // This is called on a successful hit
+        if (bullet.isVoid) {
+            enemy.applyVoid(120 + this.player.voidLevel * 60);
+        }
+        if (bullet.isSlowing) {
+            this.enemies.forEach(e => {
+                if(distance(e, {pos: bullet.pos}) < 50) {
+                     e.applySlow(120 + this.player.slowingTrailLevel * 30, 0.5);
+                }
+            });
+        }
+        if (this.player.gravityWellLevel > 0 && bullet.color === GameColor.BLUE) {
+            this.vortexes.push({
+                pos: enemy.pos,
+                radius: 80 + this.player.gravityWellLevel * 20,
+                strength: 0.5 + this.player.gravityWellLevel * 0.2,
+                lifespan: 180
+            });
+        }
         if (this.player.igniteLevel > 0 && bullet.color === GameColor.RED) {
             const igniteDamage = 1 + this.player.igniteLevel;
             const igniteDuration = 120 + this.player.igniteLevel * 30;
@@ -352,6 +389,7 @@ export class Game {
             enemy.applyFreeze(freezeDuration);
         }
         if (this.player.chainLightningLevel > 0 && bullet.color === GameColor.YELLOW) {
+            const chainRange = 100 + this.player.chainLightningLevel * 20;
             const maxChains = this.player.chainLightningLevel;
             const chainDamage = 5 + this.player.chainLightningLevel;
             enemy.triggerChainLightning(maxChains, chainDamage, chainRange);
@@ -368,69 +406,88 @@ export class Game {
                     this.player.takeDamage(bullet.damage);
                     this.particles.add(bullet.pos, bullet.color, 10);
                     this.bullets.splice(i, 1);
-                    bulletRemoved = true;
                 }
                 continue;
             }
 
             for (let j = this.enemies.length - 1; j >= 0; j--) {
                 const enemy = this.enemies[j];
+                if (!enemy.isAlive || bullet.hitEnemies.has(enemy)) continue;
 
-                if (enemy.isAlive && circleCollision(bullet, enemy)) {
-                    this.particles.add(bullet.pos, bullet.color, 10);
+                if (circleCollision(bullet, enemy)) {
+                    if (bullet.penetrationsLeft === 0) bulletRemoved = true;
+                    else bullet.penetrationsLeft--;
+                    bullet.hitEnemies.add(enemy);
 
-                    const hitSuccess = enemy.takeDamage(bullet.damage, bullet.color);
+                    let damageToDeal = bullet.damage;
+                    const reversalDamage = this.player.tryPunishmentReversal();
+                    if (reversalDamage > 0) {
+                        damageToDeal += reversalDamage;
+                        this.particles.add(this.player.pos, GameColor.YELLOW, 30);
+                    }
+                    const result = enemy.takeDamage(damageToDeal, bullet.color);
 
-                    if (!hitSuccess && enemy.activePunishment === PunishmentType.REFLECT_BULLET) {
-                        this.soundManager.play(SoundType.EnemyReflect, 0.7);
-                        this.particles.add(bullet.pos, GameColor.BLUE, 10);
-
-                        const reflectedDirection = this.player.pos.sub(bullet.pos).normalize();
-                        const reflectedBullet = new Bullet(enemy.pos, reflectedDirection, bullet.color, true);
-                        reflectedBullet.damage = bullet.damage;
-                        this.createBullet(reflectedBullet);
-                    } else if (hitSuccess) {
+                    if (result.hit) {
                         this.soundManager.play(SoundType.EnemyHit);
                         this.applySpecialEffects(bullet, enemy);
-                        if (!enemy.isAlive) {
-                           this.score += enemy.points * this.player.scoreMultiplier;
-                           this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
+                        if (this.player.lifestealPercent > 0) {
+                            this.player.heal(result.damageDealt * this.player.lifestealPercent);
+                        }
+                        if (bullet.isFission && Math.random() < this.player.fissionLevel * 0.15) {
+                            const [c1, c2] = COLOR_DETAILS[bullet.color].components!;
+                            const dir1 = new Vec2(Math.random() - 0.5, Math.random() - 0.5);
+                            const dir2 = new Vec2(Math.random() - 0.5, Math.random() - 0.5);
+                            this.createBullet(new Bullet(enemy.pos, dir1, c1));
+                            this.createBullet(new Bullet(enemy.pos, dir2, c2));
+                        }
+                    } else {
+                        this.player.addPunishmentMeter();
+                        if (enemy.activePunishment === PunishmentType.REFLECT_BULLET) {
+                            this.soundManager.play(SoundType.EnemyReflect, 0.7);
+                            const reflectedDirection = this.player.pos.sub(bullet.pos).normalize();
+                            this.createBullet(new Bullet(enemy.pos, reflectedDirection, bullet.color, true));
                         }
                     }
-
-                    this.bullets.splice(i, 1);
-                    bulletRemoved = true;
-                    break;
+                    
+                    if (result.killed) {
+                        this.score += enemy.points * this.player.scoreMultiplier;
+                        this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
+                        if (this.player.fragmentDuplicationChance > 0 && Math.random() < this.player.fragmentDuplicationChance) {
+                             this.fragments.push(new PrismFragment(enemy.pos.x + 10, enemy.pos.y, enemy.color));
+                        }
+                        if (this.player.explosiveFinishLevel > 0 && Math.random() < this.player.explosiveFinishLevel * 0.1) {
+                            this.dealAreaDamage(enemy.pos, 50 + this.player.explosiveFinishLevel * 10, 10 + this.player.explosiveFinishLevel * 5, enemy.color);
+                        }
+                    }
+                    
+                    this.particles.add(bullet.pos, bullet.color, 10);
+                    if(bulletRemoved) break;
                 }
             }
-            if (bulletRemoved) continue;
-
+            if (bulletRemoved) {
+                this.bullets.splice(i, 1);
+                continue;
+            }
 
             if (this.boss && this.boss.isAlive && circleCollision(bullet, this.boss)) {
                 this.particles.add(bullet.pos, bullet.color, 15);
                 this.boss.takeDamage(bullet.damage, bullet.color);
                 this.bullets.splice(i, 1);
-                continue;
             }
         }
-
 
         for (const enemy of this.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(enemy.damage);
                 enemy.isAlive = false;
                 this.particles.add(enemy.pos, enemy.color, 10);
-
             }
         }
-
 
         if (this.boss && this.boss.isAlive && this.player.isAlive && circleCollision(this.player, this.boss)) {
             this.player.takeDamage(this.boss.damage);
             this.player.applyKnockback(this.boss.pos, 15);
-
         }
-
 
         for (let i = this.fragments.length - 1; i >= 0; i--) {
             const fragment = this.fragments[i];
@@ -443,13 +500,10 @@ export class Game {
             }
         }
 
-
-
         for (let i = 0; i < this.enemies.length; i++) {
             for (let j = i + 1; j < this.enemies.length; j++) {
                 const enemy1 = this.enemies[i];
                 const enemy2 = this.enemies[j];
-
                 if (enemy1.isAlive && enemy2.isAlive && circleCollision(enemy1, enemy2)) {
                     this.resolveEnemyCollision(enemy1, enemy2);
                 }
@@ -467,13 +521,11 @@ export class Game {
             }
         });
 
-
         this.enemies = this.enemies.filter(e => e.isAlive);
         this.fragments = this.fragments.filter(f => f.isAlive);
 
-
         this.bullets = this.bullets.filter((bullet) =>
-            !(bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height)
+            (bullet.pos.x >= 0 && bullet.pos.x <= this.canvas.width && bullet.pos.y >= 0 && bullet.pos.y <= this.canvas.height) || bullet.ricochetsLeft > 0
         );
     }
 
@@ -489,14 +541,21 @@ export class Game {
         }
     }
 
-
-
     public draw(currentWaveToDisplay: number, currentWaveCountdown: number, isBetweenWaves: boolean) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.particles.draw(this.ctx);
+        this.vortexes.forEach(v => {
+            this.ctx.save();
+            const pulse = Math.abs(Math.sin(Date.now() / 200 + v.pos.x));
+            this.ctx.fillStyle = `rgba(120, 80, 220, ${0.1 + pulse * 0.2})`;
+            this.ctx.beginPath();
+            this.ctx.arc(v.pos.x, v.pos.y, v.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.restore();
+        });
         this.boss?.draw(this.ctx);
         this.enemies.forEach(e => e.draw(this.ctx));
         this.fragments.forEach(p => p.draw(this.ctx));

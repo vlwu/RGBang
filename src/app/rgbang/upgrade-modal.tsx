@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Upgrade } from "./upgrades";
 import { GameColor, COLOR_DETAILS } from './color';
 import { PlayerUpgradeData, UpgradeProgress } from './upgrade-data';
-import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair, Award } from "lucide-react";
+import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair, Award, HeartPulse, ShieldCheck, Sunrise, ShieldPlus, Copy, RefreshCcw, ArrowRightFromLine, Bomb, CircleDot, Reply, LocateFixed, Sprout, GitFork, Eraser } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { soundManager, SoundType } from './sound-manager';
 
@@ -40,6 +40,20 @@ export const iconMap: { [key: string]: React.ElementType } = {
     'ice-spiker': Star,
     'fallback-heal': PlusCircle,
     'fallback-score': Award,
+    'vampirism': HeartPulse,
+    'resilience': ShieldCheck,
+    'adrenaline-rush': Sunrise,
+    'kinetic-shielding': ShieldPlus,
+    'fragment-duplication': Copy,
+    'punishment-reversal': RefreshCcw,
+    'bullet-penetration': ArrowRightFromLine,
+    'explosive-finish': Bomb,
+    'gravity-well': CircleDot,
+    'ricochet-rounds': Reply,
+    'seeking-shards': LocateFixed,
+    'growth-catalyst': Sprout,
+    'fission-catalyst': GitFork,
+    'void-catalyst': Eraser,
 };
 
 

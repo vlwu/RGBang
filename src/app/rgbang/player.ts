@@ -23,7 +23,7 @@ export class Player {
     public isRadialMenuOpen = false;
     private soundManager: SoundManager;
 
-
+    // Base Stat Multipliers
     public movementSpeedMultiplier = 1;
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
@@ -31,19 +31,39 @@ export class Player {
     public accuracyModifier = 1;
     public scoreMultiplier = 1;
 
-
+    // Flat Stat Increases
     public flatHealthIncrease = 0;
+    public flatDamageReduction = 0;
 
-
+    // Gun-Specific Upgrades
     public chainLightningLevel = 0;
     public igniteLevel = 0;
     public iceSpikerLevel = 0;
+    public seekingShardsLevel = 0;
+    public ricochetRoundsLevel = 0;
+    public gravityWellLevel = 0;
+    public slowingTrailLevel = 0;
+    public fissionLevel = 0;
+    public voidLevel = 0;
+
+    // Special Mechanic Upgrades
+    public lifestealPercent = 0;
+    public adrenalineRushLevel = 0;
+    public kineticShieldLevel = 0;
+    public fragmentDuplicationChance = 0;
+    public punishmentReversalLevel = 0;
+    public bulletPenetrationLevel = 0;
+    public explosiveFinishLevel = 0;
+
+    // Live State Properties for Upgrades
+    public adrenalineTimer = 0;
+    public kineticShieldHits = 0;
+    public punishmentReversalMeter = 0;
+    private readonly PUNISHMENT_METER_MAX = 10;
 
     private baseBulletSpread = 0.15;
-
     private shootCooldown = 10;
     private shootTimer = 0;
-
 
     private isDashing = false;
     private dashTimer = 0;
@@ -71,6 +91,7 @@ export class Player {
 
         if (this.shootTimer > 0) this.shootTimer--;
         if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
+        if (this.adrenalineTimer > 0) this.adrenalineTimer--;
 
         this.handleColorSelection(input, createBullet);
 
@@ -99,17 +120,18 @@ export class Player {
                 this.availableColors.delete(components[1]);
             }
         } else {
-
              this.availableColors = new Set(ALL_COLORS);
         }
     }
 
     private handleMovement(input: InputHandler, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
-
         if (input.isKeyDown(input.keybindings.dash) && this.dashCooldownTimer === 0) {
             this.isDashing = true;
             this.dashTimer = this.dashDuration;
             this.dashCooldownTimer = this.getDashCooldown();
+            if (this.kineticShieldLevel > 0) {
+                this.kineticShieldHits = this.kineticShieldLevel;
+            }
             this.soundManager.play(SoundType.PlayerDash);
             this.knockbackVelocity = new Vec2(0, 0);
         }
@@ -130,9 +152,7 @@ export class Player {
             if (this.dashTimer <= 0) {
                 this.isDashing = false;
             }
-
             particleSystem.addDashParticle(this.pos);
-
         }
 
         if (input.isKeyDown(input.keybindings.up)) moveDir.y -= 1;
@@ -144,13 +164,11 @@ export class Player {
             this.pos = this.pos.add(moveDir.normalize().scale(currentSpeed));
         }
 
-
         this.pos.x = Math.max(this.radius, Math.min(canvasWidth - this.radius, this.pos.x));
         this.pos.y = Math.max(this.radius, Math.min(canvasHeight - this.radius, this.pos.y));
     }
 
     private handleColorSelection(input: InputHandler, createBullet: (bullet: Bullet) => void) {
-
         if (this.radialMenu.active && input.wasKeyReleased(input.keybindings.comboRadial)) {
             const selectedColor = this.radialMenu.getSelectedColor();
             if(selectedColor) {
@@ -167,7 +185,6 @@ export class Player {
             return;
         }
 
-
         if (input.isKeyDown(input.keybindings.comboRadial) && !this.radialMenu.active) {
             this.isRadialMenuOpen = true;
             this.radialMenu.open();
@@ -177,7 +194,6 @@ export class Player {
         if (this.isRadialMenuOpen) return;
 
         let primaryColorSelectedThisFrame: GameColor | null = null;
-
         if (input.isKeyDown(input.keybindings.primary1) && this.availableColors.has(GameColor.RED)) {
             primaryColorSelectedThisFrame = GameColor.RED;
         } else if (input.isKeyDown(input.keybindings.primary2) && this.availableColors.has(GameColor.YELLOW)) {
@@ -203,9 +219,31 @@ export class Player {
         }
     }
 
+    public heal(amount: number) {
+        this.health = Math.min(this.getMaxHealth(), this.health + amount);
+    }
+
     private applyBulletUpgrades(bullet: Bullet) {
         bullet.damage *= this.bulletDamageMultiplier;
 
+        if (this.bulletPenetrationLevel > 0) {
+            bullet.penetrationsLeft = this.bulletPenetrationLevel;
+        }
+        if (this.ricochetRoundsLevel > 0 && bullet.color === GameColor.YELLOW) {
+            bullet.ricochetsLeft = this.ricochetRoundsLevel;
+        }
+        if (this.seekingShardsLevel > 0 && bullet.color === GameColor.RED) {
+            bullet.isSeeking = true;
+        }
+        if (this.slowingTrailLevel > 0 && bullet.color === GameColor.GREEN) {
+            bullet.isSlowing = true;
+        }
+        if (this.fissionLevel > 0 && bullet.color === GameColor.ORANGE) {
+            bullet.isFission = true;
+        }
+        if (this.voidLevel > 0 && bullet.color === GameColor.PURPLE) {
+            bullet.isVoid = true;
+        }
     }
 
     private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void) {
@@ -223,6 +261,18 @@ export class Player {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (this.kineticShieldHits > 0) {
+            ctx.save();
+            const pulse = Math.abs(Math.sin(Date.now() / 200));
+            ctx.strokeStyle = `rgba(125, 249, 255, ${0.5 + pulse * 0.5})`;
+            ctx.fillStyle = `rgba(125, 249, 255, ${0.1 + pulse * 0.2})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, this.radius + 8, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fill();
+            ctx.restore();
+        }
 
         if (this.isDashing) {
             ctx.save();
@@ -236,12 +286,10 @@ export class Player {
             ctx.restore();
         }
 
-
         ctx.fillStyle = '#E2E8F0';
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
-
 
         if (this.dashCooldownTimer > 0) {
             this.drawDashIndicator(ctx);
@@ -250,7 +298,6 @@ export class Player {
         if (this.radialMenu.active) {
             this.radialMenu.draw(ctx);
         } else {
-
             const input = InputHandler.getInstance();
             const aimDir = input.mousePos.sub(this.pos).normalize();
             const reticlePos = this.pos.add(aimDir.scale(this.radius + 10));
@@ -271,10 +318,8 @@ export class Player {
 
         const progress = 1 - (this.dashCooldownTimer / this.getDashCooldown());
 
-
         ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
         ctx.fillRect(indicatorX, indicatorY, indicatorWidth, indicatorHeight);
-
 
         const gradient = ctx.createLinearGradient(indicatorX, indicatorY, indicatorX + (indicatorWidth * progress), indicatorY);
         gradient.addColorStop(0, '#ff4d4d');
@@ -289,12 +334,40 @@ export class Player {
 
     takeDamage(amount: number) {
         if (this.isDashing) return;
-        this.health -= amount;
+
+        if (this.kineticShieldHits > 0) {
+            this.kineticShieldHits--;
+            this.soundManager.play(SoundType.EnemyReflect); // Re-use a shield sound
+            return;
+        }
+
+        const reducedAmount = Math.max(1, amount - this.flatDamageReduction);
+        this.health -= reducedAmount;
         this.soundManager.play(SoundType.PlayerDamage);
+
+        if (this.adrenalineRushLevel > 0) {
+            const duration = 120 + this.adrenalineRushLevel * 60; // 2s to 4s
+            this.adrenalineTimer = duration;
+        }
+
         if (this.health <= 0) {
             this.health = 0;
             this.isAlive = false;
         }
+    }
+
+    public addPunishmentMeter() {
+        if (this.punishmentReversalLevel === 0) return;
+        this.punishmentReversalMeter = Math.min(this.PUNISHMENT_METER_MAX, this.punishmentReversalMeter + 1);
+    }
+
+    public tryPunishmentReversal(): number {
+        if (this.punishmentReversalLevel > 0 && this.punishmentReversalMeter >= this.PUNISHMENT_METER_MAX) {
+            const bonusDamage = 50 * this.punishmentReversalLevel;
+            this.punishmentReversalMeter = 0;
+            return bonusDamage;
+        }
+        return 0;
     }
 
     applyKnockback(from: Vec2, force: number) {
@@ -312,7 +385,8 @@ export class Player {
     }
 
     public getSpeed(): number {
-        return this.baseSpeed * this.movementSpeedMultiplier;
+        const adrenalineBonus = this.adrenalineTimer > 0 ? 1 + this.adrenalineRushLevel * 0.15 : 1;
+        return this.baseSpeed * this.movementSpeedMultiplier * adrenalineBonus;
     }
 
     public getDashCooldown(): number {
@@ -320,7 +394,8 @@ export class Player {
     }
 
     public getShootCooldown(): number {
-        return Math.round(this.shootCooldown * this.shootCooldownModifier);
+        const adrenalineBonus = this.adrenalineTimer > 0 ? 1 - this.adrenalineRushLevel * 0.15 : 1;
+        return Math.round(this.shootCooldown * this.shootCooldownModifier * adrenalineBonus);
     }
 
     public getBulletSpread(): number {
