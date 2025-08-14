@@ -171,6 +171,8 @@ export class Game {
     private firstBossDefeated = false;
     public isRunning = false;
     private isBossSpawning = false;
+    private ricochetBulletsOnScreen = 0;
+    private readonly MAX_RICOCHET_BULLETS = 30;
 
     private vortexes: {pos: Vec2, radius: number, strength: number, lifespan: number}[] = [];
 
@@ -252,6 +254,12 @@ export class Game {
     }
 
     public createBullet = (bullet: Bullet) => {
+        if (bullet.isRicochet) {
+            if (this.ricochetBulletsOnScreen >= this.MAX_RICOCHET_BULLETS) {
+                return;
+            }
+            this.ricochetBulletsOnScreen++;
+        }
         const pooledBullet = this.bulletPool.get(bullet.pos, bullet.vel.normalize(), bullet.color, bullet.isFromBoss);
 
         pooledBullet.damage = bullet.damage;
@@ -261,6 +269,8 @@ export class Game {
         pooledBullet.isSlowing = bullet.isSlowing;
         pooledBullet.isFission = bullet.isFission;
         pooledBullet.isVoid = bullet.isVoid;
+        pooledBullet.lifespan = bullet.lifespan;
+        pooledBullet.isRicochet = bullet.isRicochet;
 
         this.bullets.push(pooledBullet);
     }
@@ -602,10 +612,11 @@ export class Game {
 
             if (bullet.isActive && (!isOutOfBounds || bullet.ricochetsLeft > 0)) {
                 activeBullets.push(bullet);
-            } else if (bullet.isActive) {
-                bullet.isActive = false;
-                this.bulletPool.release(bullet);
             } else {
+                if (bullet.isRicochet) {
+                    this.ricochetBulletsOnScreen = Math.max(0, this.ricochetBulletsOnScreen - 1);
+                }
+                bullet.isActive = false;
                 this.bulletPool.release(bullet);
             }
         }

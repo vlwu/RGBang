@@ -57,6 +57,8 @@ export class Player {
 
 
     public adrenalineTimer = 0;
+    private adrenalineCooldown = 0;
+    private readonly ADRENALINE_COOLDOWN_TIME = 600;
     public kineticShieldHits = 0;
     public punishmentReversalMeter = 0;
     private readonly PUNISHMENT_METER_MAX = 10;
@@ -92,6 +94,7 @@ export class Player {
         if (this.shootTimer > 0) this.shootTimer--;
         if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
         if (this.adrenalineTimer > 0) this.adrenalineTimer--;
+        if (this.adrenalineCooldown > 0) this.adrenalineCooldown--;
 
         this.handleColorSelection(input, createBullet);
 
@@ -231,6 +234,8 @@ export class Player {
         }
         if (this.ricochetRoundsLevel > 0 && bullet.color === GameColor.YELLOW) {
             bullet.ricochetsLeft = this.ricochetRoundsLevel;
+            bullet.lifespan /= 2;
+            bullet.isRicochet = true;
         }
         if (this.seekingShardsLevel > 0 && bullet.color === GameColor.RED) {
             bullet.isSeeking = true;
@@ -388,9 +393,10 @@ export class Player {
         this.health -= reducedAmount;
         this.soundManager.play(SoundType.PlayerDamage);
 
-        if (this.adrenalineRushLevel > 0) {
+        if (this.adrenalineRushLevel > 0 && this.adrenalineCooldown <= 0) {
             const duration = 120 + this.adrenalineRushLevel * 60;
             this.adrenalineTimer = duration;
+            this.adrenalineCooldown = this.ADRENALINE_COOLDOWN_TIME;
         }
 
         if (this.health <= 0) {
@@ -428,7 +434,7 @@ export class Player {
     }
 
     public getSpeed(): number {
-        const adrenalineBonus = this.adrenalineTimer > 0 ? 1 + this.adrenalineRushLevel * 0.15 : 1;
+        const adrenalineBonus = this.adrenalineTimer > 0 ? 1 + this.adrenalineRushLevel * 0.12 : 1;
         return this.baseSpeed * this.movementSpeedMultiplier * adrenalineBonus;
     }
 
@@ -437,7 +443,7 @@ export class Player {
     }
 
     public getShootCooldown(): number {
-        const adrenalineBonus = this.adrenalineTimer > 0 ? 1 - this.adrenalineRushLevel * 0.15 : 1;
+        const adrenalineBonus = this.adrenalineTimer > 0 ? 1 - this.adrenalineRushLevel * 0.12 : 1;
         return Math.round(this.shootCooldown * this.shootCooldownModifier * adrenalineBonus);
     }
 

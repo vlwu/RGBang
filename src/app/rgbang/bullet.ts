@@ -11,6 +11,8 @@ export class Bullet {
     damage = 10;
     isFromBoss: boolean;
     isActive = true;
+    public lifespan: number;
+    public isRicochet = false;
 
     public penetrationsLeft = 0;
     public ricochetsLeft = 0;
@@ -30,6 +32,7 @@ export class Bullet {
         this.hexColor = COLOR_DETAILS[color].hex;
         this.isFromBoss = isFromBoss;
         if(isFromBoss) this.radius = 8;
+        this.lifespan = isFromBoss ? 420 : 300;
     }
 
     reset(pos: Vec2, direction: Vec2, color: GameColor, isFromBoss = false) {
@@ -42,6 +45,8 @@ export class Bullet {
         this.radius = isFromBoss ? 8 : 5;
         this.damage = 10;
         this.isActive = true;
+        this.lifespan = isFromBoss ? 420 : 300;
+        this.isRicochet = false;
 
         this.penetrationsLeft = 0;
         this.ricochetsLeft = 0;
@@ -54,6 +59,12 @@ export class Bullet {
     }
 
     update(enemies?: Enemy[], canvasWidth?: number, canvasHeight?: number) {
+        this.lifespan--;
+        if (this.lifespan <= 0) {
+            this.isActive = false;
+            return;
+        }
+
         if (this.isSlowing) {
             this.trailPoints.push(this.pos.add(new Vec2(0,0)));
             if (this.trailPoints.length > 10) {
