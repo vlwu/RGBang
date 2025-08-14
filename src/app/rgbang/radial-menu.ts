@@ -1,4 +1,3 @@
-
 import { Vec2, drawShapeForColor } from "./utils";
 import { GameColor, COLOR_DETAILS, SECONDARY_COLORS } from "./color";
 
@@ -10,22 +9,22 @@ export class RadialMenu {
     private segmentAngle = (Math.PI * 2) / this.segments.length;
     private highlightedSegment: number | null = null;
     private availableColors: Set<GameColor> = new Set();
-    
+
     update(playerPos: Vec2, mousePos: Vec2, availableColors: Set<GameColor>) {
         if (!this.active) return;
         this.center = playerPos;
         this.availableColors = availableColors;
-        
+
         const relativeMousePos = mousePos.sub(this.center);
         const dist = relativeMousePos.magnitude();
 
-        if (dist > 20) { // Dead zone in the center
+        if (dist > 20) {
             let angle = Math.atan2(relativeMousePos.y, relativeMousePos.x);
             if (angle < 0) {
                 angle += Math.PI * 2;
             }
-            
-            // Offset the angle so the first segment starts at the top
+
+
             const correctedAngle = angle + this.segmentAngle / 2 + Math.PI / 2;
             const segmentIndex = Math.floor(correctedAngle / this.segmentAngle) % this.segments.length;
 
@@ -43,30 +42,47 @@ export class RadialMenu {
     draw(ctx: CanvasRenderingContext2D) {
         if (!this.active) return;
         ctx.save();
-        ctx.globalAlpha = 0.8;
 
         this.segments.forEach((color, i) => {
             const startAngle = i * this.segmentAngle - Math.PI / 2 - this.segmentAngle/2;
             const endAngle = (i + 1) * this.segmentAngle - Math.PI/2 - this.segmentAngle/2;
             const isAvailable = this.availableColors.has(color);
-            
+            const isHighlighted = i === this.highlightedSegment && isAvailable;
+
             ctx.beginPath();
             ctx.moveTo(this.center.x, this.center.y);
             ctx.arc(this.center.x, this.center.y, this.radius, startAngle, endAngle);
             ctx.closePath();
 
-            if (i === this.highlightedSegment && isAvailable) {
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+
+            if (isAvailable) {
                 ctx.fillStyle = COLOR_DETAILS[color].hex;
-                ctx.shadowColor = COLOR_DETAILS[color].hex;
-                ctx.shadowBlur = 20;
+                ctx.globalAlpha = isHighlighted ? 1.0 : 0.6;
+                if (isHighlighted) {
+                    ctx.shadowColor = COLOR_DETAILS[color].hex;
+                    ctx.shadowBlur = 20;
+                }
             } else {
-                ctx.fillStyle = isAvailable ? '#4A5568' : '#2D3748'; // Darker for unavailable
-                ctx.shadowColor = 'transparent';
-                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#2D3748';
+                ctx.globalAlpha = 0.5;
             }
             ctx.fill();
-            
-             // Draw shape inside the segment
+
+
+            ctx.shadowBlur = 0;
+            ctx.shadowColor = 'transparent';
+
+
+            if (isHighlighted) {
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+
+            ctx.globalAlpha = 1.0;
             const angle = i * this.segmentAngle - Math.PI / 2;
             const shapePos = new Vec2(
                 this.center.x + Math.cos(angle) * this.radius * 0.6,
@@ -76,17 +92,17 @@ export class RadialMenu {
 
         });
 
-        // Draw an indicator that the menu is open, instead of the timer
+
         const indicatorRadius = this.radius + 10;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.arc(this.center.x, this.center.y, indicatorRadius, 0, Math.PI * 2);
         ctx.stroke();
-        
+
         ctx.restore();
     }
-    
+
     getSelectedColor(): GameColor | null {
         if (this.highlightedSegment !== null) {
             const selected = this.segments[this.highlightedSegment];
@@ -96,7 +112,7 @@ export class RadialMenu {
         }
         return null;
     }
-    
+
     open() {
         this.active = true;
     }
