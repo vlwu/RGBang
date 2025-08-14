@@ -156,6 +156,7 @@ export class Game {
     public currentWave = 0;
     private waveInProgress = false;
     private fragmentsCollectedThisWave: number = 0;
+    private bankedUpgrades = 0;
 
     private onGameOver: (finalScore: number) => void;
     private onFragmentCollected: (color: GameColor | null) => void;
@@ -187,6 +188,7 @@ export class Game {
         this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
         this.firstBossDefeated = initialState.nextBossScoreThreshold > 150;
         this.currentWave = initialState.currentWave || 0;
+        this.bankedUpgrades = initialState.bankedUpgrades || 0;
 
         if (initialState.activeUpgrades) {
             initialState.activeUpgrades.forEach((level, id) => {
@@ -221,6 +223,7 @@ export class Game {
             nextBossScoreThreshold: this.nextBossScoreThreshold,
             initialColor: this.player.currentColor,
             currentWave: this.currentWave,
+            bankedUpgrades: this.bankedUpgrades,
         };
     }
 
