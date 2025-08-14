@@ -150,7 +150,7 @@ export class Game {
     public isRunning = false;
     private isBossSpawning = false;
 
-    // New upgrade-related entities
+
     private vortexes: {pos: Vec2, radius: number, strength: number, lifespan: number}[] = [];
 
     public currentWave = 0;
@@ -360,7 +360,7 @@ export class Game {
     }
 
     private applySpecialEffects(bullet: Bullet, enemy: Enemy) {
-        // This is called on a successful hit
+
         if (bullet.isVoid) {
             enemy.applyVoid(120 + this.player.voidLevel * 60);
         }
@@ -448,7 +448,7 @@ export class Game {
                             this.createBullet(new Bullet(enemy.pos, reflectedDirection, bullet.color, true));
                         }
                     }
-                    
+
                     if (result.killed) {
                         this.score += enemy.points * this.player.scoreMultiplier;
                         this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
@@ -459,7 +459,7 @@ export class Game {
                             this.dealAreaDamage(enemy.pos, 50 + this.player.explosiveFinishLevel * 10, 10 + this.player.explosiveFinishLevel * 5, enemy.color);
                         }
                     }
-                    
+
                     this.particles.add(bullet.pos, bullet.color, 10);
                     if(bulletRemoved) break;
                 }
@@ -562,6 +562,6 @@ export class Game {
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx);
 
-        this.ui.draw(this.player, this.score, this.boss, currentWaveToDisplay, this.enemies.length, currentWaveCountdown, isBetweenWaves);
+        this.ui.draw(this.player, this.score, this.boss, currentWaveToDisplay, this.enemies, currentWaveCountdown, isBetweenWaves);
     }
 }

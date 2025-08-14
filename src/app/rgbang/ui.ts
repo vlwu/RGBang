@@ -1,9 +1,9 @@
-// src/app/rgbang/ui.ts
 import { Player } from './player';
 import { GameColor, COLOR_DETAILS, ALL_COLORS } from './color';
 import { Boss } from './boss';
 import { roundRect, drawShapeForColor } from './utils';
 import { Vec2 } from './utils';
+import { Enemy } from './enemy';
 
 export class UI {
     private canvas: HTMLCanvasElement;
@@ -14,19 +14,18 @@ export class UI {
         this.ctx = canvas.getContext('2d')!;
     }
 
-
-    // MODIFIED: Accepts currentWave as a direct parameter for display
-    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemyCount: number, currentWaveCountdown: number, isBetweenWaves: boolean) {
+    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemies: Enemy[], currentWaveCountdown: number, isBetweenWaves: boolean) {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScore(score, !!boss);
-        this.drawWaveNumber(currentWave); // Uses the passed currentWave
+        this.drawWaveNumber(currentWave);
         if (boss && boss.isAlive) {
             this.drawBossHealthBar(boss);
         } else {
-            this.drawEnemyCount(enemyCount);
+            this.drawEnemyCount(enemies.length);
         }
         this.drawScoreMultiplier(player.scoreMultiplier);
+        this.drawOffscreenIndicators(enemies);
 
         if (isBetweenWaves) {
             this.drawWaveCountdown(currentWaveCountdown);
@@ -207,6 +206,44 @@ export class UI {
         this.ctx.restore();
     }
 
+    private drawOffscreenIndicators(enemies: Enemy[]) {
+        const padding = 20;
+        const indicatorSize = 8;
+
+        enemies.forEach(enemy => {
+            if (!enemy.isAlive) return;
+
+            const isOffScreen =
+                enemy.pos.x < 0 ||
+                enemy.pos.x > this.canvas.width ||
+                enemy.pos.y < 0 ||
+                enemy.pos.y > this.canvas.height;
+
+            if (isOffScreen) {
+                const x = Math.max(padding, Math.min(enemy.pos.x, this.canvas.width - padding));
+                const y = Math.max(padding, Math.min(enemy.pos.y, this.canvas.height - padding));
+
+                const angle = Math.atan2(enemy.pos.y - y, enemy.pos.x - x);
+
+                this.ctx.save();
+                this.ctx.translate(x, y);
+                this.ctx.rotate(angle);
+                this.ctx.fillStyle = enemy.hexColor;
+                this.ctx.globalAlpha = 0.9;
+                this.ctx.shadowColor = enemy.hexColor;
+                this.ctx.shadowBlur = 5;
+
+                this.ctx.beginPath();
+                this.ctx.moveTo(indicatorSize, 0);
+                this.ctx.lineTo(-indicatorSize / 2, -indicatorSize / 2);
+                this.ctx.lineTo(-indicatorSize / 2, indicatorSize / 2);
+                this.ctx.closePath();
+                this.ctx.fill();
+
+                this.ctx.restore();
+            }
+        });
+    }
 
     private drawScoreMultiplier(multiplier: number) {
         if (multiplier <= 1) return;
