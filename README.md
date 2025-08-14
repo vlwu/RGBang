@@ -22,7 +22,7 @@ RGBang is a vibrant, fast-paced arcade shooter built with Next.js and the HTML5 
     -   Use keys `1`, `2`, `3` or the `Mouse Wheel` to select a primary color (Red, Yellow, Blue).
     -   Hold `Right Click` to open a radial menu and select a secondary color (Orange, Green, Purple).
 -   **Match to Destroy**: To damage an enemy, your bullet's color and shape must match the enemy's. Hitting an enemy with the wrong color multiple times will trigger a punishment, making it stronger!
--   **View Upgrades**: Hold `Shift` during a run to see your currently active upgrades.
+-   **View Upgrades**: Press `Shift` during a run to toggle a view of your currently active upgrades.
 
 ## Tech Stack
 

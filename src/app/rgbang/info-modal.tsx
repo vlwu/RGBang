@@ -40,7 +40,7 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
                             <li><KeyDisplay>Mouse</KeyDisplay> - Aim</li>
                             <li><KeyDisplay>Left Click</KeyDisplay> - Shoot</li>
                             <li><KeyDisplay>Spacebar</KeyDisplay> - Dash (provides temporary invulnerability)</li>
-                            <li><KeyDisplay>Shift</KeyDisplay> (Hold) - View current upgrades during a run</li>
+                            <li><KeyDisplay>Shift</KeyDisplay> - Toggle view of current upgrades during a run</li>
                         </ul>
                     </div>
 

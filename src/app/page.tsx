@@ -296,7 +296,7 @@ export default function Home() {
                     setIsInfoOpen(false);
                     soundManager.play(SoundType.ButtonClick);
                 } else if (isUpgradeModalOpen) {
-
+                    // Do nothing with escape in upgrade modal
                 } else if (uiState === 'playing') {
                     setUiState('paused');
                     soundManager.play(SoundType.GamePause);
@@ -307,25 +307,18 @@ export default function Home() {
                     handleNextWaveStart();
                 }
             }
-             if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase() && !isUpgradeOverviewOpen) {
-                 if(uiState === 'playing' || uiState === 'paused') {
-                    setIsUpgradeOverviewOpen(true);
-                }
-            }
-        };
-        const handleKeyUp = (e: KeyboardEvent) => {
             if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase()) {
-                setIsUpgradeOverviewOpen(false);
+                if (uiState === 'playing' || uiState === 'paused') {
+                    setIsUpgradeOverviewOpen(prev => !prev);
+                }
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
-        window.addEventListener('keyup', handleKeyUp);
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
-            window.removeEventListener('keyup', handleKeyUp);
-        }
-    }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isUpgradeOverviewOpen, handleNextWaveStart]);
+        };
+    }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, handleNextWaveStart]);
 
 
     useEffect(() => {
