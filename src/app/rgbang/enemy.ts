@@ -1,10 +1,9 @@
-// src/app/rgbang/enemy.ts
 import { Vec2, drawShapeForColor, distance } from './utils';
-import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color'; // NEW: getRandomElement for Chroma Sentinel
+import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
 import { Player } from './player';
 import { ParticleSystem } from './particle';
 import { Bullet } from './bullet';
-import { SoundManager, SoundType } from './sound-manager'; // NEW: Import SoundManager
+import { SoundManager, SoundType } from './sound-manager';
 
 export enum PunishmentType {
     SPEED_BOOST = 'SPEED_BOOST',
@@ -45,20 +44,20 @@ export class Enemy {
     public isReflecting = false;
 
     public onSplit: ((enemy: Enemy) => void) | null = null;
-    private soundManager: SoundManager; // NEW: Sound manager instance
+    private soundManager: SoundManager;
 
     private chainHitMaxChains = 0;
     private chainHitDamage = 0;
     private chainHitRange = 0;
 
-    // NEW: Chroma Sentinel specific properties
+
     private isChromaSentinel = false;
     private colorShiftTimer = 0;
-    private readonly colorShiftInterval = 180; // 3 seconds at 60 FPS
+    private readonly colorShiftInterval = 120;
     private colorShiftImmunityTimer = 0;
-    private readonly colorShiftImmunityDuration = 180; // 3 seconds
+    private readonly colorShiftImmunityDuration = 60;
 
-    constructor(x: number, y: number, color: GameColor, radius: number, health: number, speed: number, points: number, soundManager: SoundManager, isChromaSentinel = false) { // MODIFIED: Added soundManager and isChromaSentinel
+    constructor(x: number, y: number, color: GameColor, radius: number, health: number, speed: number, points: number, soundManager: SoundManager, isChromaSentinel = false) {
         this.pos = new Vec2(x, y);
         this.color = color;
         this.hexColor = COLOR_DETAILS[color].hex;
@@ -68,7 +67,7 @@ export class Enemy {
         this.speed = speed;
         this.baseSpeed = speed;
         this.points = points;
-        this.soundManager = soundManager; // Initialize sound manager
+        this.soundManager = soundManager;
 
         this.isChromaSentinel = isChromaSentinel;
         if (this.isChromaSentinel) {
@@ -114,15 +113,17 @@ export class Enemy {
             this.chainHit = false;
         }
 
-        // NEW: Chroma Sentinel color shifting logic
+
         if (this.isChromaSentinel) {
             if (this.colorShiftImmunityTimer > 0) {
                 this.colorShiftImmunityTimer--;
+            } else {
+                this.colorShiftTimer--;
             }
-            this.colorShiftTimer--;
-            if (this.colorShiftTimer <= 0 && this.colorShiftImmunityTimer <= 0) {
+
+            if (this.colorShiftTimer <= 0) {
                 this.changeChromaColor();
-                this.soundManager.play(SoundType.ChromaSentinelShift); // Play sound on shift
+                this.soundManager.play(SoundType.ChromaSentinelShift);
                 this.colorShiftTimer = this.colorShiftInterval;
                 this.colorShiftImmunityTimer = this.colorShiftImmunityDuration;
             }
@@ -145,7 +146,7 @@ export class Enemy {
         } else if (this.isReflecting) {
             ctx.shadowColor = '#7DF9FF';
             ctx.shadowBlur = 20;
-        } else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) { // NEW: Visual for Chroma Sentinel immunity
+        } else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) {
             ctx.shadowColor = 'white';
             ctx.shadowBlur = 15 + Math.abs(Math.sin(this.colorShiftImmunityTimer / 10) * 10);
         }
@@ -167,7 +168,7 @@ export class Enemy {
             ctx.strokeStyle = "rgba(125, 249, 255, 0.8)";
             ctx.lineWidth = 4;
             ctx.stroke();
-        } else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) { // NEW: Stroke for Chroma Sentinel immunity
+        } else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) {
             ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
             ctx.lineWidth = 3;
             ctx.stroke();
@@ -208,9 +209,9 @@ export class Enemy {
     takeDamage(amount: number, damageColor: GameColor): boolean {
         const damageColorDetail = COLOR_DETAILS[damageColor];
 
-        // NEW: Chroma Sentinel immunity
+
         if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) {
-            this.soundManager.play(SoundType.EnemyHit, 0.5); // Play a 'clink' sound for immune hits
+            this.soundManager.play(SoundType.EnemyHit, 0.5);
             return false;
         }
 
@@ -223,12 +224,12 @@ export class Enemy {
                 this.health = 0;
                 this.isAlive = false;
             }
-            if (this.isReflecting) { // Correct hit on reflecting enemy removes reflection
+            if (this.isReflecting) {
                 this.deactivatePunishment();
             }
             return true;
         } else {
-            if (!this.isReflecting) { // Only increment wrong hit counter if not already reflecting
+            if (!this.isReflecting) {
                 this.wrongHitCounter++;
                 if (this.wrongHitCounter >= 3) {
                     this.applyPunishment();
@@ -281,13 +282,11 @@ export class Enemy {
         }
     }
 
-    // NEW: Chroma Sentinel color change
     private changeChromaColor() {
         const otherColors = PRIMARY_COLORS.filter(c => c !== this.color);
         this.color = getRandomElement(otherColors);
         this.hexColor = COLOR_DETAILS[this.color].hex;
     }
-
 
     private applyPunishment() {
         if (this.activePunishment) return;
@@ -301,32 +300,32 @@ export class Enemy {
         switch (randomPunishment) {
             case PunishmentType.SPEED_BOOST:
                 this.speed = Math.min(this.speed * 1.5, this.baseSpeed * 2);
-                this.soundManager.play(SoundType.EnemySpeedBoost); // Play sound
+                this.soundManager.play(SoundType.EnemySpeedBoost);
                 break;
             case PunishmentType.DAMAGE_BOOST:
                 this.damage = Math.min(this.damage * 2, 40);
-                // No specific sound for damage boost, perhaps subtle visual
+
                 break;
             case PunishmentType.SPLIT:
                  if (this.radius > 10 && this.onSplit) {
-                    this.isAlive = false; // Mark as not alive immediately before splitting
+                    this.isAlive = false;
 
                     const newRadius = this.radius * 0.7;
                     const newHealth = Math.round(this.maxHealth * 0.6);
                     const newSpeed = this.speed * 1.1;
                     const newPoints = Math.round(this.points * 0.5);
 
-                    const enemy1 = new Enemy(this.pos.x - 10, this.pos.y, this.color, newRadius, newHealth, newSpeed, newPoints, this.soundManager); // Pass soundManager
-                    const enemy2 = new Enemy(this.pos.x + 10, this.pos.y, this.color, newRadius, newHealth, newSpeed, newPoints, this.soundManager); // Pass soundManager
+                    const enemy1 = new Enemy(this.pos.x - 10, this.pos.y, this.color, newRadius, newHealth, newSpeed, newPoints, this.soundManager);
+                    const enemy2 = new Enemy(this.pos.x + 10, this.pos.y, this.color, newRadius, newHealth, newSpeed, newPoints, this.soundManager);
 
                     this.onSplit(enemy1);
                     this.onSplit(enemy2);
-                    this.soundManager.play(SoundType.EnemySplit); // Play sound
+                    this.soundManager.play(SoundType.EnemySplit);
                  }
                 break;
             case PunishmentType.REFLECT_BULLET:
                 this.isReflecting = true;
-                this.soundManager.play(SoundType.EnemyReflect); // Play sound
+                this.soundManager.play(SoundType.EnemyReflect);
                 break;
         }
     }
