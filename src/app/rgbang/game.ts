@@ -146,7 +146,7 @@ export class Game {
     private score = 0;
     private nextBossScoreThreshold = 150;
     private firstBossDefeated = false;
-    public isRunning = false; // Changed to false by default
+    public isRunning = false;
     private isBossSpawning = false;
 
     public currentWave = 0;
@@ -193,7 +193,7 @@ export class Game {
     }
 
     public start() {
-        // Removed the conditional return, now always sets isRunning to true and initializes wave
+
         this.isRunning = true;
         if (this.currentWave === 0) {
             this.startWave(1);
@@ -300,15 +300,15 @@ export class Game {
     }
 
 
-    public update(inputHandler: InputHandler, isGamePaused: boolean) {
+    public update(inputHandler: InputHandler, isGamePaused: boolean) { // No longer needs countdown as a direct parameter
         if (!this.isRunning) return;
 
-        // Player update always runs, but its internal logic is paused based on isGamePaused
+
         this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height, isGamePaused);
-        // Particle system always updates for visual effects
+
         this.particles.update();
 
-        // Only update game entities and handle collisions/spawning if the game is not paused
+
         if (!isGamePaused) {
             this.bullets.forEach(bullet => bullet.update());
             this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
@@ -336,6 +336,7 @@ export class Game {
                     this.enemySpawner.update(this.createEnemy, waveConfig);
                 }
 
+                // Wave ends when no more enemies to spawn and all current enemies, bullets, and fragments are gone
                 if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.bullets.length === 0 && this.fragments.length === 0 && !this.isBossSpawning) {
                     this.endWave(waveConfig.fragmentsAwarded);
                 }
@@ -343,7 +344,7 @@ export class Game {
         }
 
 
-        // Game Over check should always run to react to player health reaching zero
+
         if (!this.player.isAlive) {
             this.soundManager.play(SoundType.GameOver);
             this.stop();
@@ -500,7 +501,7 @@ export class Game {
         }
     }
 
-    public draw() {
+    public draw(currentWaveCountdown: number) { // Accepts countdown for drawing
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -512,6 +513,6 @@ export class Game {
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx);
 
-        this.ui.draw(this.player, this.score, this.boss, this.currentWave, this.enemies.length);
+        this.ui.draw(this.player, this.score, this.boss, this.currentWave, this.enemies.length, currentWaveCountdown);
     }
 }

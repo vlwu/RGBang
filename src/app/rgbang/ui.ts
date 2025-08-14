@@ -1,4 +1,3 @@
-// src/app/rgbang/ui.ts
 import { Player } from './player';
 import { GameColor, COLOR_DETAILS, ALL_COLORS } from './color';
 import { Boss } from './boss';
@@ -14,7 +13,7 @@ export class UI {
         this.ctx = canvas.getContext('2d')!;
     }
 
-    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemyCount: number) {
+    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemyCount: number, currentWaveCountdown: number) {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScore(score, !!boss);
@@ -24,7 +23,8 @@ export class UI {
         } else {
             this.drawEnemyCount(enemyCount);
         }
-        this.drawScoreMultiplier(player.scoreMultiplier); // NEW: Draw score multiplier
+        this.drawScoreMultiplier(player.scoreMultiplier);
+        this.drawWaveCountdown(currentWaveCountdown); // Draw the countdown
     }
 
     private drawHealthBar(player: Player) {
@@ -201,20 +201,35 @@ export class UI {
         this.ctx.restore();
     }
 
-    // NEW: drawScoreMultiplier method
+
     private drawScoreMultiplier(multiplier: number) {
-        if (multiplier <= 1) return; // Only draw if multiplier is greater than 1
+        if (multiplier <= 1) return;
 
         this.ctx.save();
-        this.ctx.fillStyle = '#ffff66'; // Yellow for multiplier
+        this.ctx.fillStyle = '#ffff66';
         this.ctx.font = 'bold 18px "Space Grotesk"';
         this.ctx.textAlign = 'right';
         this.ctx.textBaseline = 'top';
         this.ctx.shadowColor = '#ffff66';
         this.ctx.shadowBlur = 5;
 
-        // Position below enemy count or score, adjust as needed
+
         this.ctx.fillText(`Multiplier: x${multiplier.toFixed(1)}`, this.canvas.width - 20, 80);
+        this.ctx.restore();
+    }
+
+    private drawWaveCountdown(countdown: number) {
+        if (countdown <= 0) return;
+
+        this.ctx.save();
+        this.ctx.fillStyle = '#7DF9FF';
+        this.ctx.font = 'bold 48px "Space Grotesk"';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
+        this.ctx.shadowColor = '#7DF9FF';
+        this.ctx.shadowBlur = 15;
+
+        this.ctx.fillText(`${countdown}`, this.canvas.width / 2, this.canvas.height / 2);
         this.ctx.restore();
     }
 }

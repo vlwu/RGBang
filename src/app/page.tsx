@@ -6,7 +6,7 @@ import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-ha
 import { Button } from '@/components/ui/button';
 import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History, X } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
-import { InfoModal } from './rgbang/info-modal'; // Correct import
+import { InfoModal } from './rgbang/info-modal';
 import { GameColor, PRIMARY_COLORS, getRandomElement } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade, UpgradeProgress } from './rgbang/upgrades';
@@ -32,11 +32,12 @@ import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG } from './rgbang/wave-data';
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0 };
+const BETWEEN_WAVES_DURATION = 15; // 15 seconds for upgrades and break
 
 
 interface GameCanvasHandle {
     getGameInstance: () => Game | null;
-    // Removed startGameLoop and stopGameLoop as GameCanvas now manages its own loop internally
+
 }
 
 
@@ -48,16 +49,17 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
     height: number,
     initialGameState: SavedGameState,
     isGamePausedExternally: boolean;
-}> (({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, initialGameState, isGamePausedExternally }, ref) => {
+    currentWaveCountdown: number; // New prop for countdown
+}> (({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, initialGameState, isGamePausedExternally, currentWaveCountdown }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const gameInstanceRef = useRef<Game | null>(null);
     const animationFrameIdRef = useRef<number | null>(null);
     const inputHandler = InputHandler.getInstance();
 
-    // NEW: Create a ref to hold the external pause state
+
     const isGamePausedRef = useRef(isGamePausedExternally);
 
-    // NEW: Update the ref whenever the isGamePausedExternally prop changes
+
     useEffect(() => {
         isGamePausedRef.current = isGamePausedExternally;
     }, [isGamePausedExternally]);
@@ -69,13 +71,12 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
             return;
         }
 
-        // Use the ref's current value for pausing, ensuring gameLoop's identity is stable
-        gameInstanceRef.current.update(inputHandler, isGamePausedRef.current);
-        gameInstanceRef.current.draw();
 
+        gameInstanceRef.current.update(inputHandler, isGamePausedRef.current);
+        gameInstanceRef.current.draw(currentWaveCountdown); // Pass countdown to draw
         inputHandler.resetEvents();
         animationFrameIdRef.current = requestAnimationFrame(gameLoop);
-    }, [inputHandler]); // Removed isGamePausedExternally from dependencies
+    }, [inputHandler, currentWaveCountdown]); // Add currentWaveCountdown to dependencies
 
 
     useImperativeHandle(ref, () => ({
@@ -95,9 +96,9 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
         inputHandler.setCanvas(canvas);
 
-        // Only create a new Game instance if one doesn't exist,
-        // or if the initialGameState object reference changes, implying a new game session.
-        // The gameLoop function is now stable, so it won't cause this useEffect to re-run on pause/unpause.
+
+
+
         console.log("Creating new Game instance with initialGameState:", initialGameState);
         gameInstanceRef.current = new Game(
             canvas,
@@ -107,7 +108,7 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
             initialGameState,
             soundManager
         );
-        gameInstanceRef.current.start(); // This initializes the Game instance and its internal state
+        gameInstanceRef.current.start();
 
 
         if (animationFrameIdRef.current === null) {
@@ -124,7 +125,7 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
                 gameInstanceRef.current.stop();
                 gameInstanceRef.current = null;
             }
-            // Ensure input handler listeners are cleaned up when the canvas unmounts
+
             inputHandler.destroy();
         };
     }, [width, height, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, inputHandler, gameLoop, soundManager]);
@@ -275,58 +276,40 @@ export default function Home() {
         }
     }, [currentWave]);
 
-    const startCountdown = useCallback(() => {
+    // This useEffect handles the countdown during the 'betweenWaves' state
+    useEffect(() => {
         let countdownInterval: NodeJS.Timeout | null = null;
-        // Clear any existing interval to prevent multiple countdowns
-        if (countdownInterval) clearInterval(countdownInterval);
-        setBetweenWaveCountdown(5);
-        countdownInterval = setInterval(() => {
-            setBetweenWaveCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(countdownInterval!);
-                    countdownInterval = null;
-                    handleNextWaveStart();
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
+        if (gameState === 'betweenWaves' && betweenWaveCountdown > 0 && !isUpgradeModalOpen) {
+            countdownInterval = setInterval(() => {
+                setBetweenWaveCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(countdownInterval!);
+                        countdownInterval = null;
+                        handleNextWaveStart();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
 
         return () => {
             if (countdownInterval) clearInterval(countdownInterval);
         };
-    }, [handleNextWaveStart]);
-
-
-    // Effect to manage the overall game loop start/stop based on gameState
-    // This effect ensures the GameCanvas component is mounted/unmounted based on game state
-    // and handles the between-waves countdown.
-    useEffect(() => {
-        // If the game is in a state where GameCanvas should be rendered and between waves
-        if (gameState === 'betweenWaves' && betweenWaveCountdown === 0) {
-            // Initiate countdown for next wave
-            const cleanupCountdown = startCountdown();
-            return cleanupCountdown;
-        }
-
-    }, [gameState, isUpgradeOverviewOpen, betweenWaveCountdown, startCountdown]);
+    }, [gameState, betweenWaveCountdown, isUpgradeModalOpen, handleNextWaveStart]); // Added isUpgradeModalOpen to dependencies
 
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 e.preventDefault();
-                if (isSettingsOpen || isInfoOpen || isUpgradeModalOpen) {
-                    // Close any open modals
+                if (isSettingsOpen || isInfoOpen) { // Only close info/settings directly
                     setIsSettingsOpen(false);
                     setIsInfoOpen(false);
-                    if (isUpgradeModalOpen) {
-                        setIsUpgradeModalOpen(false);
-                        // If upgrade modal was open, go back to between waves state
-                        setGameState('betweenWaves');
-                        setBetweenWaveCountdown(0); // Restart countdown or ensure it proceeds
-                        soundManager.play(SoundType.GamePause); // Play pause sound for consistency
-                    }
+                    soundManager.play(SoundType.ButtonClick);
+                } else if (isUpgradeModalOpen) {
+                    // Do nothing, upgrade modal cannot be closed by Escape
+                    // It must be selected or the countdown finishes
                 } else if (gameState === 'playing') {
                     setGameState('paused');
                     soundManager.play(SoundType.GamePause);
@@ -360,7 +343,8 @@ export default function Home() {
 
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
-        console.log(`Fragment of color ${color} collected. (No immediate effect in wave mode)`);
+        // Fragments are collected by player for upgrades but do not
+        // directly trigger upgrade modal unless a wave ends.
     }, []);
 
     const handleWaveCompleted = useCallback((waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => {
@@ -368,28 +352,44 @@ export default function Home() {
 
         const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
         setNextWaveHint(waveConfig.nextWaveHint);
+        setCurrentWave(waveNumber); // Update currentWave after it's completed
+
+        setBetweenWaveCountdown(BETWEEN_WAVES_DURATION); // Start the countdown
+        setGameState('betweenWaves'); // Transition to betweenWaves state
+        soundManager.play(SoundType.GamePause); // Play pause sound for the break
 
         if (fragmentsToAward > 0) {
             setUpgradesRemainingToSelect(fragmentsToAward);
             setTotalUpgradesToSelect(fragmentsToAward);
-            if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
-                const options = gameCanvasRef.current.getGameInstance()!.player.upgradeManager.getUpgradeOptions(
-                    isBossWave ? null : getRandomElement(PRIMARY_COLORS),
-                    upgradeDataRef.current,
-                    gameCanvasRef.current.getGameInstance()!.addScore
-                );
-                setUpgradeOptions(options);
-            }
+            // Upgrade options will be generated when player explicitly opens the upgrade modal
+        } else {
+            setUpgradesRemainingToSelect(0); // Ensure no upgrades are prompted if none are awarded
+            setTotalUpgradesToSelect(0);
+        }
+    }, []);
+
+    const openUpgradeSelection = useCallback(() => {
+        if (upgradesRemainingToSelect > 0 && gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
+            const gameInstance = gameCanvasRef.current.getGameInstance()!;
+            const currentWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === currentWave) || FALLBACK_WAVE_CONFIG;
+            const nextFragmentColor = currentWaveConfig.bossType ? null : getRandomElement(PRIMARY_COLORS);
+
+            const options = gameInstance.player.upgradeManager.getUpgradeOptions(
+                nextFragmentColor,
+                upgradeDataRef.current,
+                gameInstance.addScore
+            );
+            setUpgradeOptions(options);
             setIsUpgradeModalOpen(true);
             setGameState('upgrading');
-            soundManager.play(SoundType.GamePause);
         } else {
-            setGameState('betweenWaves');
-            setBetweenWaveCountdown(0);
-            soundManager.play(SoundType.GamePause);
+            toast({
+                title: "No Upgrades Available",
+                description: "You have no fragments to convert into upgrades at this time.",
+            });
         }
-        setCurrentWave(waveNumber);
-    }, []);
+    }, [upgradesRemainingToSelect, currentWave, upgradeDataRef, toast]);
+
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
@@ -437,11 +437,10 @@ export default function Home() {
                 if (newCount <= 0) {
                     // No more upgrades to select, close modal and proceed to next wave phase
                     setIsUpgradeModalOpen(false);
-                    setGameState('betweenWaves');
-                    setBetweenWaveCountdown(0);
-                    soundManager.play(SoundType.GamePause);
+                    setGameState('betweenWaves'); // Keep in between waves state
+                    // Countdown will resume naturally as isUpgradeModalOpen is now false
                 } else {
-                    // Still more upgrades to select, generate new options
+                    // Still more upgrades to select, generate new options immediately
                     if (gameInstance) {
                         const currentWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === currentWave) || FALLBACK_WAVE_CONFIG;
                         const nextFragmentColor = currentWaveConfig.bossType ? null : getRandomElement(PRIMARY_COLORS);
@@ -587,7 +586,7 @@ export default function Home() {
             />
             <InfoModal
                 isOpen={isInfoOpen}
-                onClose={() => setIsInfoOpen(false)} // Corrected: setIsInfoExample -> setIsInfoOpen
+                onClose={() => setIsInfoOpen(false)}
             />
             <UpgradeModal
                 isOpen={isUpgradeModalOpen}
@@ -619,7 +618,7 @@ export default function Home() {
                             <Settings className="mr-2" />
                             Settings
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsInfoOpen(true); }} onMouseEnter={playHoverSound}> {/* Corrected: setIsInfoExample -> setIsInfoOpen */}
+                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsInfoOpen(true); }} onMouseEnter={playHoverSound}> {}
                             <Info className="mr-2" />
                             How to Play
                         </Button>
@@ -693,6 +692,7 @@ export default function Home() {
                         isGamePausedExternally={gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen || gameState === 'betweenWaves'}
                         initialGameState={initialGameState}
                         ref={gameCanvasRef}
+                        currentWaveCountdown={betweenWaveCountdown}
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
@@ -723,6 +723,25 @@ export default function Home() {
                             <h2 className="text-6xl font-bold font-headline tracking-tighter mb-4 text-glow">WAVE {currentWave} CLEARED!</h2>
                             <p className="text-3xl font-semibold text-foreground/80 mb-6">Next Wave in: <span className="text-accent">{betweenWaveCountdown}</span></p>
                             <p className="text-xl font-medium text-muted-foreground">{nextWaveHint}</p>
+                            {upgradesRemainingToSelect > 0 && (
+                                <Button
+                                    size="lg"
+                                    onClick={openUpgradeSelection}
+                                    onMouseEnter={playHoverSound}
+                                    className="font-bold text-lg mt-6 btn-gradient btn-gradient-3 animate-gradient-shift"
+                                >
+                                    Choose Upgrades ({totalUpgradesToSelect - upgradesRemainingToSelect}/{totalUpgradesToSelect} selected)
+                                </Button>
+                            )}
+                            <Button
+                                size="lg"
+                                onClick={handleNextWaveStart}
+                                onMouseEnter={playHoverSound}
+                                className="font-bold text-lg mt-4 btn-gradient btn-gradient-1 animate-gradient-shift"
+                            >
+                                <Play className="mr-2" />
+                                Start Next Wave Now
+                            </Button>
                         </div>
                     )}
                 </div>

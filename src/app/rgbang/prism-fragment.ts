@@ -10,11 +10,11 @@ export class PrismFragment {
     color: GameColor | null;
     hexColor: string;
 
-    private lifespan = 480;
+    // Removed lifespan and related properties
     private attractRadius = 100;
     private attractSpeed = 0.08;
     private canAttract = false;
-    private attractDelay = 30;
+    private initialDelay = 30; // Renamed attractDelay to initialDelay for clarity
 
     private angle = Math.random() * Math.PI * 2;
     private rotationSpeed = (Math.random() - 0.5) * 0.1;
@@ -29,17 +29,16 @@ export class PrismFragment {
     update(player: Player, particles: ParticleSystem) {
         if (!this.isAlive) return;
 
-        this.lifespan--;
-        this.attractDelay--;
+        // Removed lifespan decrement
+        this.initialDelay--; // Decrement initial delay
+
         this.angle += this.rotationSpeed;
 
-        if (this.attractDelay <= 0) {
+        if (this.initialDelay <= 0) { // Check initial delay
             this.canAttract = true;
         }
 
-        if (this.lifespan <= 0) {
-            this.isAlive = false;
-        }
+        // Removed lifespan check for isAlive = false
 
 
         if (this.canAttract) {
@@ -50,7 +49,7 @@ export class PrismFragment {
                 this.pos.y = lerp(this.pos.y, player.pos.y, this.attractSpeed);
             }
         }
-        
+
         particles.addFragmentParticle(this.pos, this.hexColor);
     }
 
@@ -59,19 +58,15 @@ export class PrismFragment {
 
         ctx.save();
 
-        const pulse = (Math.sin(this.lifespan / 20) + 1) / 2;
+        const pulse = (Math.sin(Date.now() / 200) + 1) / 2; // Keep a visual pulse
 
 
         ctx.shadowColor = this.hexColor;
         ctx.shadowBlur = 10 + pulse * 10;
 
+        // Removed lifespan-based alpha fading
+        ctx.globalAlpha = 1;
 
-        if (this.lifespan < 120) {
-            const flash = Math.abs(Math.sin(this.lifespan * 0.1));
-            ctx.globalAlpha = flash;
-        } else {
-            ctx.globalAlpha = 1;
-        }
 
         ctx.translate(this.pos.x, this.pos.y);
         ctx.rotate(this.angle);
