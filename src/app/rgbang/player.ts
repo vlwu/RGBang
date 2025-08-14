@@ -1,4 +1,3 @@
-// src/app/rgbang/player.ts
 import { Vec2, drawShapeForColor } from './utils';
 import { Bullet } from './bullet';
 import InputHandler from './input-handler';
@@ -29,9 +28,9 @@ export class Player {
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
     public shootCooldownModifier = 1;
-    public expGainMultiplier = 1; // Kept for future potential EXP system
+    public expGainMultiplier = 1;
     public accuracyModifier = 1;
-    public scoreMultiplier = 1; // NEW: Player's score multiplier
+    public scoreMultiplier = 1;
 
 
     public flatHealthIncrease = 0;
@@ -178,19 +177,19 @@ export class Player {
 
         if (this.isRadialMenuOpen) return;
 
-        const trySelectColor = (color: GameColor) => {
-            if (this.availableColors.has(color)) {
-                this.updateAvailableColors(color);
-            }
-        };
+        let primaryColorSelectedThisFrame: GameColor | null = null;
 
+        if (input.isKeyDown(input.keybindings.primary1) && this.availableColors.has(GameColor.RED)) {
+            primaryColorSelectedThisFrame = GameColor.RED;
+        } else if (input.isKeyDown(input.keybindings.primary2) && this.availableColors.has(GameColor.YELLOW)) {
+            primaryColorSelectedThisFrame = GameColor.YELLOW;
+        } else if (input.isKeyDown(input.keybindings.primary3) && this.availableColors.has(GameColor.BLUE)) {
+            primaryColorSelectedThisFrame = GameColor.BLUE;
+        }
 
-        if (input.isKeyDown(input.keybindings.primary1)) trySelectColor(GameColor.RED);
-        if (input.isKeyDown(input.keybindings.primary2)) trySelectColor(GameColor.YELLOW);
-        if (input.isKeyDown(input.keybindings.primary3)) trySelectColor(GameColor.BLUE);
-
-
-        if (input.wheelDeltaY !== 0) {
+        if (primaryColorSelectedThisFrame !== null) {
+            this.updateAvailableColors(primaryColorSelectedThisFrame);
+        } else if (input.wheelDeltaY !== 0) {
             const selectableColors = ALL_COLORS.filter(c => this.availableColors.has(c));
             if(selectableColors.length === 0) return;
 
