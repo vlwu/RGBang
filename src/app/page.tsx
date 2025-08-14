@@ -1,3 +1,4 @@
+// src/app/page.tsx
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useImperativeHandle } from 'react';
@@ -50,7 +51,9 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
     initialGameState: SavedGameState,
     isGamePausedExternally: boolean;
     currentWaveCountdown: number;
-}> (({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, initialGameState, isGamePausedExternally, currentWaveCountdown }, ref) => {
+    // Added new prop
+    isGameBetweenWaves: boolean;
+}> (({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, initialGameState, isGamePausedExternally, currentWaveCountdown, isGameBetweenWaves }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const gameInstanceRef = useRef<Game | null>(null);
     const animationFrameIdRef = useRef<number | null>(null);
@@ -73,10 +76,11 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
 
         gameInstanceRef.current.update(inputHandler, isGamePausedRef.current);
-        gameInstanceRef.current.draw(currentWaveCountdown);
+        // Pass isGameBetweenWaves to gameInstance.draw
+        gameInstanceRef.current.draw(currentWaveCountdown, isGameBetweenWaves);
         inputHandler.resetEvents();
         animationFrameIdRef.current = requestAnimationFrame(gameLoop);
-    }, [inputHandler, currentWaveCountdown]);
+    }, [inputHandler, currentWaveCountdown, isGameBetweenWaves]); // Added isGameBetweenWaves to dependencies
 
 
     useImperativeHandle(ref, () => ({
@@ -361,14 +365,17 @@ export default function Home() {
             );
             setUpgradeOptions(options);
             setIsUpgradeModalOpen(true);
-            setGameState('upgrading');
+            // gameState is already 'upgrading' from handleWaveCompleted
         } else {
-            // This toast is now less likely to be hit, as we only call openUpgradeSelection
-            // when upgradesRemainingToSelect > 0 in handleWaveCompleted
+            // Fix: If no upgrades are available, ensure we transition out of 'upgrading' state
             toast({
                 title: "No Upgrades Available",
-                description: "You have no fragments to convert into upgrades at this time.",
+                description: "You have no fragments to convert into upgrades at this time. Proceeding to next wave.",
             });
+            setIsUpgradeModalOpen(false); // Ensure modal is not open
+            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION); // Start the countdown
+            setGameState('betweenWaves'); // Transition to between waves
+            soundManager.play(SoundType.GameResume); // Resume game sounds
         }
     }, [upgradesRemainingToSelect, currentWave, upgradeDataRef, toast]);
 
@@ -377,26 +384,26 @@ export default function Home() {
 
         const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
         setNextWaveHint(waveConfig.nextWaveHint);
-        setCurrentWave(waveNumber); // Update currentWave after it's completed
+        setCurrentWave(waveNumber);
 
         if (fragmentsToAward > 0) {
             setUpgradesRemainingToSelect(fragmentsToAward);
             setTotalUpgradesToSelect(fragmentsToAward);
-            setGameState('upgrading'); // Transition to upgrading state
-            soundManager.play(SoundType.GamePause); // Play pause sound for the break
-            // Automatically open upgrade selection
-            setTimeout(() => { // Small delay to ensure state updates
+            setGameState('upgrading');
+            soundManager.play(SoundType.GamePause);
+
+            setTimeout(() => {
                 openUpgradeSelection();
             }, 100);
 
         } else {
-            setUpgradesRemainingToSelect(0); // Ensure no upgrades are prompted if none are awarded
+            setUpgradesRemainingToSelect(0);
             setTotalUpgradesToSelect(0);
-            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION); // Start the countdown
-            setGameState('betweenWaves'); // Transition to betweenWaves state
-            soundManager.play(SoundType.GamePause); // Play pause sound for the break
+            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION);
+            setGameState('betweenWaves');
+            soundManager.play(SoundType.GamePause);
         }
-    }, [openUpgradeSelection]); // openUpgradeSelection is now correctly in the dependency array
+    }, [openUpgradeSelection]);
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
@@ -445,10 +452,10 @@ export default function Home() {
                     // No more upgrades to select, close modal and proceed to next wave phase
                     setIsUpgradeModalOpen(false);
                     setBetweenWaveCountdown(BETWEEN_WAVES_DURATION); // Start the countdown
-                    setGameState('betweenWaves'); // Transition to betweenWaves state
+                    setGameState('betweenWaves');
 
                 } else {
-                    // More upgrades to select, re-open with new options
+
                     if (gameInstance) {
                         const currentWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === currentWave) || FALLBACK_WAVE_CONFIG;
                         const nextFragmentColor = currentWaveConfig.bossType ? null : getRandomElement(PRIMARY_COLORS);
@@ -700,6 +707,8 @@ export default function Home() {
                         initialGameState={initialGameState}
                         ref={gameCanvasRef}
                         currentWaveCountdown={betweenWaveCountdown}
+                        // Pass this state to GameCanvas to control UI rendering
+                        isGameBetweenWaves={gameState === 'betweenWaves'}
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">

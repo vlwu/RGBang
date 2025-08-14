@@ -1,3 +1,4 @@
+// src/app/rgbang/ui.ts
 import { Player } from './player';
 import { GameColor, COLOR_DETAILS, ALL_COLORS } from './color';
 import { Boss } from './boss';
@@ -13,7 +14,8 @@ export class UI {
         this.ctx = canvas.getContext('2d')!;
     }
 
-    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemyCount: number, currentWaveCountdown: number) {
+    // Added 'isBetweenWaves' parameter
+    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemyCount: number, currentWaveCountdown: number, isBetweenWaves: boolean) {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScore(score, !!boss);
@@ -24,7 +26,10 @@ export class UI {
             this.drawEnemyCount(enemyCount);
         }
         this.drawScoreMultiplier(player.scoreMultiplier);
-        this.drawWaveCountdown(currentWaveCountdown); // Draw the countdown
+        // Conditionally draw wave countdown based on isBetweenWaves state
+        if (isBetweenWaves) {
+            this.drawWaveCountdown(currentWaveCountdown);
+        }
     }
 
     private drawHealthBar(player: Player) {

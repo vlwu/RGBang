@@ -1,3 +1,4 @@
+// src/app/rgbang/game.ts
 import { Player } from './player';
 import { Bullet } from './bullet';
 import { Enemy, PunishmentType } from './enemy';
@@ -300,7 +301,8 @@ export class Game {
     }
 
 
-    public update(inputHandler: InputHandler, isGamePaused: boolean) { // No longer needs countdown as a direct parameter
+    // Added 'isBetweenWaves' parameter
+    public update(inputHandler: InputHandler, isGamePaused: boolean) {
         if (!this.isRunning) return;
 
 
@@ -336,7 +338,7 @@ export class Game {
                     this.enemySpawner.update(this.createEnemy, waveConfig);
                 }
 
-                // Wave ends when no more enemies to spawn and all current enemies, bullets, and fragments are gone
+
                 if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.bullets.length === 0 && this.fragments.length === 0 && !this.isBossSpawning) {
                     this.endWave(waveConfig.fragmentsAwarded);
                 }
@@ -501,7 +503,8 @@ export class Game {
         }
     }
 
-    public draw(currentWaveCountdown: number) { // Accepts countdown for drawing
+    // Added 'isBetweenWaves' parameter
+    public draw(currentWaveCountdown: number, isBetweenWaves: boolean) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -513,6 +516,7 @@ export class Game {
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx);
 
-        this.ui.draw(this.player, this.score, this.boss, this.currentWave, this.enemies.length, currentWaveCountdown);
+        // Pass isBetweenWaves to UI draw
+        this.ui.draw(this.player, this.score, this.boss, this.currentWave, this.enemies.length, currentWaveCountdown, isBetweenWaves);
     }
 }
