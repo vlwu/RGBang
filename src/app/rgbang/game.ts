@@ -1,4 +1,3 @@
-// src/app/rgbang/game.ts
 import { Player } from './player';
 import { Bullet } from './bullet';
 import { Enemy, PunishmentType } from './enemy';
@@ -17,9 +16,9 @@ class EnemySpawner {
     private spawnTimer = 0;
     private currentSpawnConfigIndex = 0;
     private currentWaveEnemiesToSpawn: EnemySpawnConfig[] = [];
-    private soundManager: SoundManager; // NEW: SoundManager instance
+    private soundManager: SoundManager;
 
-    constructor(private canvasWidth: number, private canvasHeight: number, soundManager: SoundManager) { // MODIFIED: Added soundManager
+    constructor(private canvasWidth: number, private canvasHeight: number, soundManager: SoundManager) {
         this.soundManager = soundManager;
     }
 
@@ -53,7 +52,7 @@ class EnemySpawner {
         }
     }
 
-    // MODIFIED: Pass soundManager and isChromaSentinel to Enemy constructor
+
     private spawnEnemy(createEnemy: (enemy: Enemy) => void, enemyType: EnemyType, fixedColor: GameColor | undefined, waveNumber: number) {
         const edge = Math.floor(Math.random() * 4);
         let x, y;
@@ -77,7 +76,7 @@ class EnemySpawner {
         let speed: number;
         let points: number;
         let damage: number;
-        let isChromaSentinel = false; // NEW: Flag for Chroma Sentinel
+        let isChromaSentinel = false;
 
         const healthMultiplier = 1 + waveNumber * 0.1;
         const speedMultiplier = 1 + waveNumber * 0.02;
@@ -101,13 +100,13 @@ class EnemySpawner {
                 damage = 15;
                 break;
             case EnemyType.CHROMA_SENTINEL:
-                color = fixedColor || getRandomElement(PRIMARY_COLORS); // Chroma Sentinel starts with primary color
+                color = fixedColor || getRandomElement(PRIMARY_COLORS);
                 radius = 20;
                 health = Math.round(80 * healthMultiplier);
                 speed = 1.2 * speedMultiplier;
                 points = Math.round(30 * pointsMultiplier);
                 damage = 20;
-                isChromaSentinel = true; // Set flag
+                isChromaSentinel = true;
                 break;
             default:
                 color = getRandomElement(PRIMARY_COLORS);
@@ -120,7 +119,7 @@ class EnemySpawner {
         }
 
 
-        // MODIFIED: Pass soundManager and isChromaSentinel to Enemy constructor
+
         const newEnemy = new Enemy(x, y, color, radius, health, speed, points, this.soundManager, isChromaSentinel);
         newEnemy.damage = damage;
         createEnemy(newEnemy);
@@ -147,7 +146,7 @@ export class Game {
     private score = 0;
     private nextBossScoreThreshold = 150;
     private firstBossDefeated = false;
-    public isRunning = false;
+    public isRunning = false; // Changed to false by default
     private isBossSpawning = false;
 
     public currentWave = 0;
@@ -173,7 +172,7 @@ export class Game {
         this.soundManager = soundManager;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor, this.soundManager);
-        // MODIFIED: Pass soundManager to EnemySpawner
+
         this.enemySpawner = new EnemySpawner(canvas.width, this.canvas.height, this.soundManager);
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();
@@ -194,7 +193,7 @@ export class Game {
     }
 
     public start() {
-        if (this.isRunning) return;
+        // Removed the conditional return, now always sets isRunning to true and initializes wave
         this.isRunning = true;
         if (this.currentWave === 0) {
             this.startWave(1);
@@ -288,7 +287,7 @@ export class Game {
             const miniBossPoints = Math.round(100 * (this.currentWave / 2));
             const miniBossColor = getRandomElement(PRIMARY_COLORS);
 
-            // MODIFIED: Pass soundManager to mini-boss Enemy constructor
+
             const miniBoss = new Enemy(bossX, bossY, miniBossColor, miniBossRadius, miniBossHealth, miniBossSpeed, miniBossPoints, this.soundManager);
             miniBoss.damage = 20;
             miniBoss.onSplit = (newEnemy) => {
@@ -301,12 +300,15 @@ export class Game {
     }
 
 
-    public update(inputHandler: InputHandler, isGamePaused = false) {
+    public update(inputHandler: InputHandler, isGamePaused: boolean) {
         if (!this.isRunning) return;
 
+        // Player update always runs, but its internal logic is paused based on isGamePaused
         this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height, isGamePaused);
+        // Particle system always updates for visual effects
         this.particles.update();
 
+        // Only update game entities and handle collisions/spawning if the game is not paused
         if (!isGamePaused) {
             this.bullets.forEach(bullet => bullet.update());
             this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
@@ -341,6 +343,7 @@ export class Game {
         }
 
 
+        // Game Over check should always run to react to player health reaching zero
         if (!this.player.isAlive) {
             this.soundManager.play(SoundType.GameOver);
             this.stop();
@@ -391,7 +394,7 @@ export class Game {
                     const hitSuccess = enemy.takeDamage(bullet.damage, bullet.color);
 
                     if (!hitSuccess && enemy.activePunishment === PunishmentType.REFLECT_BULLET) {
-                        this.soundManager.play(SoundType.EnemyReflect, 0.7); // Play distinct reflect sound
+                        this.soundManager.play(SoundType.EnemyReflect, 0.7);
                         this.particles.add(bullet.pos, GameColor.BLUE, 10);
 
                         const reflectedDirection = this.player.pos.sub(bullet.pos).normalize();

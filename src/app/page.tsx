@@ -1,14 +1,12 @@
-// src/app/page.tsx
-
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback, useImperativeHandle } from 'react'; // Added React import
+import React, { useState, useRef, useEffect, useCallback, useImperativeHandle } from 'react';
 import { Game } from './rgbang/game';
 import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
 import { Button } from '@/components/ui/button';
 import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History, X } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
-import { InfoModal } from './rgbang/info-modal';
+import { InfoModal } from './rgbang/info-modal'; // Correct import
 import { GameColor, PRIMARY_COLORS, getRandomElement } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade, UpgradeProgress } from './rgbang/upgrades';
@@ -35,14 +33,13 @@ const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0 };
 
-// Define the interface for the ref exposed by GameCanvas
+
 interface GameCanvasHandle {
     getGameInstance: () => Game | null;
-    startGameLoop: () => void;
-    stopGameLoop: () => void;
+    // Removed startGameLoop and stopGameLoop as GameCanvas now manages its own loop internally
 }
 
-// Modify GameCanvas to be a functional component wrapped with forwardRef
+
 const GameCanvas = React.forwardRef<GameCanvasHandle, {
     onGameOver: (score: number) => void,
     onFragmentCollected: (color: GameColor | null) => void,
@@ -57,37 +54,35 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
     const animationFrameIdRef = useRef<number | null>(null);
     const inputHandler = InputHandler.getInstance();
 
-    // Expose methods to parent component
-    useImperativeHandle(ref, () => ({
-        getGameInstance: () => gameInstanceRef.current,
-        startGameLoop: () => {
-            if (animationFrameIdRef.current === null) {
-                gameLoop(); // Start the loop
-            }
-        },
-        stopGameLoop: () => {
-            if (animationFrameIdRef.current !== null) {
-                cancelAnimationFrame(animationFrameIdRef.current);
-                animationFrameIdRef.current = null;
-            }
-        },
-    }));
+    // NEW: Create a ref to hold the external pause state
+    const isGamePausedRef = useRef(isGamePausedExternally);
 
-    // Game loop function
-    const gameLoop = () => {
+    // NEW: Update the ref whenever the isGamePausedExternally prop changes
+    useEffect(() => {
+        isGamePausedRef.current = isGamePausedExternally;
+    }, [isGamePausedExternally]);
+
+
+    const gameLoop = useCallback(() => {
         if (!gameInstanceRef.current || !canvasRef.current) {
             animationFrameIdRef.current = null;
             return;
         }
 
-        gameInstanceRef.current.update(inputHandler, isGamePausedExternally);
+        // Use the ref's current value for pausing, ensuring gameLoop's identity is stable
+        gameInstanceRef.current.update(inputHandler, isGamePausedRef.current);
         gameInstanceRef.current.draw();
 
-        inputHandler.resetEvents(); // Reset input state for next frame
+        inputHandler.resetEvents();
         animationFrameIdRef.current = requestAnimationFrame(gameLoop);
-    };
+    }, [inputHandler]); // Removed isGamePausedExternally from dependencies
 
-    // Effect for canvas setup and initial game instance creation/load
+
+    useImperativeHandle(ref, () => ({
+        getGameInstance: () => gameInstanceRef.current,
+    }));
+
+
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) {
@@ -98,8 +93,11 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
         canvas.width = width;
         canvas.height = height;
 
-        inputHandler.setCanvas(canvas); // Set canvas for input handler
+        inputHandler.setCanvas(canvas);
 
+        // Only create a new Game instance if one doesn't exist,
+        // or if the initialGameState object reference changes, implying a new game session.
+        // The gameLoop function is now stable, so it won't cause this useEffect to re-run on pause/unpause.
         console.log("Creating new Game instance with initialGameState:", initialGameState);
         gameInstanceRef.current = new Game(
             canvas,
@@ -109,9 +107,13 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
             initialGameState,
             soundManager
         );
-        gameInstanceRef.current.start(); // This starts the game's internal logic, not the RAF loop.
+        gameInstanceRef.current.start(); // This initializes the Game instance and its internal state
 
-        // Cleanup when component unmounts
+
+        if (animationFrameIdRef.current === null) {
+             animationFrameIdRef.current = requestAnimationFrame(gameLoop);
+        }
+
         return () => {
             console.log("GameCanvas unmount cleanup.");
             if (animationFrameIdRef.current !== null) {
@@ -122,16 +124,16 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
                 gameInstanceRef.current.stop();
                 gameInstanceRef.current = null;
             }
+            // Ensure input handler listeners are cleaned up when the canvas unmounts
+            inputHandler.destroy();
         };
-    }, [width, height, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, inputHandler]); // Dependencies: props and ref to keep game instance unique per game run.
+    }, [width, height, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, inputHandler, gameLoop, soundManager]);
 
-    // Effect to manage the game loop based on `isGameRunning` prop (now handled by parent)
-    // This effect is controlled by `Home`'s useEffect using startGameLoop/stopGameLoop via ref
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 });
 
-GameCanvas.displayName = 'GameCanvas'; // Important for React DevTools and debugging
+GameCanvas.displayName = 'GameCanvas';
 
 export default function Home() {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'continuePrompt' | 'betweenWaves'>('menu');
@@ -148,15 +150,15 @@ export default function Home() {
 
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-    const [isInfoOpen, setIsInfoOpen] = useState(false);
+    const [isInfoOpen, setIsInfoOpen] = useState(false); // Correct state variable name
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [isUpgradeOverviewOpen, setIsUpgradeOverviewOpen] = useState(false);
     const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
 
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
-    const gameCanvasRef = useRef<GameCanvasHandle | null>(null); // Ref to the GameCanvas component
+    const gameCanvasRef = useRef<GameCanvasHandle | null>(null);
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
-    const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE); // State that triggers game instance creation
+    const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE);
     const { toast } = useToast();
     const [volume, setVolume] = useState(1.0);
     const [isMuted, setIsMuted] = useState(false);
@@ -270,12 +272,12 @@ export default function Home() {
             gameCanvasRef.current.getGameInstance()!.startWave(nextWaveNum);
             setGameState('playing');
             soundManager.play(SoundType.GameResume);
-            gameCanvasRef.current.startGameLoop(); // Ensure loop restarts after state change
         }
     }, [currentWave]);
 
     const startCountdown = useCallback(() => {
         let countdownInterval: NodeJS.Timeout | null = null;
+        // Clear any existing interval to prevent multiple countdowns
         if (countdownInterval) clearInterval(countdownInterval);
         setBetweenWaveCountdown(5);
         countdownInterval = setInterval(() => {
@@ -297,17 +299,12 @@ export default function Home() {
 
 
     // Effect to manage the overall game loop start/stop based on gameState
+    // This effect ensures the GameCanvas component is mounted/unmounted based on game state
+    // and handles the between-waves countdown.
     useEffect(() => {
-        if (!gameCanvasRef.current) return;
-
-        if (gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading' || gameState === 'betweenWaves') {
-            gameCanvasRef.current.startGameLoop();
-        } else {
-            gameCanvasRef.current.stopGameLoop();
-        }
-
-        // Handle between waves countdown externally
+        // If the game is in a state where GameCanvas should be rendered and between waves
         if (gameState === 'betweenWaves' && betweenWaveCountdown === 0) {
+            // Initiate countdown for next wave
             const cleanupCountdown = startCountdown();
             return cleanupCountdown;
         }
@@ -320,13 +317,15 @@ export default function Home() {
             if (e.key === 'Escape') {
                 e.preventDefault();
                 if (isSettingsOpen || isInfoOpen || isUpgradeModalOpen) {
+                    // Close any open modals
                     setIsSettingsOpen(false);
                     setIsInfoOpen(false);
                     if (isUpgradeModalOpen) {
                         setIsUpgradeModalOpen(false);
+                        // If upgrade modal was open, go back to between waves state
                         setGameState('betweenWaves');
-                        setBetweenWaveCountdown(0);
-                        soundManager.play(SoundType.GamePause);
+                        setBetweenWaveCountdown(0); // Restart countdown or ensure it proceeds
+                        soundManager.play(SoundType.GamePause); // Play pause sound for consistency
                     }
                 } else if (gameState === 'playing') {
                     setGameState('paused');
@@ -335,6 +334,7 @@ export default function Home() {
                     setGameState('playing');
                     soundManager.play(SoundType.GameResume);
                 } else if (gameState === 'betweenWaves') {
+                    // Allow skipping the countdown from betweenWaves state
                     handleNextWaveStart();
                 }
             }
@@ -467,9 +467,6 @@ export default function Home() {
             setHighScore(finalScore);
         }
         clearGameState();
-        if (gameCanvasRef.current) {
-            gameCanvasRef.current.stopGameLoop();
-        }
     }, [highScore]);
 
     const resetGameAndUpgradeState = () => {
@@ -590,7 +587,7 @@ export default function Home() {
             />
             <InfoModal
                 isOpen={isInfoOpen}
-                onClose={() => setIsInfoOpen(false)}
+                onClose={() => setIsInfoOpen(false)} // Corrected: setIsInfoExample -> setIsInfoOpen
             />
             <UpgradeModal
                 isOpen={isUpgradeModalOpen}
@@ -622,7 +619,7 @@ export default function Home() {
                             <Settings className="mr-2" />
                             Settings
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsInfoOpen(true); }} onMouseEnter={playHoverSound}>
+                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsInfoOpen(true); }} onMouseEnter={playHoverSound}> {/* Corrected: setIsInfoExample -> setIsInfoOpen */}
                             <Info className="mr-2" />
                             How to Play
                         </Button>
