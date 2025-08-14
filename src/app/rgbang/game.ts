@@ -148,7 +148,7 @@ export class Game {
 
     public currentWave = 0;
     private waveInProgress = false;
-    private fragmentsCollectedThisWave: number = 0; // New property to track collected fragments
+    private fragmentsCollectedThisWave: number = 0;
 
     private onGameOver: (finalScore: number) => void;
     private onFragmentCollected: (color: GameColor | null) => void;
@@ -239,7 +239,7 @@ export class Game {
         this.fragments = [];
         this.isBossSpawning = false;
         this.boss = null;
-        this.fragmentsCollectedThisWave = 0; // Reset fragment count for new wave
+        this.fragmentsCollectedThisWave = 0;
 
         const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || FALLBACK_WAVE_CONFIG;
 
@@ -254,7 +254,7 @@ export class Game {
 
     private endWave() {
         this.waveInProgress = false;
-        this.onWaveCompleted(this.currentWave, !!this.boss, this.fragmentsCollectedThisWave); // Pass collected count
+        this.onWaveCompleted(this.currentWave, !!this.boss, this.fragmentsCollectedThisWave);
         this.boss = null;
         this.isBossSpawning = false;
     }
@@ -290,7 +290,6 @@ export class Game {
             };
             this.enemies.push(miniBoss);
         }
-        this.enemies = [];
         this.isBossSpawning = true;
     }
 
@@ -306,6 +305,11 @@ export class Game {
             this.boss?.update();
             this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
 
+            if (this.waveInProgress && !this.isBossSpawning) {
+                const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
+                this.enemySpawner.update(this.createEnemy, waveConfig);
+            }
+
             this.handleCollisions();
             this.cleanupEntities();
 
@@ -319,7 +323,7 @@ export class Game {
                     this.endWave();
                 }
             } else {
-                if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.bullets.length === 0 && this.fragments.length === 0 && !this.isBossSpawning) {
+                if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.bullets.length === 0 && this.fragments.length === 0) {
                     this.endWave();
                 }
             }
@@ -430,7 +434,7 @@ export class Game {
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
                 this.soundManager.play(SoundType.FragmentCollect);
                 this.onFragmentCollected(fragment.color);
-                this.fragmentsCollectedThisWave++; // Increment collected fragments count
+                this.fragmentsCollectedThisWave++;
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
                 fragment.isAlive = false;
             }
