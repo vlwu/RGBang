@@ -4,7 +4,7 @@ import { Enemy, PunishmentType } from './enemy';
 import { Boss } from './boss';
 import { UI } from './ui';
 import { ParticleSystem } from './particle';
-import { circleCollision, Vec2, distance, ObjectPool, Quadtree } from './utils';
+import { circleCollision, Vec2, distance, ObjectPool, Quadtree, QuadtreeObject } from './utils';
 import { getRandomElement, PRIMARY_COLORS, GameColor, ALL_COLORS, COLOR_DETAILS } from './color';
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
@@ -193,7 +193,7 @@ export class Game {
                 this.player.upgradeManager.applyById(id, level);
             });
         }
-        
+
         gameStateStore.resetState(this.getCurrentState());
     }
 
@@ -234,7 +234,7 @@ export class Game {
 
     public createBullet = (bullet: Bullet) => {
         const pooledBullet = this.bulletPool.get(bullet.pos, bullet.vel.normalize(), bullet.color, bullet.isFromBoss);
-        
+
         pooledBullet.damage = bullet.damage;
         pooledBullet.penetrationsLeft = bullet.penetrationsLeft;
         pooledBullet.ricochetsLeft = bullet.ricochetsLeft;
@@ -242,7 +242,7 @@ export class Game {
         pooledBullet.isSlowing = bullet.isSlowing;
         pooledBullet.isFission = bullet.isFission;
         pooledBullet.isVoid = bullet.isVoid;
-        
+
         this.bullets.push(pooledBullet);
     }
 
@@ -278,8 +278,8 @@ export class Game {
     private endWave() {
         this.waveInProgress = false;
         const isBossWave = !!this.boss;
-        gameStateStore.updateState({ 
-            isBetweenWaves: true, 
+        gameStateStore.updateState({
+            isBetweenWaves: true,
             waveCompletedFragments: this.fragmentsCollectedThisWave,
             isBossWave
         });
@@ -333,7 +333,7 @@ export class Game {
             v.lifespan--;
             if (v.lifespan <= 0) this.vortexes.splice(i, 1);
         });
-        
+
         this.quadtree.clear();
         for (const enemy of this.enemies) {
             if (enemy.isAlive) {
@@ -342,7 +342,7 @@ export class Game {
                     y: enemy.pos.y,
                     width: enemy.radius * 2,
                     height: enemy.radius * 2,
-                    ...enemy 
+                    entity: enemy
                 });
             }
         }
@@ -378,7 +378,7 @@ export class Game {
                 }
             }
         }
-        
+
         gameStateStore.updateState({
             playerHealth: this.player.health,
             playerMaxHealth: this.player.getMaxHealth()
@@ -457,9 +457,10 @@ export class Game {
                 y: bullet.pos.y,
                 width: bullet.radius * 2,
                 height: bullet.radius * 2
-            }) as unknown as Enemy[];
+            });
 
-            for (const enemy of potentialColliders) {
+            for (const quadObj of potentialColliders) {
+                const enemy = quadObj.entity as Enemy;
                 if (!enemy.isAlive || bullet.hitEnemies.has(enemy)) continue;
 
                 if (circleCollision(bullet, enemy)) {
@@ -542,7 +543,7 @@ export class Game {
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
                 this.soundManager.play(SoundType.FragmentCollect);
                 const currentState = gameStateStore.getSnapshot();
-                gameStateStore.updateState({ 
+                gameStateStore.updateState({
                     lastFragmentCollected: fragment.color || 'special',
                     fragmentCollectCount: currentState.fragmentCollectCount + 1,
                 });
@@ -579,13 +580,13 @@ export class Game {
         const activeBullets: Bullet[] = [];
         for (const bullet of this.bullets) {
             const isOutOfBounds = bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height;
-            
+
             if (bullet.isActive && (!isOutOfBounds || bullet.ricochetsLeft > 0)) {
                 activeBullets.push(bullet);
-            } else if (bullet.isActive) { 
+            } else if (bullet.isActive) {
                 bullet.isActive = false;
                 this.bulletPool.release(bullet);
-            } else { 
+            } else {
                 this.bulletPool.release(bullet);
             }
         }

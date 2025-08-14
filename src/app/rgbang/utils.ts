@@ -171,7 +171,7 @@ interface Boundary {
     height: number;
 }
 
-interface QuadtreeObject extends Boundary {
+export interface QuadtreeObject extends Boundary {
     entity: any;
 }
 
@@ -240,7 +240,10 @@ export class Quadtree {
         }
 
         for (const obj of this.objects) {
-             if (this.intersects(obj)) {
+             const intersects =
+                Math.abs(range.x - obj.x) * 2 < (range.width + obj.width) &&
+                Math.abs(range.y - obj.y) * 2 < (range.height + obj.height);
+            if (intersects) {
                 found.push(obj);
             }
         }
