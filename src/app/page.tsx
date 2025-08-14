@@ -88,8 +88,8 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
             return;
         }
 
-        canvas.width = width;
-        canvas.height = height;
+        canvas.width = GAME_WIDTH;
+        canvas.height = GAME_HEIGHT;
         inputHandler.setCanvas(canvas);
 
         console.log("Initializing Game engine with initialGameState:", initialGameState);
@@ -110,7 +110,7 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
             }
             inputHandler.destroy();
         };
-    }, [width, height, initialGameState, inputHandler, gameLoop]);
+    }, [initialGameState, inputHandler, gameLoop]);
 
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
@@ -170,11 +170,6 @@ export default function Home() {
         if (newHeight > windowHeight) {
             newHeight = windowHeight;
             newWidth = newHeight * aspectRatio;
-        }
-
-        if(newWidth > GAME_WIDTH) {
-            newWidth = GAME_WIDTH;
-            newHeight = GAME_HEIGHT;
         }
 
         setCanvasSize({ width: newWidth, height: newHeight });
