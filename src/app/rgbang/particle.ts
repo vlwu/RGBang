@@ -1,4 +1,4 @@
-
+// src/app/rgbang/particle.ts
 import { Vec2 } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 
@@ -8,7 +8,9 @@ interface IParticle {
     lifespan: number;
     radius: number;
     update(): void;
-    draw(ctx: CanvasRenderingContext2D): void;
+    draw(ctx: CanvasRenderingRenderingContext2D): void;
+    isAlive(): boolean; // NEW: To check if a particle is still active in the pool
+    reset?(pos: Vec2, color: GameColor): void; // NEW: Optional reset method for pooled particles
 }
 
 
@@ -18,24 +20,45 @@ class Particle implements IParticle {
     lifespan: number;
     radius: number;
     color: string;
+    private active: boolean = true; // NEW: Flag for pooling
 
     constructor(pos: Vec2, color: GameColor) {
         this.pos = new Vec2(pos.x, pos.y);
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 3 + 1;
         this.vel = new Vec2(Math.cos(angle) * speed, Math.sin(angle) * speed);
-        this.lifespan = Math.random() * 60 + 30; // 0.5 to 1.5 seconds
+        this.lifespan = Math.random() * 60 + 30;
         this.radius = Math.random() * 3 + 2;
         this.color = COLOR_DETAILS[color].hex;
+        this.active = true;
+    }
+
+    // NEW: Reset method for recycling particles
+    reset(pos: Vec2, color: GameColor) {
+        this.pos.x = pos.x;
+        this.pos.y = pos.y;
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 3 + 1;
+        this.vel.x = Math.cos(angle) * speed;
+        this.vel.y = Math.sin(angle) * speed;
+        this.lifespan = Math.random() * 60 + 30;
+        this.radius = Math.random() * 3 + 2;
+        this.color = COLOR_DETAILS[color].hex;
+        this.active = true;
     }
 
     update() {
+        if (!this.active) return;
         this.pos = this.pos.add(this.vel);
-        this.vel = this.vel.scale(0.97); // friction
+        this.vel = this.vel.scale(0.97);
         this.lifespan--;
+        if (this.lifespan <= 0) {
+            this.active = false;
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (!this.active) return;
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.lifespan / 60);
         ctx.fillStyle = this.color;
@@ -44,42 +67,57 @@ class Particle implements IParticle {
         ctx.fill();
         ctx.restore();
     }
+
+    isAlive(): boolean { // NEW: Conforming to IParticle for active check
+        return this.active;
+    }
 }
 
 
 class LightningParticle implements IParticle {
     pos: Vec2;
-    vel: Vec2; // Not used, but needed for interface
+    vel: Vec2;
     lifespan: number;
-    radius: number; // Not used
+    radius: number;
     private endPos: Vec2;
+    private active: boolean = true; // NEW
 
     constructor(startPos: Vec2, endPos: Vec2) {
         this.pos = startPos;
         this.endPos = endPos;
-        this.lifespan = 20; // Short-lived effect
+        this.lifespan = 20;
         this.vel = new Vec2(0, 0);
         this.radius = 0;
+        this.active = true;
     }
 
     update() {
+        if (!this.active) return;
         this.lifespan--;
+        if (this.lifespan <= 0) {
+            this.active = false;
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (!this.active) return;
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.lifespan / 20);
-        ctx.strokeStyle = '#ffff66'; // Yellow
+        ctx.strokeStyle = '#ffff66';
         ctx.lineWidth = 2;
         ctx.shadowColor = '#ffff66';
         ctx.shadowBlur = 10;
-        
+
         ctx.beginPath();
         ctx.moveTo(this.pos.x, this.pos.y);
         ctx.lineTo(this.endPos.x, this.endPos.y);
         ctx.stroke();
-        
+
         ctx.restore();
+    }
+
+    isAlive(): boolean { // NEW
+        return this.active;
     }
 }
 
@@ -91,6 +129,7 @@ class FragmentParticle implements IParticle {
     maxLifespan: number;
     radius: number;
     color: string;
+    private active: boolean = true; // NEW
 
     constructor(pos: Vec2, color: string) {
         this.pos = new Vec2(pos.x, pos.y);
@@ -100,14 +139,20 @@ class FragmentParticle implements IParticle {
         this.maxLifespan = this.lifespan = Math.random() * 50 + 40;
         this.radius = Math.random() * 1.5 + 0.5;
         this.color = color;
+        this.active = true;
     }
 
     update() {
+        if (!this.active) return;
         this.pos = this.pos.add(this.vel);
         this.lifespan--;
+        if (this.lifespan <= 0) {
+            this.active = false;
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (!this.active) return;
         ctx.save();
         ctx.globalAlpha = Math.max(0, (this.lifespan / this.maxLifespan) * 0.7);
         ctx.fillStyle = this.color;
@@ -118,6 +163,10 @@ class FragmentParticle implements IParticle {
         ctx.fill();
         ctx.restore();
     }
+
+    isAlive(): boolean { // NEW
+        return this.active;
+    }
 }
 
 class PickupParticle implements IParticle {
@@ -127,24 +176,31 @@ class PickupParticle implements IParticle {
     maxLifespan: number;
     radius: number;
     color: string;
+    private active: boolean = true; // NEW
 
     constructor(pos: Vec2, color: string) {
         this.pos = new Vec2(pos.x, pos.y);
         const angle = Math.random() * Math.PI * 2;
-        const speed = Math.random() * 4 + 2; // Faster burst
+        const speed = Math.random() * 4 + 2;
         this.vel = new Vec2(Math.cos(angle) * speed, Math.sin(angle) * speed);
-        this.maxLifespan = this.lifespan = Math.random() * 30 + 20; // Shorter lifespan
+        this.maxLifespan = this.lifespan = Math.random() * 30 + 20;
         this.radius = Math.random() * 2 + 1;
         this.color = color;
+        this.active = true;
     }
-    
+
     update() {
+        if (!this.active) return;
         this.pos = this.pos.add(this.vel);
-        this.vel = this.vel.scale(0.95); // More friction
+        this.vel = this.vel.scale(0.95);
         this.lifespan--;
+        if (this.lifespan <= 0) {
+            this.active = false;
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (!this.active) return;
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.lifespan / this.maxLifespan);
         ctx.fillStyle = this.color;
@@ -154,6 +210,10 @@ class PickupParticle implements IParticle {
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+    }
+
+    isAlive(): boolean { // NEW
+        return this.active;
     }
 }
 
@@ -165,27 +225,35 @@ class DashParticle implements IParticle {
     maxLifespan: number;
     radius: number;
     private color: string = '#FF0000';
+    private active: boolean = true; // NEW
 
     constructor(pos: Vec2) {
         this.pos = new Vec2(pos.x, pos.y);
         const angle = Math.random() * Math.PI * 2;
         const speed = Math.random() * 2 + 0.5;
         this.vel = new Vec2(Math.cos(angle) * speed, Math.sin(angle) * speed);
-        this.maxLifespan = this.lifespan = Math.random() * 40 + 20; // smaller lifespan
+        this.maxLifespan = this.lifespan = Math.random() * 40 + 20;
         this.radius = Math.random() * 2 + 1;
+        this.active = true;
     }
 
     update() {
+        if (!this.active) return;
         this.pos = this.pos.add(this.vel);
         this.lifespan--;
-        
-        // Color cycling logic
+
+
         const lifeRatio = this.lifespan / this.maxLifespan;
         const hue = (1 - lifeRatio) * 360;
         this.color = `hsl(${hue}, 100%, 50%)`;
+
+        if (this.lifespan <= 0) {
+            this.active = false;
+        }
     }
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (!this.active) return;
         ctx.save();
         ctx.globalAlpha = Math.max(0, this.lifespan / this.maxLifespan);
         ctx.fillStyle = this.color;
@@ -196,17 +264,28 @@ class DashParticle implements IParticle {
         ctx.fill();
         ctx.restore();
     }
+
+    isAlive(): boolean { // NEW
+        return this.active;
+    }
 }
 
 
 export class ParticleSystem {
     particles: IParticle[] = [];
+    private particlePool: Particle[] = []; // NEW: Pool for general particles
+    private readonly MAX_PARTICLES = 500; // Cap total particles
+    private readonly POOL_SIZE = 200; // Max particles in pool
 
     update() {
         for (let i = this.particles.length - 1; i >= 0; i--) {
             this.particles[i].update();
-            if (this.particles[i].lifespan <= 0) {
-                this.particles.splice(i, 1);
+            if (!this.particles[i].isAlive()) { // Check if particle is no longer active
+                const p = this.particles.splice(i, 1)[0];
+                // Only return general Particles to the pool
+                if (p instanceof Particle && this.particlePool.length < this.POOL_SIZE) {
+                    this.particlePool.push(p);
+                }
             }
         }
     }
@@ -217,28 +296,41 @@ export class ParticleSystem {
 
     add(pos: Vec2, color: GameColor, count: number) {
         for (let i = 0; i < count; i++) {
-            this.particles.push(new Particle(pos, color));
+            if (this.particles.length >= this.MAX_PARTICLES) return; // Prevent too many particles
+
+            let particle: Particle;
+            if (this.particlePool.length > 0) {
+                particle = this.particlePool.pop()!;
+                particle.reset(pos, color);
+            } else {
+                particle = new Particle(pos, color);
+            }
+            this.particles.push(particle);
         }
     }
-    
+
     addDashParticle(pos: Vec2) {
+        if (this.particles.length >= this.MAX_PARTICLES) return;
         this.particles.push(new DashParticle(pos));
     }
 
     addFragmentParticle(pos: Vec2, color: string) {
-        if (Math.random() > 0.7) { // Don't add every frame
+        if (this.particles.length >= this.MAX_PARTICLES) return;
+        if (Math.random() > 0.7) {
              this.particles.push(new FragmentParticle(pos, color));
         }
     }
-    
+
     addPickupEffect(pos: Vec2, color: GameColor | null) {
+        if (this.particles.length >= this.MAX_PARTICLES) return;
         const hexColor = color ? COLOR_DETAILS[color].hex : '#FFFFFF';
         for (let i = 0; i < 20; i++) {
             this.particles.push(new PickupParticle(pos, hexColor));
         }
     }
-    
+
     addLightning(startPos: Vec2, endPos: Vec2) {
+        if (this.particles.length >= this.MAX_PARTICLES) return;
         this.particles.push(new LightningParticle(startPos, endPos));
     }
 }

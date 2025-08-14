@@ -1,3 +1,4 @@
+// src/app/rgbang/player.ts
 import { Vec2, drawShapeForColor } from './utils';
 import { Bullet } from './bullet';
 import InputHandler from './input-handler';
@@ -24,13 +25,13 @@ export class Player {
     private soundManager: SoundManager;
 
 
-
     public movementSpeedMultiplier = 1;
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
     public shootCooldownModifier = 1;
-    public expGainMultiplier = 1;
+    public expGainMultiplier = 1; // Kept for future potential EXP system
     public accuracyModifier = 1;
+    public scoreMultiplier = 1; // NEW: Player's score multiplier
 
 
     public flatHealthIncrease = 0;

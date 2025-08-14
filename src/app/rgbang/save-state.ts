@@ -1,17 +1,18 @@
-
+// src/app/rgbang/save-state.ts
 import { GameColor } from './color';
 
 export interface SavedGameState {
     score: number;
     playerHealth: number;
-    activeUpgrades: Map<string, number>; // Map<upgradeId, level>
+    activeUpgrades: Map<string, number>;
     nextBossScoreThreshold: number;
     initialColor: GameColor;
+    currentWave: number; // NEW
 }
 
 const GAME_STATE_KEY = 'rgBangGameState';
 
-// Helper to convert Maps and Sets to JSON
+
 const replacer = (key: string, value: any) => {
     if (value instanceof Map) {
         return {
@@ -28,7 +29,7 @@ const replacer = (key: string, value: any) => {
     return value;
 }
 
-// Helper to revive Maps and Sets from JSON
+
 const reviver = (key: string, value: any) => {
     if (typeof value === 'object' && value !== null) {
         if (value.dataType === 'Map') {

@@ -1,3 +1,4 @@
+// src/app/rgbang/sound-manager.ts
 export enum SoundType {
     PlayerShoot = 'playerShoot',
     PlayerDash = 'playerDash',
@@ -14,6 +15,10 @@ export enum SoundType {
     GameOver = 'gameOver',
     GameQuit = 'gameQuit',
     GunSwitch = 'gunSwitch',
+    EnemyReflect = 'enemyReflect', // NEW
+    EnemySpeedBoost = 'enemySpeedBoost', // NEW
+    EnemySplit = 'enemySplit', // NEW
+    ChromaSentinelShift = 'chromaSentinelShift', // NEW
 }
 
 const soundPaths: Record<SoundType, string> = {
@@ -32,6 +37,10 @@ const soundPaths: Record<SoundType, string> = {
     [SoundType.GameOver]: '/sounds/game-over.mp3',
     [SoundType.GameQuit]: '/sounds/game-quit.mp3',
     [SoundType.GunSwitch]: '/sounds/gun-switch.mp3',
+    [SoundType.EnemyReflect]: '/sounds/enemy-reflect.mp3', // Placeholder, create this sound
+    [SoundType.EnemySpeedBoost]: '/sounds/enemy-speedboost.mp3', // Placeholder
+    [SoundType.EnemySplit]: '/sounds/enemy-split.mp3', // Placeholder
+    [SoundType.ChromaSentinelShift]: '/sounds/chroma-shift.mp3', // Placeholder
 };
 
 export class SoundManager {

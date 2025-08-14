@@ -1,3 +1,4 @@
+// src/app/rgbang/ui.ts
 import { Player } from './player';
 import { GameColor, COLOR_DETAILS, ALL_COLORS } from './color';
 import { Boss } from './boss';
@@ -13,13 +14,17 @@ export class UI {
         this.ctx = canvas.getContext('2d')!;
     }
 
-    draw(player: Player, score: number, boss: Boss | null) {
+    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemyCount: number) {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScore(score, !!boss);
+        this.drawWaveNumber(currentWave);
         if (boss && boss.isAlive) {
             this.drawBossHealthBar(boss);
+        } else {
+            this.drawEnemyCount(enemyCount);
         }
+        this.drawScoreMultiplier(player.scoreMultiplier); // NEW: Draw score multiplier
     }
 
     private drawHealthBar(player: Player) {
@@ -167,6 +172,49 @@ export class UI {
         this.ctx.shadowBlur = 5;
 
         this.ctx.fillText(`Score: ${Math.round(score)}`, this.canvas.width - 20, isBossActive ? 60 : 20);
+        this.ctx.restore();
+    }
+
+    private drawWaveNumber(waveNumber: number) {
+        this.ctx.save();
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = 'bold 32px "Space Grotesk"';
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'top';
+        this.ctx.shadowColor = 'black';
+        this.ctx.shadowBlur = 5;
+
+        this.ctx.fillText(`WAVE ${waveNumber}`, this.canvas.width / 2, 20);
+        this.ctx.restore();
+    }
+
+    private drawEnemyCount(count: number) {
+        this.ctx.save();
+        this.ctx.fillStyle = 'white';
+        this.ctx.font = 'bold 18px "Space Grotesk"';
+        this.ctx.textAlign = 'right';
+        this.ctx.textBaseline = 'top';
+        this.ctx.shadowColor = 'black';
+        this.ctx.shadowBlur = 5;
+
+        this.ctx.fillText(`Enemies: ${count}`, this.canvas.width - 20, 50);
+        this.ctx.restore();
+    }
+
+    // NEW: drawScoreMultiplier method
+    private drawScoreMultiplier(multiplier: number) {
+        if (multiplier <= 1) return; // Only draw if multiplier is greater than 1
+
+        this.ctx.save();
+        this.ctx.fillStyle = '#ffff66'; // Yellow for multiplier
+        this.ctx.font = 'bold 18px "Space Grotesk"';
+        this.ctx.textAlign = 'right';
+        this.ctx.textBaseline = 'top';
+        this.ctx.shadowColor = '#ffff66';
+        this.ctx.shadowBlur = 5;
+
+        // Position below enemy count or score, adjust as needed
+        this.ctx.fillText(`Multiplier: x${multiplier.toFixed(1)}`, this.canvas.width - 20, 80);
         this.ctx.restore();
     }
 }

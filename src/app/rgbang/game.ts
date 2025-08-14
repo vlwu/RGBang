@@ -1,6 +1,7 @@
+// src/app/rgbang/game.ts
 import { Player } from './player';
 import { Bullet } from './bullet';
-import { Enemy } from './enemy';
+import { Enemy, PunishmentType } from './enemy';
 import { Boss } from './boss';
 import { UI } from './ui';
 import { ParticleSystem } from './particle';
@@ -10,27 +11,50 @@ import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
 import { SoundManager, SoundType } from './sound-manager';
+import { WAVE_CONFIGS, WaveConfig, EnemySpawnConfig, EnemyType, FALLBACK_WAVE_CONFIG } from './wave-data';
 
 class EnemySpawner {
-    private spawnInterval = 120;
     private spawnTimer = 0;
-    private maxEnemies = 20;
+    private currentSpawnConfigIndex = 0;
+    private currentWaveEnemiesToSpawn: EnemySpawnConfig[] = [];
+    private soundManager: SoundManager; // NEW: SoundManager instance
 
-    constructor(private canvasWidth: number, private canvasHeight: number) {}
+    constructor(private canvasWidth: number, private canvasHeight: number, soundManager: SoundManager) { // MODIFIED: Added soundManager
+        this.soundManager = soundManager;
+    }
 
-    update(currentEnemyCount: number, upgradeCount: number, firstBossDefeated: boolean, createEnemy: (enemy: Enemy) => void) {
-        this.spawnTimer--;
-        if (this.spawnTimer <= 0 && currentEnemyCount < this.maxEnemies) {
-            this.spawnEnemy(createEnemy, upgradeCount, firstBossDefeated);
-            this.spawnTimer = this.spawnInterval;
+    initializeForWave(waveConfig: WaveConfig) {
+        this.currentWaveEnemiesToSpawn = [...waveConfig.enemySpawnPatterns];
+        this.currentSpawnConfigIndex = 0;
+        this.spawnTimer = 0;
+    }
 
-            if (this.spawnInterval > 30) {
-                this.spawnInterval *= 0.995;
+    update(createEnemy: (enemy: Enemy) => void, waveConfig: WaveConfig) {
+        if (this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length) {
+            const currentPattern = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex];
+
+            if (this.spawnTimer === 0 && currentPattern.delay !== undefined) {
+                this.spawnTimer = currentPattern.delay;
+            }
+
+            this.spawnTimer--;
+
+            if (this.spawnTimer <= 0) {
+                for (let i = 0; i < currentPattern.count; i++) {
+                    this.spawnEnemy(createEnemy, currentPattern.type, currentPattern.color, waveConfig.waveNumber);
+                }
+                this.currentSpawnConfigIndex++;
+                if (this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length && this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex].delay !== undefined) {
+                    this.spawnTimer = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex].delay!;
+                } else {
+                    this.spawnTimer = 0;
+                }
             }
         }
     }
 
-    private spawnEnemy(createEnemy: (enemy: Enemy) => void, upgradeCount: number, firstBossDefeated: boolean) {
+    // MODIFIED: Pass soundManager and isChromaSentinel to Enemy constructor
+    private spawnEnemy(createEnemy: (enemy: Enemy) => void, enemyType: EnemyType, fixedColor: GameColor | undefined, waveNumber: number) {
         const edge = Math.floor(Math.random() * 4);
         let x, y;
         if (edge === 0) {
@@ -47,21 +71,63 @@ class EnemySpawner {
             y = Math.random() * this.canvasHeight;
         }
 
-        const availableColors = firstBossDefeated ? ALL_COLORS : PRIMARY_COLORS;
-        const color = getRandomElement(availableColors);
-        const radius = 15;
+        let color: GameColor;
+        let radius: number;
+        let health: number;
+        let speed: number;
+        let points: number;
+        let damage: number;
+        let isChromaSentinel = false; // NEW: Flag for Chroma Sentinel
+
+        const healthMultiplier = 1 + waveNumber * 0.1;
+        const speedMultiplier = 1 + waveNumber * 0.02;
+        const pointsMultiplier = 1 + waveNumber * 0.05;
+
+        switch (enemyType) {
+            case EnemyType.RED_BLOB:
+                color = fixedColor || getRandomElement(PRIMARY_COLORS);
+                radius = 15;
+                health = Math.round(30 * healthMultiplier);
+                speed = 1.5 * speedMultiplier;
+                points = Math.round(10 * pointsMultiplier);
+                damage = 10;
+                break;
+            case EnemyType.BLUE_SHARD:
+                color = fixedColor || getRandomElement(PRIMARY_COLORS);
+                radius = 18;
+                health = Math.round(50 * healthMultiplier);
+                speed = 1.8 * speedMultiplier;
+                points = Math.round(20 * pointsMultiplier);
+                damage = 15;
+                break;
+            case EnemyType.CHROMA_SENTINEL:
+                color = fixedColor || getRandomElement(PRIMARY_COLORS); // Chroma Sentinel starts with primary color
+                radius = 20;
+                health = Math.round(80 * healthMultiplier);
+                speed = 1.2 * speedMultiplier;
+                points = Math.round(30 * pointsMultiplier);
+                damage = 20;
+                isChromaSentinel = true; // Set flag
+                break;
+            default:
+                color = getRandomElement(PRIMARY_COLORS);
+                radius = 15;
+                health = Math.round(30 * healthMultiplier);
+                speed = 1.5 * speedMultiplier;
+                points = Math.round(10 * pointsMultiplier);
+                damage = 10;
+                break;
+        }
 
 
-        const healthMultiplier = 1 + upgradeCount * 0.15;
-        const speedMultiplier = 1 + upgradeCount * 0.05;
-        const pointsMultiplier = 1 + upgradeCount * 0.2;
-
-        const health = Math.round(30 * healthMultiplier);
-        const speed = 1.5 * speedMultiplier;
-        const points = Math.round(10 * pointsMultiplier);
-
-        const newEnemy = new Enemy(x, y, color, radius, health, speed, points);
+        // MODIFIED: Pass soundManager and isChromaSentinel to Enemy constructor
+        const newEnemy = new Enemy(x, y, color, radius, health, speed, points, this.soundManager, isChromaSentinel);
+        newEnemy.damage = damage;
         createEnemy(newEnemy);
+    }
+
+    hasMoreEnemiesToSpawn(): boolean {
+        return this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length;
     }
 }
 
@@ -84,13 +150,18 @@ export class Game {
     public isRunning = false;
     private isBossSpawning = false;
 
+    public currentWave = 0;
+    private waveInProgress = false;
+
     private onGameOver: (finalScore: number) => void;
     private onFragmentCollected: (color: GameColor | null) => void;
+    public onWaveCompleted: (waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => void;
 
     constructor(
         canvas: HTMLCanvasElement,
         onGameOver: (finalScore: number) => void,
         onFragmentCollected: (color: GameColor | null) => void,
+        onWaveCompleted: (waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => void,
         initialState: SavedGameState,
         soundManager: SoundManager,
     ) {
@@ -98,10 +169,12 @@ export class Game {
         this.ctx = canvas.getContext('2d')!;
         this.onGameOver = onGameOver;
         this.onFragmentCollected = onFragmentCollected;
+        this.onWaveCompleted = onWaveCompleted;
         this.soundManager = soundManager;
 
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor, this.soundManager);
-        this.enemySpawner = new EnemySpawner(canvas.width, this.canvas.height);
+        // MODIFIED: Pass soundManager to EnemySpawner
+        this.enemySpawner = new EnemySpawner(canvas.width, this.canvas.height, this.soundManager);
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();
 
@@ -110,6 +183,7 @@ export class Game {
         this.player.health = initialState.playerHealth;
         this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
         this.firstBossDefeated = initialState.nextBossScoreThreshold > 150;
+        this.currentWave = initialState.currentWave || 0;
 
 
         if (initialState.activeUpgrades) {
@@ -122,6 +196,16 @@ export class Game {
     public start() {
         if (this.isRunning) return;
         this.isRunning = true;
+        if (this.currentWave === 0) {
+            this.startWave(1);
+        } else {
+            const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
+            this.enemySpawner.initializeForWave(waveConfig);
+            this.waveInProgress = true;
+            if (waveConfig.bossType) {
+                this.spawnBossByType(waveConfig.bossType);
+            }
+        }
     }
 
     public stop() {
@@ -135,6 +219,7 @@ export class Game {
             activeUpgrades: this.player.upgradeManager.getActiveUpgradeMap(),
             nextBossScoreThreshold: this.nextBossScoreThreshold,
             initialColor: this.player.currentColor,
+            currentWave: this.currentWave,
         };
     }
 
@@ -153,58 +238,105 @@ export class Game {
         this.enemies.push(enemy);
     }
 
-    private spawnBoss() {
-        if (this.boss) return;
-        const bossX = this.canvas.width / 2;
-        const bossY = 100;
-        this.boss = new Boss(
-            bossX,
-            bossY,
-            this.createBullet,
-            this.canvas.width,
-            this.canvas.height,
-            this.soundManager
-        );
+    public startWave(waveNumber: number) {
+        this.currentWave = waveNumber;
         this.enemies = [];
+        this.bullets = [];
+        this.fragments = [];
+        this.isBossSpawning = false;
+        this.boss = null;
+
+        const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || FALLBACK_WAVE_CONFIG;
+
+        if (waveConfig.bossType) {
+            this.spawnBossByType(waveConfig.bossType);
+            this.waveInProgress = true;
+        } else {
+            this.enemySpawner.initializeForWave(waveConfig);
+            this.waveInProgress = true;
+        }
     }
 
-    public update(inputHandler: InputHandler) {
+    private endWave(fragmentsToAward: number) {
+        this.waveInProgress = false;
+        this.onWaveCompleted(this.currentWave, !!this.boss, fragmentsToAward);
+        this.boss = null;
+        this.isBossSpawning = false;
+    }
 
-        this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height);
+    private spawnBossByType(bossType: EnemyType.MINI_BOSS_1 | EnemyType.MAIN_BOSS_1) {
+        const bossX = this.canvas.width / 2;
+        const bossY = 100;
 
-        this.bullets.forEach(bullet => bullet.update());
-        this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
-        this.boss?.update();
-        this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
+        let bossHealthMultiplier = 1 + (this.currentWave * 0.1);
+
+        if (bossType === EnemyType.MAIN_BOSS_1) {
+            this.boss = new Boss(
+                bossX,
+                bossY,
+                this.createBullet,
+                this.canvas.width,
+                this.canvas.height,
+                this.soundManager
+            );
+            this.boss.maxHealth = Math.round(1000 * bossHealthMultiplier);
+            this.boss.health = this.boss.maxHealth;
+        } else if (bossType === EnemyType.MINI_BOSS_1) {
+            const miniBossRadius = 30;
+            const miniBossHealth = Math.round(300 * bossHealthMultiplier);
+            const miniBossSpeed = 2.0;
+            const miniBossPoints = Math.round(100 * (this.currentWave / 2));
+            const miniBossColor = getRandomElement(PRIMARY_COLORS);
+
+            // MODIFIED: Pass soundManager to mini-boss Enemy constructor
+            const miniBoss = new Enemy(bossX, bossY, miniBossColor, miniBossRadius, miniBossHealth, miniBossSpeed, miniBossPoints, this.soundManager);
+            miniBoss.damage = 20;
+            miniBoss.onSplit = (newEnemy) => {
+                this.createEnemy(newEnemy);
+            };
+            this.enemies.push(miniBoss);
+        }
+        this.enemies = [];
+        this.isBossSpawning = true;
+    }
 
 
-        this.handleCollisions();
+    public update(inputHandler: InputHandler, isGamePaused = false) {
+        if (!this.isRunning) return;
 
-
+        this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height, isGamePaused);
         this.particles.update();
 
+        if (!isGamePaused) {
+            this.bullets.forEach(bullet => bullet.update());
+            this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
+            this.boss?.update();
+            this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
 
-        this.cleanupEntities();
 
+            this.handleCollisions();
+            this.cleanupEntities();
 
-        if (this.boss) {
-            if (!this.boss.isAlive) {
-                this.soundManager.play(SoundType.BossDestroy);
-                this.particles.add(this.boss.pos, this.boss.color, 100);
-                this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null));
-                this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5);
-                this.boss = null;
-                this.firstBossDefeated = true;
-                this.isBossSpawning = false;
-            }
-        } else if (!this.isBossSpawning) {
+            if (this.boss) {
+                if (!this.boss.isAlive) {
+                    this.soundManager.play(SoundType.BossDestroy);
+                    this.particles.add(this.boss.pos, this.boss.color, 100);
+                    this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null));
+                    this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5);
 
-            const upgradeCount = this.player.upgradeManager.activeUpgrades.size;
-            this.enemySpawner.update(this.enemies.length, upgradeCount, this.firstBossDefeated, this.createEnemy);
+                    const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
+                    this.endWave(waveConfig.fragmentsAwarded);
+                }
+            } else {
+                const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
 
-            if (this.score >= this.nextBossScoreThreshold) {
-                this.isBossSpawning = true;
-                this.spawnBoss();
+                if (this.enemySpawner.hasMoreEnemiesToSpawn()) {
+                    this.enemySpawner.update(this.createEnemy, waveConfig);
+                }
+
+                if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.bullets.length === 0 && this.fragments.length === 0 && !this.isBossSpawning) {
+                    this.endWave(waveConfig.fragmentsAwarded);
+                }
             }
         }
 
@@ -236,7 +368,6 @@ export class Game {
     }
 
     private handleCollisions() {
-
         for (let i = this.bullets.length - 1; i >= 0; i--) {
             const bullet = this.bullets[i];
             let bulletRemoved = false;
@@ -246,10 +377,10 @@ export class Game {
                     this.player.takeDamage(bullet.damage);
                     this.particles.add(bullet.pos, bullet.color, 10);
                     this.bullets.splice(i, 1);
+                    bulletRemoved = true;
                 }
                 continue;
             }
-
 
             for (let j = this.enemies.length - 1; j >= 0; j--) {
                 const enemy = this.enemies[j];
@@ -259,11 +390,19 @@ export class Game {
 
                     const hitSuccess = enemy.takeDamage(bullet.damage, bullet.color);
 
-                    if (hitSuccess) {
+                    if (!hitSuccess && enemy.activePunishment === PunishmentType.REFLECT_BULLET) {
+                        this.soundManager.play(SoundType.EnemyReflect, 0.7); // Play distinct reflect sound
+                        this.particles.add(bullet.pos, GameColor.BLUE, 10);
+
+                        const reflectedDirection = this.player.pos.sub(bullet.pos).normalize();
+                        const reflectedBullet = new Bullet(enemy.pos, reflectedDirection, bullet.color, true);
+                        reflectedBullet.damage = bullet.damage;
+                        this.createBullet(reflectedBullet);
+                    } else if (hitSuccess) {
                         this.soundManager.play(SoundType.EnemyHit);
                         this.applySpecialEffects(bullet, enemy);
                         if (!enemy.isAlive) {
-                           this.score += enemy.points;
+                           this.score += enemy.points * this.player.scoreMultiplier;
                            this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
                         }
                     }
@@ -370,6 +509,6 @@ export class Game {
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx);
 
-        this.ui.draw(this.player, this.score, this.boss);
+        this.ui.draw(this.player, this.score, this.boss, this.currentWave, this.enemies.length);
     }
 }

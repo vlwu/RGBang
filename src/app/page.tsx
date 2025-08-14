@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History, X } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
-import { GameColor } from './rgbang/color';
+import { GameColor, PRIMARY_COLORS, getRandomElement } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade, UpgradeProgress } from './rgbang/upgrades';
 import { ALL_UPGRADES } from './rgbang/upgrades';
@@ -27,14 +27,16 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
+import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG } from './rgbang/wave-data';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
-const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED };
+const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0 };
 
-function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, initialGameState }: {
+function GameCanvas({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, gameRef, initialGameState }: {
     onGameOver: (score: number) => void,
     onFragmentCollected: (color: GameColor | null) => void,
+    onWaveCompleted: (waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => void,
     width: number,
     height: number,
     gameRef: React.MutableRefObject<Game | null>,
@@ -44,16 +46,19 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
     const inputHandler = InputHandler.getInstance();
 
     useEffect(() => {
-        if (!canvasRef.current) return;
+        // MODIFIED: Ensure canvasRef.current is assigned to a local variable and checked
         const canvas = canvasRef.current;
-
+        if (!canvas) {
+            console.warn("Canvas element not found on useEffect.");
+            return;
+        }
 
         canvas.width = GAME_WIDTH;
         canvas.height = GAME_HEIGHT;
 
         inputHandler.setCanvas(canvas);
 
-        const game = new Game(canvas, onGameOver, onFragmentCollected, initialGameState, soundManager);
+        const game = new Game(canvas, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, soundManager);
         gameRef.current = game;
         game.start();
 
@@ -61,18 +66,21 @@ function GameCanvas({ onGameOver, onFragmentCollected, width, height, gameRef, i
             game.stop();
         };
 
-    }, [initialGameState, onGameOver, onFragmentCollected, gameRef, inputHandler]);
+    }, [initialGameState, onGameOver, onFragmentCollected, onWaveCompleted, gameRef, inputHandler]);
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 }
 
 export default function Home() {
-    const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'continuePrompt'>('menu');
+    const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'continuePrompt' | 'betweenWaves'>('menu');
     const [score, setScore] = useState(0);
     const [highScore, setHighScore] = useState(0);
     const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
     const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set<string>(), upgradeProgress: new Map<string, UpgradeProgress>() });
     const [runUpgrades, setRunUpgrades] = useState<Map<string, number>>(new Map<string, number>());
+    const [currentWave, setCurrentWave] = useState(0);
+    const [nextWaveHint, setNextWaveHint] = useState("");
+    const [betweenWaveCountdown, setBetweenWaveCountdown] = useState(0);
 
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -138,8 +146,10 @@ export default function Home() {
         const savedRun = await loadGameState();
         if (savedRun && savedRun.score > 0) {
             setSavedGame(savedRun);
+            setCurrentWave(savedRun.currentWave);
         } else {
             setSavedGame(null);
+            setCurrentWave(0);
         }
 
         const data = await getPlayerUpgradeData();
@@ -168,7 +178,7 @@ export default function Home() {
 
     useEffect(() => {
         const handleBeforeUnload = () => {
-            if (gameRef.current && (gameState === 'playing' || gameState === 'paused')) {
+            if (gameRef.current && (gameState === 'playing' || gameState === 'paused' || gameState === 'betweenWaves' || gameState === 'upgrading')) {
                 const stateToSave = gameRef.current.getCurrentState();
                 if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
@@ -192,26 +202,15 @@ export default function Home() {
 
     useEffect(() => {
         let animationFrameId: number | null = null;
+        let countdownInterval: NodeJS.Timeout | null = null;
         const inputHandler = inputHandlerRef.current;
 
         const gameLoop = () => {
             if (!gameRef.current) return;
 
-            const isPausedForModal = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen;
+            const isPausedForModal = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen || gameState === 'betweenWaves';
 
-
-            if (!isPausedForModal) {
-                gameRef.current.update(inputHandler);
-            } else {
-
-
-                const isInputPaused = gameRef.current.player.isRadialMenuOpen || isPausedForModal;
-                gameRef.current.player.update(inputHandler, gameRef.current.createBullet, gameRef.current.particles, gameRef.current.canvas.width, gameRef.current.canvas.height, isInputPaused);
-            }
-
-            if (!gameRef.current) {
-                return;
-            }
+            gameRef.current.update(inputHandler, isPausedForModal);
 
             gameRef.current.draw();
 
@@ -219,18 +218,53 @@ export default function Home() {
             animationFrameId = requestAnimationFrame(gameLoop);
         };
 
+        const startCountdown = () => {
+            if (countdownInterval) clearInterval(countdownInterval);
+            setBetweenWaveCountdown(5); // Start with 5 seconds
+            countdownInterval = setInterval(() => {
+                setBetweenWaveCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(countdownInterval!);
+                        countdownInterval = null;
+                        handleNextWaveStart();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        };
 
-        if(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading'){
+        const handleNextWaveStart = () => {
+            if (gameRef.current) {
+                const nextWaveNum = currentWave + 1;
+                setCurrentWave(nextWaveNum);
+                gameRef.current.startWave(nextWaveNum);
+                setGameState('playing');
+                soundManager.play(SoundType.GameResume);
+            }
+        };
+
+
+        if(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading' || gameState === 'betweenWaves'){
             animationFrameId = requestAnimationFrame(gameLoop);
+            if (gameState === 'betweenWaves' && betweenWaveCountdown === 0) {
+                startCountdown();
+            }
+        } else if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
         }
 
         return () => {
             if (animationFrameId) {
                 cancelAnimationFrame(animationFrameId);
             }
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
         };
+    }, [gameState, isUpgradeOverviewOpen, currentWave, betweenWaveCountdown]);
 
-    }, [gameState, isUpgradeOverviewOpen]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -239,12 +273,20 @@ export default function Home() {
                 if (isSettingsOpen || isInfoOpen || isUpgradeModalOpen) {
                     setIsSettingsOpen(false);
                     setIsInfoOpen(false);
+                    if (isUpgradeModalOpen) {
+                        setIsUpgradeModalOpen(false);
+                        setGameState('betweenWaves');
+                        setBetweenWaveCountdown(0);
+                        soundManager.play(SoundType.GamePause);
+                    }
                 } else if (gameState === 'playing') {
                     setGameState('paused');
                     soundManager.play(SoundType.GamePause);
                 } else if (gameState === 'paused') {
                     setGameState('playing');
                     soundManager.play(SoundType.GameResume);
+                } else if (gameState === 'betweenWaves') {
+                    handleNextWaveStart();
                 }
             }
              if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase() && !isUpgradeOverviewOpen) {
@@ -265,20 +307,37 @@ export default function Home() {
             window.removeEventListener('keydown', handleKeyDown);
             window.removeEventListener('keyup', handleKeyUp);
         }
-    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isUpgradeOverviewOpen]);
+    }, [gameState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isUpgradeOverviewOpen, currentWave]);
+
 
     const handleFragmentCollected = useCallback((color: GameColor | null) => {
-        if (gameRef.current) {
-            const addScoreCallback = (amount: number) => {
-                if (gameRef.current) {
-                    gameRef.current.addScore(amount);
-                }
-            };
-            const options = gameRef.current.player.upgradeManager.getUpgradeOptions(color, upgradeDataRef.current, addScoreCallback);
-            setUpgradeOptions(options);
-            setGameState('upgrading');
+        console.log(`Fragment of color ${color} collected. (No immediate effect in wave mode)`);
+    }, []);
+
+    const handleWaveCompleted = useCallback((waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => {
+        setScore(gameRef.current?.score || 0);
+
+        const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
+        setNextWaveHint(waveConfig.nextWaveHint);
+
+        if (fragmentsToAward > 0) {
+            if (gameRef.current) {
+                const options = gameRef.current.player.upgradeManager.getUpgradeOptions(
+                    isBossWave ? null : getRandomElement(PRIMARY_COLORS),
+                    upgradeDataRef.current,
+                    gameRef.current.addScore
+                );
+                setUpgradeOptions(options);
+            }
             setIsUpgradeModalOpen(true);
+            setGameState('upgrading');
+            soundManager.play(SoundType.GamePause);
+        } else {
+            setGameState('betweenWaves');
+            setBetweenWaveCountdown(0);
+            soundManager.play(SoundType.GamePause);
         }
+        setCurrentWave(waveNumber);
     }, []);
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
@@ -320,9 +379,12 @@ export default function Home() {
         }
 
         setIsUpgradeModalOpen(false);
-        setGameState('playing');
-        soundManager.play(SoundType.GameResume);
-    }, [runUpgrades]);
+        setGameState('betweenWaves');
+        const nextWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === currentWave + 1) || FALLBACK_WAVE_CONFIG;
+        setNextWaveHint(nextWaveConfig.nextWaveHint);
+        setBetweenWaveCountdown(0);
+        soundManager.play(SoundType.GamePause);
+    }, [runUpgrades, currentWave]);
 
     const handleGameOver = useCallback((finalScore: number) => {
         setScore(finalScore);
@@ -342,6 +404,7 @@ export default function Home() {
         setRunUpgrades(new Map<string, number>());
         setScore(0);
         setSavedGame(null);
+        setCurrentWave(0);
     };
 
     const startNewRun = async () => {
@@ -349,7 +412,7 @@ export default function Home() {
         resetGameAndUpgradeState();
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
         const uniqueKey = Math.random();
-        setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor, score: uniqueKey });
+        setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor, score: uniqueKey, currentWave: 0 });
         setGameState('playing');
     };
 
@@ -371,6 +434,7 @@ export default function Home() {
             setUpgradeData(data);
             upgradeDataRef.current = data;
             setRunUpgrades(new Map(savedRun.activeUpgrades));
+            setCurrentWave(savedRun.currentWave);
 
             setInitialGameState(savedRun);
             setGameState('playing');
@@ -395,6 +459,7 @@ export default function Home() {
             }
             setScore(currentState.score);
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
+            setCurrentWave(currentState.currentWave);
         }
         gameRef.current = null;
         loadInitialData();
@@ -523,6 +588,7 @@ export default function Home() {
                      <div className="text-2xl font-semibold text-foreground/80">
                         <p>You have a run in progress.</p>
                         <p>Score: <span className="font-bold text-accent">{Math.round(savedGame.score)}</span></p>
+                        <p>Wave: <span className="font-bold text-accent">{savedGame.currentWave}</span></p>
                     </div>
                     <div className="flex flex-col gap-4 w-64">
                         <Button size="lg" onClick={continueRun} onMouseEnter={playHoverSound} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
@@ -541,12 +607,13 @@ export default function Home() {
             )}
 
 
-            {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading') && (
+            {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading' || gameState === 'betweenWaves') && (
                 <div className="relative">
                     <GameCanvas
-                        key={`${initialGameState.score}-${initialGameState.playerHealth}-${initialGameState.initialColor}`}
+                        key={`${initialGameState.score}-${initialGameState.playerHealth}-${initialGameState.initialColor}-${initialGameState.currentWave}`}
                         onGameOver={handleGameOver}
                         onFragmentCollected={handleFragmentCollected}
+                        onWaveCompleted={handleWaveCompleted}
                         width={canvasSize.width}
                         height={canvasSize.height}
                         gameRef={gameRef}
@@ -575,6 +642,13 @@ export default function Home() {
                                  </Button>
                              </div>
                          </div>
+                    )}
+                    {gameState === 'betweenWaves' && (
+                        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
+                            <h2 className="text-6xl font-bold font-headline tracking-tighter mb-4 text-glow">WAVE {currentWave} CLEARED!</h2>
+                            <p className="text-3xl font-semibold text-foreground/80 mb-6">Next Wave in: <span className="text-accent">{betweenWaveCountdown}</span></p>
+                            <p className="text-xl font-medium text-muted-foreground">{nextWaveHint}</p>
+                        </div>
                     )}
                 </div>
             )}

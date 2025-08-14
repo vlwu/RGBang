@@ -1,3 +1,4 @@
+// src/app/rgbang/upgrades.ts
 import { GameColor } from './color';
 import { Player } from './player';
 
@@ -89,13 +90,13 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'prism-exp-gain',
         name: 'Prism Magnetism',
-        description: 'Increases EXP gained from fragments by 20% per level.',
+        description: 'Increases score gained from enemies by 20% per level.', // MODIFIED DESCRIPTION
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
         getValue: (level) => 1 + (0.2 * level),
         apply: (player, level) => {
-            player.expGainMultiplier *= Math.pow(1.2, level);
+            player.scoreMultiplier *= Math.pow(1.2, level); // MODIFIED: Apply to scoreMultiplier
         }
     },
     {
