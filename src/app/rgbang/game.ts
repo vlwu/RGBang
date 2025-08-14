@@ -293,7 +293,20 @@ export class Game {
         this.boss = null;
         this.fragmentsCollectedThisWave = 0;
 
-        const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || { ...FALLBACK_WAVE_CONFIG, waveNumber };
+        let waveConfig: WaveConfig;
+
+        if (waveNumber > 0 && waveNumber % 5 === 0) {
+            waveConfig = {
+                waveNumber: waveNumber,
+                name: `Giga-Threat Level ${waveNumber / 5}`,
+                bossType: EnemyType.MAIN_BOSS_1,
+                enemySpawnPatterns: [],
+                nextWaveHint: "The chromatic chaos intensifies...",
+                fragmentsAwarded: 5,
+            };
+        } else {
+            waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || { ...FALLBACK_WAVE_CONFIG, waveNumber };
+        }
 
         this.enemySpawner.initializeForWave(waveConfig);
         this.waveInProgress = true;
@@ -320,9 +333,12 @@ export class Game {
         const bossX = this.canvas.width / 2;
         const bossY = 100;
 
-        let bossHealthMultiplier = 1 + (this.currentWave * 0.1);
-
         if (bossType === EnemyType.MAIN_BOSS_1) {
+            const waveMultiplier = Math.floor(this.currentWave / 5);
+            const scaledHealth = 800 + (waveMultiplier * 300);
+            const scaledDamage = 25 + (waveMultiplier * 5);
+            const scaledAttackInterval = Math.max(40, 100 - (waveMultiplier * 6));
+
             this.boss = new Boss(
                 bossX,
                 bossY,
@@ -332,11 +348,13 @@ export class Game {
                 },
                 this.canvas.width,
                 this.canvas.height,
-                this.soundManager
+                this.soundManager,
+                scaledHealth,
+                scaledDamage,
+                scaledAttackInterval
             );
-            this.boss.maxHealth = Math.round(1000 * bossHealthMultiplier);
-            this.boss.health = this.boss.maxHealth;
         } else if (bossType === EnemyType.MINI_BOSS_1) {
+            let bossHealthMultiplier = 1 + (this.currentWave * 0.1);
             const miniBossRadius = 30;
             const miniBossHealth = Math.round(300 * bossHealthMultiplier);
             const miniBossSpeed = 2.0;

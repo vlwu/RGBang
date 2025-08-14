@@ -13,11 +13,11 @@ export class Boss {
     pos: Vec2;
     radius = 40;
     health: number;
-    maxHealth = 1000;
+    maxHealth: number;
     color: GameColor;
     isAlive = true;
     points = 0;
-    damage = 30;
+    damage: number;
 
     private canvasWidth: number;
     private canvasHeight: number;
@@ -37,7 +37,7 @@ export class Boss {
     private moveSpeed = 0.1;
 
     private attackTimer = 0;
-    private readonly attackInterval = 100;
+    private readonly attackInterval: number;
 
     private createBullet: (bullet: Bullet) => void;
 
@@ -48,10 +48,16 @@ export class Boss {
         canvasWidth: number,
         canvasHeight: number,
         soundManager: SoundManager,
+        maxHealth = 1000,
+        damage = 30,
+        attackInterval = 100
     ) {
         this.pos = new Vec2(x, y);
         this.targetPos = new Vec2(x, y);
+        this.maxHealth = maxHealth;
         this.health = this.maxHealth;
+        this.damage = damage;
+        this.attackInterval = attackInterval;
         this.color = getRandomElement(PRIMARY_COLORS);
         this.createBullet = createBullet;
         this.canvasWidth = canvasWidth;

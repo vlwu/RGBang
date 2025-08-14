@@ -12,15 +12,15 @@ export const ENEMY_COSTS: Record<EnemyType, number> = {
     [EnemyType.RED_BLOB]: 5,
     [EnemyType.BLUE_SHARD]: 10,
     [EnemyType.CHROMA_SENTINEL]: 25,
-    [EnemyType.MINI_BOSS_1]: 0, // Not spawned procedurally
-    [EnemyType.MAIN_BOSS_1]: 0, // Not spawned procedurally
+    [EnemyType.MINI_BOSS_1]: 0,
+    [EnemyType.MAIN_BOSS_1]: 0,
 };
 
 const ENEMY_UNLOCK_WAVE: Record<EnemyType, number> = {
     [EnemyType.RED_BLOB]: 1,
     [EnemyType.BLUE_SHARD]: 3,
     [EnemyType.CHROMA_SENTINEL]: 6,
-    [EnemyType.MINI_BOSS_1]: 999, // Arbitrarily high to prevent procedural spawn
+    [EnemyType.MINI_BOSS_1]: 999,
     [EnemyType.MAIN_BOSS_1]: 999,
 };
 
@@ -53,7 +53,7 @@ export function generateProceduralWave(waveNumber: number): EnemySpawnConfig[] {
 
         const maxInGroup = Math.floor(remainingBudget / enemyCost);
         let groupSize;
-        if (Math.random() > 0.8 && maxInGroup > 1) { // 20% chance of a large group
+        if (Math.random() > 0.8 && maxInGroup > 1) {
             const minSize = Math.floor(maxInGroup / 2);
             groupSize = minSize + Math.floor(Math.random() * (maxInGroup - minSize + 1));
         } else {
@@ -61,7 +61,7 @@ export function generateProceduralWave(waveNumber: number): EnemySpawnConfig[] {
         }
         groupSize = Math.max(1, Math.min(groupSize, maxInGroup));
 
-        const delay = isFirstSpawn ? 120 : (60 + Math.random() * 120); // 2s initial, 1-3s after
+        const delay = isFirstSpawn ? 120 : (60 + Math.random() * 120);
         isFirstSpawn = false;
 
         spawnPatterns.push({
@@ -72,7 +72,7 @@ export function generateProceduralWave(waveNumber: number): EnemySpawnConfig[] {
 
         remainingBudget -= enemyCost * groupSize;
     }
-    
+
     return spawnPatterns;
 }
 
@@ -122,14 +122,6 @@ export const WAVE_CONFIGS: WaveConfig[] = [
         fragmentsAwarded: 1,
     },
     {
-        waveNumber: 5,
-        name: "Mini-Boss: Sentinel Prime",
-        enemySpawnPatterns: [],
-        bossType: EnemyType.MINI_BOSS_1,
-        nextWaveHint: "The core challenge awaits. Master all colors!",
-        fragmentsAwarded: 3,
-    },
-    {
         waveNumber: 6,
         name: "Chromatic Confusion",
         nextWaveHint: "Enemies are adapting faster now. Stay sharp!",
@@ -141,16 +133,6 @@ export const WAVE_CONFIGS: WaveConfig[] = [
         nextWaveHint: "The final test nears. Prepare for the Prism Guardian!",
         fragmentsAwarded: 1,
     },
-    {
-        waveNumber: 8,
-        name: "Apex Predator",
-        enemySpawnPatterns: [],
-        bossType: EnemyType.MAIN_BOSS_1,
-        nextWaveHint: "You've survived the worst. How long can you last?",
-        fragmentsAwarded: 5,
-    },
-
-
     {
         waveNumber: 9,
         name: "Endless Surge I",
