@@ -23,7 +23,7 @@ export class Player {
     public isRadialMenuOpen = false;
     private soundManager: SoundManager;
 
-    // Base Stat Multipliers
+
     public movementSpeedMultiplier = 1;
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
@@ -31,11 +31,11 @@ export class Player {
     public accuracyModifier = 1;
     public scoreMultiplier = 1;
 
-    // Flat Stat Increases
+
     public flatHealthIncrease = 0;
     public flatDamageReduction = 0;
 
-    // Gun-Specific Upgrades
+
     public chainLightningLevel = 0;
     public igniteLevel = 0;
     public iceSpikerLevel = 0;
@@ -46,7 +46,7 @@ export class Player {
     public fissionLevel = 0;
     public voidLevel = 0;
 
-    // Special Mechanic Upgrades
+
     public lifestealPercent = 0;
     public adrenalineRushLevel = 0;
     public kineticShieldLevel = 0;
@@ -55,7 +55,7 @@ export class Player {
     public bulletPenetrationLevel = 0;
     public explosiveFinishLevel = 0;
 
-    // Live State Properties for Upgrades
+
     public adrenalineTimer = 0;
     public kineticShieldHits = 0;
     public punishmentReversalMeter = 0;
@@ -286,10 +286,23 @@ export class Player {
             ctx.restore();
         }
 
-        ctx.fillStyle = '#E2E8F0';
+        ctx.save();
+        const hexColor = COLOR_DETAILS[this.currentColor].hex;
+        const gradient = ctx.createRadialGradient(
+            this.pos.x, this.pos.y, this.radius * 0.2,
+            this.pos.x, this.pos.y, this.radius
+        );
+        gradient.addColorStop(0, hexColor);
+        gradient.addColorStop(0.7, '#E2E8F0');
+
+        ctx.fillStyle = gradient;
+        ctx.shadowColor = hexColor;
+        ctx.shadowBlur = 15;
+        
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
 
         if (this.dashCooldownTimer > 0) {
             this.drawDashIndicator(ctx);
@@ -337,7 +350,7 @@ export class Player {
 
         if (this.kineticShieldHits > 0) {
             this.kineticShieldHits--;
-            this.soundManager.play(SoundType.EnemyReflect); // Re-use a shield sound
+            this.soundManager.play(SoundType.EnemyReflect);
             return;
         }
 
@@ -346,7 +359,7 @@ export class Player {
         this.soundManager.play(SoundType.PlayerDamage);
 
         if (this.adrenalineRushLevel > 0) {
-            const duration = 120 + this.adrenalineRushLevel * 60; // 2s to 4s
+            const duration = 120 + this.adrenalineRushLevel * 60;
             this.adrenalineTimer = duration;
         }
 
