@@ -1,3 +1,4 @@
+import { ALL_UPGRADES } from './upgrades';
 
 export interface UpgradeProgress {
     level: number;
@@ -10,7 +11,7 @@ export interface PlayerUpgradeData {
 
 const UPGRADE_DATA_KEY = 'rgBangUpgradeData';
 
-// Helper to convert Maps and Sets to JSON
+
 const replacer = (key: string, value: any) => {
     if (value instanceof Map) {
         return {
@@ -27,7 +28,7 @@ const replacer = (key: string, value: any) => {
     return value;
 }
 
-// Helper to revive Maps and Sets from JSON
+
 const reviver = (key: string, value: any) => {
     if (typeof value === 'object' && value !== null) {
         if (value.dataType === 'Map') {
@@ -53,7 +54,7 @@ export async function getPlayerUpgradeData(): Promise<PlayerUpgradeData> {
     } catch (error) {
         console.error('Failed to load upgrade data from localStorage', error);
     }
-    // Default data if nothing is saved
+
     return {
         unlockedUpgradeIds: new Set(),
         upgradeProgress: new Map(),
@@ -75,15 +76,17 @@ export async function savePlayerUpgradeData(data: PlayerUpgradeData): Promise<vo
 export async function levelUpUpgrade(upgradeId: string): Promise<PlayerUpgradeData> {
     const data = await getPlayerUpgradeData();
     let progress = data.upgradeProgress.get(upgradeId);
+    const upgrade = ALL_UPGRADES.find(u => u.id === upgradeId);
+    const maxLevel = upgrade ? upgrade.getMaxLevel() : 5;
 
     if (!progress) {
         progress = { level: 1 };
     } else {
-        if (progress.level < 5) {
+        if (progress.level < maxLevel) {
             progress.level++;
         }
     }
-    
+
     data.upgradeProgress.set(upgradeId, progress);
     await savePlayerUpgradeData(data);
     return data;
@@ -93,7 +96,7 @@ export async function unlockUpgrade(upgradeId: string): Promise<PlayerUpgradeDat
     const data = await getPlayerUpgradeData();
     if (!data.unlockedUpgradeIds.has(upgradeId)) {
         data.unlockedUpgradeIds.add(upgradeId);
-        // Do not set initial level here, levelUp will handle it.
+
         await savePlayerUpgradeData(data);
     }
     return data;

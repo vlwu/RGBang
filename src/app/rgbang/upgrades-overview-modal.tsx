@@ -26,7 +26,7 @@ const UpgradeInfoCard = ({ upgrade, level }: { upgrade: Upgrade, level: number }
             </CardHeader>
             <CardContent className="p-0 mt-2">
                  <div className="flex justify-center items-center">
-                    {Array.from({ length: 5 }).map((_, i) => (
+                    {Array.from({ length: upgrade.getMaxLevel() }).map((_, i) => (
                         <Star key={i} className={`w-4 h-4 ${i < level ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
                     ))}
                 </div>
