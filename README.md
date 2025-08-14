@@ -1,17 +1,16 @@
-
 # RGBang
 
-RGBang is a vibrant, fast-paced arcade shooter built with Next.js and the HTML5 Canvas API. The game challenges players to survive waves of colorful enemies by mastering a unique color-mixing mechanic. It's a test of reflexes, strategy, and color theory!
+RGBang is a vibrant, fast-paced arcade shooter built with Next.js and the HTML5 Canvas API. The game challenges players to survive procedurally generated waves of colorful enemies by mastering a unique color-mixing mechanic and a deep upgrade system. It's a test of reflexes, strategy, and color theory!
 
 ## Features
 
-- **Dynamic Gameplay**: Face endless waves of enemies that increase in difficulty over time.
-- **Color-Mixing Mechanic**: Combine primary colors (Red, Yellow, Blue) to create secondary colors (Orange, Purple, Green) to match and destroy your foes.
-- **Shape-Based Accessibility**: Each color is paired with a unique shape (Circle, Triangle, Square), making the game accessible to players with color blindness.
-- **Challenging Boss Fights**: Every 100 points, a powerful boss spawns, testing your skills with unique attack patterns.
-- **Responsive Canvas**: The game dynamically resizes to fit your browser window while maintaining a perfect 16:9 aspect ratio.
-- **Customizable Controls**: Rebind your keys to suit your playstyle.
-- **High Score Tracking**: Compete against yourself and save your best scores locally.
+-   **Dynamic Gameplay**: Face endless, procedurally generated waves of enemies that increase in difficulty over time.
+-   **Color & Shape System**: Combine primary colors (Red, Yellow, Blue) to create secondary colors (Orange, Purple, Green) to match and destroy your foes. Each color is also paired with a unique shape (Circle, Triangle, Square), making the game more accessible.
+-   **Deep Upgrade System**: Collect fragments from fallen enemies to unlock and level up a wide variety of powerful upgrades that can dramatically change your playstyle.
+-   **Challenging Boss Fights**: At key intervals, powerful bosses and mini-bosses will spawn, testing your skills with unique attack patterns.
+-   **Responsive Canvas**: The game dynamically resizes to fit your browser window while maintaining a perfect 16:9 aspect ratio.
+-   **Customizable Controls**: Rebind your keys to suit your playstyle.
+-   **Persistent Progress**: Save your high score and unlocked upgrades between sessions.
 
 ## How to Play
 
@@ -20,9 +19,10 @@ RGBang is a vibrant, fast-paced arcade shooter built with Next.js and the HTML5 
 -   **Shoot**: `Left Click` to fire projectiles.
 -   **Dash**: Press `Spacebar` for a quick burst of speed and temporary invulnerability.
 -   **Select Colors**:
-    -   Use keys `1`, `2`, `3` or the `Mouse Wheel` to select your primary color (Red, Yellow, Blue).
-    -   Hold `Shift` and press a different primary color key to combine them into a secondary color.
--   **Match to Destroy**: To damage an enemy, your bullet's color and shape must match the enemy's. Hitting an enemy with the wrong color will eventually make it stronger!
+    -   Use keys `1`, `2`, `3` or the `Mouse Wheel` to select a primary color (Red, Yellow, Blue).
+    -   Hold `Right Click` to open a radial menu and select a secondary color (Orange, Green, Purple).
+-   **Match to Destroy**: To damage an enemy, your bullet's color and shape must match the enemy's. Hitting an enemy with the wrong color multiple times will trigger a punishment, making it stronger!
+-   **View Upgrades**: Hold `Shift` during a run to see your currently active upgrades.
 
 ## Tech Stack
 

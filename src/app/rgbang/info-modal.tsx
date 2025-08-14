@@ -1,4 +1,3 @@
-
 "use client"
 
 import {
@@ -41,29 +40,29 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
                             <li><KeyDisplay>Mouse</KeyDisplay> - Aim</li>
                             <li><KeyDisplay>Left Click</KeyDisplay> - Shoot</li>
                             <li><KeyDisplay>Spacebar</KeyDisplay> - Dash (provides temporary invulnerability)</li>
+                            <li><KeyDisplay>Shift</KeyDisplay> (Hold) - View current upgrades during a run</li>
                         </ul>
                     </div>
-                    
+
                      <div className="space-y-2">
                         <h3 className="font-semibold text-primary">Color & Shape System</h3>
                          <p>To damage an enemy, you must match your bullet's color and shape to the enemy's.</p>
                         <ul className="list-disc list-inside space-y-1">
                             <li>There are 3 primary colors: <span className="text-[#ff4d4d] font-bold">Red (Circle)</span>, <span className="text-[#ffff66] font-bold">Yellow (Triangle)</span>, and <span className="text-[#4d94ff] font-bold">Blue (Square)</span>.</li>
-                             <li>Select a primary color with keys <KeyDisplay>1</KeyDisplay> <KeyDisplay>2</KeyDisplay> <KeyDisplay>3</KeyDisplay>.</li>
-                             <li>Cycle through all available colors with the <KeyDisplay>Mouse Wheel</KeyDisplay>.</li>
-                            <li>Hold <KeyDisplay>Right Click</KeyDisplay> (or your rebound key) to open a radial menu for secondary colors.</li>
-                            <li>Shooting the wrong color will eventually trigger a punishment, making the enemy stronger!</li>
+                             <li>Select a primary color with keys <KeyDisplay>1</KeyDisplay> <KeyDisplay>2</KeyDisplay> <KeyDisplay>3</KeyDisplay>, or cycle with the <KeyDisplay>Mouse Wheel</KeyDisplay>.</li>
+                            <li>Hold <KeyDisplay>Right Click</KeyDisplay> to open a radial menu for secondary colors (Orange, Green, Purple).</li>
+                            <li>Shooting an enemy with the wrong color 3 times will trigger a punishment, making it stronger!</li>
                         </ul>
                     </div>
-                    
+
                     <div className="space-y-2">
                         <h3 className="font-semibold text-primary">Gameplay & Upgrades</h3>
                         <ul className="list-disc list-inside space-y-1">
-                            <li>Enemies will spawn continuously. Defeating them drops colored fragments.</li>
-                            <li>Collecting fragments will present you with powerful upgrade options.</li>
-                            <li>For every <span className="font-bold text-accent">150 score</span> (threshold increases over time), a powerful Boss will spawn.</li>
-                            <li>Defeat the Boss to get a special fragment with unique upgrades!</li>
-                            <li>Survive as long as you can and set a new high score!</li>
+                            <li>Survive procedurally generated waves of enemies that become progressively harder.</li>
+                            <li>Defeating enemies drops colored fragments. Collecting these earns you upgrade choices at the end of a wave.</li>
+                            <li>Powerful bosses and mini-bosses will appear on certain waves.</li>
+                            <li>Defeat bosses to get special fragments which may offer more powerful upgrade choices!</li>
+                            <li>Survive as long as you can and set a new high score! Your unlocked upgrades are persistent.</li>
                         </ul>
                     </div>
                 </div>

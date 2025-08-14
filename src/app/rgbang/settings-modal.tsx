@@ -60,7 +60,7 @@ export function SettingsModal({
     }, [isOpen]);
 
     useEffect(() => {
-        // Apply local settings to the sound manager for real-time feedback
+
         soundManager.setMasterVolume(localVolume);
         soundManager.setMuted(localIsMuted);
     }, [localVolume, localIsMuted]);
@@ -104,14 +104,14 @@ export function SettingsModal({
         onMuteChange(localIsMuted);
         onClose();
     };
-    
+
     const handleTestSound = () => {
         soundManager.play(SoundType.EnemyHit);
     };
 
     const handleOpenChange = (open: boolean) => {
         if (!open) {
-            // Revert sound manager to original settings from props on any close action
+
             soundManager.setMasterVolume(volume);
             soundManager.setMuted(isMuted);
             onClose();
@@ -152,14 +152,14 @@ export function SettingsModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-background text-foreground">
+            <DialogContent className="sm:max-w-[425px] bg-background text-foreground flex flex-col max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle className="text-primary">Settings</DialogTitle>
                     <DialogDescription>
                         Customize your controls and audio settings.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-6 py-4">
+                <div className="grid gap-6 py-4 overflow-y-auto pr-3">
                     <div className="space-y-4">
                         <h4 className="font-semibold text-muted-foreground text-sm">Sound</h4>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -215,9 +215,9 @@ export function SettingsModal({
                         ))}
                     </div>
                 </div>
-                <DialogFooter>
-                    <Button variant="secondary" onClick={handleCancel} onMouseEnter={playHoverSound}>Cancel</Button>
-                    <Button onClick={handleSave} onMouseEnter={playHoverSound}>Save Changes</Button>
+                <DialogFooter className="pt-4 border-t border-border mt-auto">
+                    <Button onClick={handleCancel} onMouseEnter={playHoverSound} className="font-bold btn-gradient btn-gradient-1">Cancel</Button>
+                    <Button onClick={handleSave} onMouseEnter={playHoverSound} className="font-bold btn-gradient btn-gradient-3 text-slate-800 hover:text-slate-900">Save Changes</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
