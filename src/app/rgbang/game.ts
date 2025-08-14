@@ -19,6 +19,9 @@ class EnemySpawner {
     private currentWaveEnemiesToSpawn: EnemySpawnConfig[] = [];
     private soundManager: SoundManager;
 
+    private enemiesLeftInGroup = 0;
+    private groupSpawnTimer = 0;
+
     constructor(private canvasWidth: number, private canvasHeight: number, soundManager: SoundManager) {
         this.soundManager = soundManager;
     }
@@ -31,9 +34,32 @@ class EnemySpawner {
         }
         this.currentSpawnConfigIndex = 0;
         this.spawnTimer = 0;
+        this.enemiesLeftInGroup = 0;
+        this.groupSpawnTimer = 0;
     }
 
-    update(createEnemy: (enemy: Enemy) => void, waveConfig: WaveConfig) {
+    update(createEnemy: (enemy: Enemy) => void, waveConfig: WaveConfig, currentEnemyCount: number) {
+        if (this.enemiesLeftInGroup > 0) {
+            this.groupSpawnTimer--;
+            if (this.groupSpawnTimer <= 0) {
+                const currentPattern = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex];
+                this.spawnEnemy(createEnemy, currentPattern.type, currentPattern.color, waveConfig.waveNumber);
+                this.enemiesLeftInGroup--;
+
+                if (this.enemiesLeftInGroup === 0) {
+                    this.currentSpawnConfigIndex++;
+                    if (this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length) {
+                        this.spawnTimer = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex].delay ?? 0;
+                    }
+                } else {
+                    const baseInterval = 8;
+                    const dynamicInterval = baseInterval + Math.floor(currentEnemyCount * 0.4);
+                    this.groupSpawnTimer = Math.max(5, dynamicInterval);
+                }
+            }
+            return;
+        }
+
         if (this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length) {
             const currentPattern = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex];
 
@@ -44,15 +70,8 @@ class EnemySpawner {
             this.spawnTimer--;
 
             if (this.spawnTimer <= 0) {
-                for (let i = 0; i < currentPattern.count; i++) {
-                    this.spawnEnemy(createEnemy, currentPattern.type, currentPattern.color, waveConfig.waveNumber);
-                }
-                this.currentSpawnConfigIndex++;
-                if (this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length && this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex].delay !== undefined) {
-                    this.spawnTimer = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex].delay!;
-                } else {
-                    this.spawnTimer = 0;
-                }
+                this.enemiesLeftInGroup = currentPattern.count;
+                this.groupSpawnTimer = 0;
             }
         }
     }
@@ -128,7 +147,7 @@ class EnemySpawner {
     }
 
     hasMoreEnemiesToSpawn(): boolean {
-        return this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length;
+        return this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length || this.enemiesLeftInGroup > 0;
     }
 }
 
@@ -357,7 +376,7 @@ export class Game {
 
             if (this.waveInProgress && !this.isBossSpawning) {
                 const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || { ...FALLBACK_WAVE_CONFIG, waveNumber: this.currentWave };
-                this.enemySpawner.update(this.createEnemy, waveConfig);
+                this.enemySpawner.update(this.createEnemy, waveConfig, this.enemies.length);
             }
 
             this.handleCollisions();
