@@ -1,6 +1,8 @@
+// src/app/page.tsx
+
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useImperativeHandle } from 'react'; // Added React import
 import { Game } from './rgbang/game';
 import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
 import { Button } from '@/components/ui/button';
@@ -33,42 +35,103 @@ const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0 };
 
-function GameCanvas({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, gameRef, initialGameState }: {
+// Define the interface for the ref exposed by GameCanvas
+interface GameCanvasHandle {
+    getGameInstance: () => Game | null;
+    startGameLoop: () => void;
+    stopGameLoop: () => void;
+}
+
+// Modify GameCanvas to be a functional component wrapped with forwardRef
+const GameCanvas = React.forwardRef<GameCanvasHandle, {
     onGameOver: (score: number) => void,
     onFragmentCollected: (color: GameColor | null) => void,
     onWaveCompleted: (waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => void,
     width: number,
     height: number,
-    gameRef: React.MutableRefObject<Game | null>,
     initialGameState: SavedGameState,
-}) {
+    isGamePausedExternally: boolean;
+}> (({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, initialGameState, isGamePausedExternally }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const gameInstanceRef = useRef<Game | null>(null);
+    const animationFrameIdRef = useRef<number | null>(null);
     const inputHandler = InputHandler.getInstance();
 
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) {
-            console.warn("Canvas element not found on useEffect.");
+    // Expose methods to parent component
+    useImperativeHandle(ref, () => ({
+        getGameInstance: () => gameInstanceRef.current,
+        startGameLoop: () => {
+            if (animationFrameIdRef.current === null) {
+                gameLoop(); // Start the loop
+            }
+        },
+        stopGameLoop: () => {
+            if (animationFrameIdRef.current !== null) {
+                cancelAnimationFrame(animationFrameIdRef.current);
+                animationFrameIdRef.current = null;
+            }
+        },
+    }));
+
+    // Game loop function
+    const gameLoop = () => {
+        if (!gameInstanceRef.current || !canvasRef.current) {
+            animationFrameIdRef.current = null;
             return;
         }
 
-        canvas.width = GAME_WIDTH;
-        canvas.height = GAME_HEIGHT;
+        gameInstanceRef.current.update(inputHandler, isGamePausedExternally);
+        gameInstanceRef.current.draw();
 
-        inputHandler.setCanvas(canvas);
+        inputHandler.resetEvents(); // Reset input state for next frame
+        animationFrameIdRef.current = requestAnimationFrame(gameLoop);
+    };
 
-        const game = new Game(canvas, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, soundManager);
-        gameRef.current = game;
-        game.start();
+    // Effect for canvas setup and initial game instance creation/load
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) {
+            console.warn("Canvas element not found on mount.");
+            return;
+        }
 
+        canvas.width = width;
+        canvas.height = height;
+
+        inputHandler.setCanvas(canvas); // Set canvas for input handler
+
+        console.log("Creating new Game instance with initialGameState:", initialGameState);
+        gameInstanceRef.current = new Game(
+            canvas,
+            onGameOver,
+            onFragmentCollected,
+            onWaveCompleted,
+            initialGameState,
+            soundManager
+        );
+        gameInstanceRef.current.start(); // This starts the game's internal logic, not the RAF loop.
+
+        // Cleanup when component unmounts
         return () => {
-            game.stop();
+            console.log("GameCanvas unmount cleanup.");
+            if (animationFrameIdRef.current !== null) {
+                cancelAnimationFrame(animationFrameIdRef.current);
+                animationFrameIdRef.current = null;
+            }
+            if (gameInstanceRef.current) {
+                gameInstanceRef.current.stop();
+                gameInstanceRef.current = null;
+            }
         };
+    }, [width, height, onGameOver, onFragmentCollected, onWaveCompleted, initialGameState, inputHandler]); // Dependencies: props and ref to keep game instance unique per game run.
 
-    }, [initialGameState, onGameOver, onFragmentCollected, onWaveCompleted, gameRef, inputHandler]);
+    // Effect to manage the game loop based on `isGameRunning` prop (now handled by parent)
+    // This effect is controlled by `Home`'s useEffect using startGameLoop/stopGameLoop via ref
 
     return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
-}
+});
+
+GameCanvas.displayName = 'GameCanvas'; // Important for React DevTools and debugging
 
 export default function Home() {
     const [gameState, setGameState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'continuePrompt' | 'betweenWaves'>('menu');
@@ -91,9 +154,9 @@ export default function Home() {
     const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
 
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
-    const gameRef = useRef<Game | null>(null);
+    const gameCanvasRef = useRef<GameCanvasHandle | null>(null); // Ref to the GameCanvas component
     const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
-    const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE);
+    const [initialGameState, setInitialGameState] = useState<SavedGameState>(DEFAULT_GAME_STATE); // State that triggers game instance creation
     const { toast } = useToast();
     const [volume, setVolume] = useState(1.0);
     const [isMuted, setIsMuted] = useState(false);
@@ -179,8 +242,8 @@ export default function Home() {
 
     useEffect(() => {
         const handleBeforeUnload = () => {
-            if (gameRef.current && (gameState === 'playing' || gameState === 'paused' || gameState === 'betweenWaves' || gameState === 'upgrading')) {
-                const stateToSave = gameRef.current.getCurrentState();
+            if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance() && (gameState === 'playing' || gameState === 'paused' || gameState === 'betweenWaves' || gameState === 'upgrading')) {
+                const stateToSave = gameCanvasRef.current.getGameInstance()!.getCurrentState();
                 if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
                 }
@@ -200,14 +263,14 @@ export default function Home() {
         localStorage.setItem('rgBangKeybindings', JSON.stringify(keybindings));
     }, [keybindings]);
 
-
     const handleNextWaveStart = useCallback(() => {
-        if (gameRef.current) {
+        if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
             const nextWaveNum = currentWave + 1;
             setCurrentWave(nextWaveNum);
-            gameRef.current.startWave(nextWaveNum);
+            gameCanvasRef.current.getGameInstance()!.startWave(nextWaveNum);
             setGameState('playing');
             soundManager.play(SoundType.GameResume);
+            gameCanvasRef.current.startGameLoop(); // Ensure loop restarts after state change
         }
     }, [currentWave]);
 
@@ -233,39 +296,22 @@ export default function Home() {
     }, [handleNextWaveStart]);
 
 
+    // Effect to manage the overall game loop start/stop based on gameState
     useEffect(() => {
-        let animationFrameId: number | null = null;
-        const inputHandler = inputHandlerRef.current;
+        if (!gameCanvasRef.current) return;
 
-        const gameLoop = () => {
-            if (!gameRef.current) return;
-
-            const isPausedForModal = gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen || gameState === 'betweenWaves';
-
-            gameRef.current.update(inputHandler, isPausedForModal);
-
-            gameRef.current.draw();
-
-            inputHandler.resetEvents();
-            animationFrameId = requestAnimationFrame(gameLoop);
-        };
-
-
-        if(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading' || gameState === 'betweenWaves'){
-            animationFrameId = requestAnimationFrame(gameLoop);
-            if (gameState === 'betweenWaves' && betweenWaveCountdown === 0) {
-                const cleanupCountdown = startCountdown();
-            }
-        } else if (animationFrameId) {
-            cancelAnimationFrame(animationFrameId);
-            animationFrameId = null;
+        if (gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading' || gameState === 'betweenWaves') {
+            gameCanvasRef.current.startGameLoop();
+        } else {
+            gameCanvasRef.current.stopGameLoop();
         }
 
-        return () => {
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-        };
+        // Handle between waves countdown externally
+        if (gameState === 'betweenWaves' && betweenWaveCountdown === 0) {
+            const cleanupCountdown = startCountdown();
+            return cleanupCountdown;
+        }
+
     }, [gameState, isUpgradeOverviewOpen, betweenWaveCountdown, startCountdown]);
 
 
@@ -318,19 +364,19 @@ export default function Home() {
     }, []);
 
     const handleWaveCompleted = useCallback((waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => {
-        setScore(gameRef.current?.getCurrentState().score || 0);
+        setScore(gameCanvasRef.current?.getGameInstance()?.getCurrentState().score || 0);
 
         const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
         setNextWaveHint(waveConfig.nextWaveHint);
 
         if (fragmentsToAward > 0) {
             setUpgradesRemainingToSelect(fragmentsToAward);
-            setTotalUpgradesToSelect(fragmentsToAward); // Store total for display
-            if (gameRef.current) {
-                const options = gameRef.current.player.upgradeManager.getUpgradeOptions(
+            setTotalUpgradesToSelect(fragmentsToAward);
+            if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
+                const options = gameCanvasRef.current.getGameInstance()!.player.upgradeManager.getUpgradeOptions(
                     isBossWave ? null : getRandomElement(PRIMARY_COLORS),
                     upgradeDataRef.current,
-                    gameRef.current.addScore
+                    gameCanvasRef.current.getGameInstance()!.addScore
                 );
                 setUpgradeOptions(options);
             }
@@ -347,11 +393,10 @@ export default function Home() {
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
-        if (gameRef.current) {
+        if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
+            const gameInstance = gameCanvasRef.current.getGameInstance()!;
             const addScoreCallback = (amount: number) => {
-                if (gameRef.current) {
-                    gameRef.current.addScore(amount);
-                }
+                gameInstance.addScore(amount);
             };
 
             if (upgrade.id.startsWith('max-out-')) {
@@ -359,7 +404,7 @@ export default function Home() {
                 const originalUpgrade = ALL_UPGRADES.find(u => u.id === originalId);
 
                 if (originalUpgrade) {
-                    gameRef.current.player.upgradeManager.applyMax(originalUpgrade);
+                    gameInstance.player.upgradeManager.applyMax(originalUpgrade);
                     setRunUpgrades(prev => new Map(prev).set(originalId, originalUpgrade.getMaxLevel()));
 
                     const data = await getPlayerUpgradeData();
@@ -370,9 +415,9 @@ export default function Home() {
                     upgradeDataRef.current = data;
                 }
             } else if (upgrade.id.startsWith('fallback-')) {
-                upgrade.apply(gameRef.current.player, 1, addScoreCallback);
+                upgrade.apply(gameInstance.player, 1, addScoreCallback);
             } else {
-                 gameRef.current.player.applyUpgrade(upgrade);
+                 gameInstance.player.applyUpgrade(upgrade);
                  setRunUpgrades(prev => {
                      const currentLevel = prev.get(upgrade.id) || 0;
                      const newMap = new Map(prev);
@@ -393,21 +438,20 @@ export default function Home() {
                     // No more upgrades to select, close modal and proceed to next wave phase
                     setIsUpgradeModalOpen(false);
                     setGameState('betweenWaves');
-                    setBetweenWaveCountdown(0); // Moved this line here
-                    soundManager.play(SoundType.GamePause); // Ensure pause sound is played once here
+                    setBetweenWaveCountdown(0);
+                    soundManager.play(SoundType.GamePause);
                 } else {
                     // Still more upgrades to select, generate new options
-                    if (gameRef.current) {
+                    if (gameInstance) {
                         const currentWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === currentWave) || FALLBACK_WAVE_CONFIG;
                         const nextFragmentColor = currentWaveConfig.bossType ? null : getRandomElement(PRIMARY_COLORS);
 
-                        const newOptions = gameRef.current.player.upgradeManager.getUpgradeOptions(
+                        const newOptions = gameInstance.player.upgradeManager.getUpgradeOptions(
                             nextFragmentColor,
                             upgradeDataRef.current,
-                            gameRef.current.addScore
+                            gameInstance.addScore
                         );
                         setUpgradeOptions(newOptions);
-                        // Game state remains 'upgrading', modal remains open
                     }
                 }
                 return newCount;
@@ -423,7 +467,9 @@ export default function Home() {
             setHighScore(finalScore);
         }
         clearGameState();
-        gameRef.current = null;
+        if (gameCanvasRef.current) {
+            gameCanvasRef.current.stopGameLoop();
+        }
     }, [highScore]);
 
     const resetGameAndUpgradeState = () => {
@@ -440,8 +486,9 @@ export default function Home() {
         await clearGameState();
         resetGameAndUpgradeState();
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
-        const uniqueKey = Math.random();
-        setInitialGameState({ ...DEFAULT_GAME_STATE, initialColor: lastColor, score: uniqueKey, currentWave: 0 });
+        // Set a new object identity for initialGameState to ensure GameCanvas re-initializes
+        const newInitialGameState = { ...DEFAULT_GAME_STATE, initialColor: lastColor, currentWave: 0 };
+        setInitialGameState(newInitialGameState);
         setGameState('playing');
     };
 
@@ -465,7 +512,7 @@ export default function Home() {
             setRunUpgrades(new Map(savedRun.activeUpgrades));
             setCurrentWave(savedRun.currentWave);
 
-            setInitialGameState(savedRun);
+            setInitialGameState(savedRun); // This will cause GameCanvas to re-render and re-initialize
             setGameState('playing');
         } else {
             startNewRun();
@@ -474,8 +521,8 @@ export default function Home() {
 
     const quitToMenu = () => {
         soundManager.play(SoundType.GameQuit);
-        if (gameRef.current) {
-            const currentState = gameRef.current.getCurrentState();
+        if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
+            const currentState = gameCanvasRef.current.getGameInstance()!.getCurrentState();
             if (currentState.score > 0) {
                  saveGameState(currentState);
             } else {
@@ -490,8 +537,8 @@ export default function Home() {
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
             setCurrentWave(currentState.currentWave);
         }
-        gameRef.current = null;
-        loadInitialData();
+        setGameState('menu'); // This will cause GameCanvas to unmount
+        loadInitialData(); // Load menu specific data
     };
 
     const resumeGame = () => {
@@ -556,7 +603,7 @@ export default function Home() {
             />
             <UpgradesOverviewModal
                 isOpen={isUpgradeOverviewOpen}
-                upgradeManager={gameRef.current?.player.upgradeManager}
+                upgradeManager={gameCanvasRef.current?.getGameInstance()?.player.upgradeManager}
             />
 
 
@@ -641,14 +688,14 @@ export default function Home() {
             {(gameState === 'playing' || gameState === 'paused' || gameState === 'upgrading' || gameState === 'betweenWaves') && (
                 <div className="relative">
                     <GameCanvas
-                        key={`${initialGameState.score}-${initialGameState.playerHealth}-${initialGameState.initialColor}-${initialGameState.currentWave}`}
                         onGameOver={handleGameOver}
                         onFragmentCollected={handleFragmentCollected}
                         onWaveCompleted={handleWaveCompleted}
                         width={canvasSize.width}
                         height={canvasSize.height}
-                        gameRef={gameRef}
+                        isGamePausedExternally={gameState === 'paused' || gameState === 'upgrading' || isUpgradeOverviewOpen || gameState === 'betweenWaves'}
                         initialGameState={initialGameState}
+                        ref={gameCanvasRef}
                     />
                     {gameState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
