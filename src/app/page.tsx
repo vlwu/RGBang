@@ -51,9 +51,9 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
     initialGameState: SavedGameState,
     isGamePausedExternally: boolean;
     currentWaveCountdown: number;
-    // Added new prop
+    currentWaveToDisplay: number; // ADDED: New prop for displaying current wave
     isGameBetweenWaves: boolean;
-}> (({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, initialGameState, isGamePausedExternally, currentWaveCountdown, isGameBetweenWaves }, ref) => {
+}> (({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, initialGameState, isGamePausedExternally, currentWaveCountdown, currentWaveToDisplay, isGameBetweenWaves }, ref) => { // ADDED: currentWaveToDisplay
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const gameInstanceRef = useRef<Game | null>(null);
     const animationFrameIdRef = useRef<number | null>(null);
@@ -76,11 +76,12 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
 
         gameInstanceRef.current.update(inputHandler, isGamePausedRef.current);
-        // Pass isGameBetweenWaves to gameInstance.draw
-        gameInstanceRef.current.draw(currentWaveCountdown, isGameBetweenWaves);
+
+        // MODIFIED: Pass currentWaveToDisplay from props to Game.draw
+        gameInstanceRef.current.draw(currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves);
         inputHandler.resetEvents();
         animationFrameIdRef.current = requestAnimationFrame(gameLoop);
-    }, [inputHandler, currentWaveCountdown, isGameBetweenWaves]); // Added isGameBetweenWaves to dependencies
+    }, [inputHandler, currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves]); // ADDED: currentWaveToDisplay to dependencies
 
 
     useImperativeHandle(ref, () => ({
@@ -147,7 +148,7 @@ export default function Home() {
     const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
     const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set<string>(), upgradeProgress: new Map<string, UpgradeProgress>() });
     const [runUpgrades, setRunUpgrades] = useState<Map<string, number>>(new Map<string, number>());
-    const [currentWave, setCurrentWave] = useState(0);
+    const [currentWave, setCurrentWave] = useState(0); // This state will be the source of truth for the UI
     const [nextWaveHint, setNextWaveHint] = useState("");
     const [betweenWaveCountdown, setBetweenWaveCountdown] = useState(0);
     const [upgradesRemainingToSelect, setUpgradesRemainingToSelect] = useState(0);
@@ -217,10 +218,10 @@ export default function Home() {
         const savedRun = await loadGameState();
         if (savedRun && savedRun.score > 0) {
             setSavedGame(savedRun);
-            setCurrentWave(savedRun.currentWave);
+            setCurrentWave(savedRun.currentWave); // Ensure Home's currentWave state is in sync with saved game
         } else {
             setSavedGame(null);
-            setCurrentWave(0);
+            setCurrentWave(0); // Reset for new game
         }
 
         const data = await getPlayerUpgradeData();
@@ -273,12 +274,13 @@ export default function Home() {
     const handleNextWaveStart = useCallback(() => {
         if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
             const nextWaveNum = currentWave + 1;
-            setCurrentWave(nextWaveNum);
+            setCurrentWave(nextWaveNum); // Ensure Home's currentWave state is updated
             gameCanvasRef.current.getGameInstance()!.startWave(nextWaveNum);
             setGameState('playing');
             soundManager.play(SoundType.GameResume);
         }
-    }, [currentWave]);
+    }, [currentWave]); // Added currentWave to dependency array
+
 
     // This useEffect handles the countdown during the 'betweenWaves' state
     useEffect(() => {
@@ -372,25 +374,35 @@ export default function Home() {
                 title: "No Upgrades Available",
                 description: "You have no fragments to convert into upgrades at this time. Proceeding to next wave.",
             });
-            setIsUpgradeModalOpen(false); // Ensure modal is not open
-            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION); // Start the countdown
-            setGameState('betweenWaves'); // Transition to between waves
-            soundManager.play(SoundType.GameResume); // Resume game sounds
+            setIsUpgradeModalOpen(false);
+            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION);
+            setGameState('betweenWaves');
+            soundManager.play(SoundType.GameResume);
         }
     }, [upgradesRemainingToSelect, currentWave, upgradeDataRef, toast]);
 
     const handleWaveCompleted = useCallback((waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => {
         setScore(gameCanvasRef.current?.getGameInstance()?.getCurrentState().score || 0);
 
-        const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
-        setNextWaveHint(waveConfig.nextWaveHint);
-        setCurrentWave(waveNumber);
+        // MODIFIED: Ensure currentWave state is updated correctly here
+        setCurrentWave(waveNumber); // This is the wave that *just completed*
+
+        const waveConfigForNextHint = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
+        setNextWaveHint(waveConfigForNextHint.nextWaveHint);
+
 
         if (fragmentsToAward > 0) {
             setUpgradesRemainingToSelect(fragmentsToAward);
             setTotalUpgradesToSelect(fragmentsToAward);
             setGameState('upgrading');
             soundManager.play(SoundType.GamePause);
+
+            // ADDED: Toast notification for upgrades earned
+            toast({
+                title: "Wave Cleared!",
+                description: `You've earned ${fragmentsToAward} upgrade${fragmentsToAward > 1 ? 's' : ''}! Choose wisely.`,
+                duration: 3000,
+            });
 
             setTimeout(() => {
                 openUpgradeSelection();
@@ -403,7 +415,7 @@ export default function Home() {
             setGameState('betweenWaves');
             soundManager.play(SoundType.GamePause);
         }
-    }, [openUpgradeSelection]);
+    }, [openUpgradeSelection, toast]); // Added toast to dependencies
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
@@ -490,7 +502,7 @@ export default function Home() {
         setRunUpgrades(new Map<string, number>());
         setScore(0);
         setSavedGame(null);
-        setCurrentWave(0);
+        setCurrentWave(0); // Reset Home's currentWave state to 0 for a fresh game
     };
 
     const startNewRun = async () => {
@@ -521,7 +533,7 @@ export default function Home() {
             setUpgradeData(data);
             upgradeDataRef.current = data;
             setRunUpgrades(new Map(savedRun.activeUpgrades));
-            setCurrentWave(savedRun.currentWave);
+            setCurrentWave(savedRun.currentWave); // Ensure Home's currentWave state is in sync with saved game
 
             setInitialGameState(savedRun);
             setGameState('playing');
@@ -545,10 +557,10 @@ export default function Home() {
                 setHighScore(currentState.score);
             }
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
-            setCurrentWave(currentState.currentWave);
+            setCurrentWave(currentState.currentWave); // Save the game instance's current wave
         }
         setGameState('menu');
-        loadInitialData();
+        loadInitialData(); // Reload initial data to reflect saved state
     };
 
     const resumeGame = () => {
@@ -707,7 +719,7 @@ export default function Home() {
                         initialGameState={initialGameState}
                         ref={gameCanvasRef}
                         currentWaveCountdown={betweenWaveCountdown}
-                        // Pass this state to GameCanvas to control UI rendering
+                        currentWaveToDisplay={currentWave} // ADDED: Pass Home's currentWave state for display
                         isGameBetweenWaves={gameState === 'betweenWaves'}
                     />
                     {gameState === 'paused' && (

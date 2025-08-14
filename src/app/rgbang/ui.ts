@@ -14,19 +14,20 @@ export class UI {
         this.ctx = canvas.getContext('2d')!;
     }
 
-    // Added 'isBetweenWaves' parameter
+
+    // MODIFIED: Accepts currentWave as a direct parameter for display
     draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemyCount: number, currentWaveCountdown: number, isBetweenWaves: boolean) {
         this.drawHealthBar(player);
         this.drawHotbar(player);
         this.drawScore(score, !!boss);
-        this.drawWaveNumber(currentWave);
+        this.drawWaveNumber(currentWave); // Uses the passed currentWave
         if (boss && boss.isAlive) {
             this.drawBossHealthBar(boss);
         } else {
             this.drawEnemyCount(enemyCount);
         }
         this.drawScoreMultiplier(player.scoreMultiplier);
-        // Conditionally draw wave countdown based on isBetweenWaves state
+
         if (isBetweenWaves) {
             this.drawWaveCountdown(currentWaveCountdown);
         }

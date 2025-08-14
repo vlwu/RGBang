@@ -150,7 +150,7 @@ export class Game {
     public isRunning = false;
     private isBossSpawning = false;
 
-    public currentWave = 0;
+    public currentWave = 0; // Internal wave tracking for game logic
     private waveInProgress = false;
 
     private onGameOver: (finalScore: number) => void;
@@ -183,7 +183,7 @@ export class Game {
         this.player.health = initialState.playerHealth;
         this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
         this.firstBossDefeated = initialState.nextBossScoreThreshold > 150;
-        this.currentWave = initialState.currentWave || 0;
+        this.currentWave = initialState.currentWave || 0; // Use initial state for internal wave tracking
 
 
         if (initialState.activeUpgrades) {
@@ -199,6 +199,7 @@ export class Game {
         if (this.currentWave === 0) {
             this.startWave(1);
         } else {
+            // If continuing from a saved game, start the wave specified by initial state
             const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
             this.enemySpawner.initializeForWave(waveConfig);
             this.waveInProgress = true;
@@ -219,7 +220,7 @@ export class Game {
             activeUpgrades: this.player.upgradeManager.getActiveUpgradeMap(),
             nextBossScoreThreshold: this.nextBossScoreThreshold,
             initialColor: this.player.currentColor,
-            currentWave: this.currentWave,
+            currentWave: this.currentWave, // Save current internal wave
         };
     }
 
@@ -239,7 +240,7 @@ export class Game {
     }
 
     public startWave(waveNumber: number) {
-        this.currentWave = waveNumber;
+        this.currentWave = waveNumber; // Update internal wave tracking
         this.enemies = [];
         this.bullets = [];
         this.fragments = [];
@@ -301,7 +302,8 @@ export class Game {
     }
 
 
-    // Added 'isBetweenWaves' parameter
+
+    // MODIFIED: Accepts currentWaveToDisplay from outside (Home component)
     public update(inputHandler: InputHandler, isGamePaused: boolean) {
         if (!this.isRunning) return;
 
@@ -503,8 +505,9 @@ export class Game {
         }
     }
 
-    // Added 'isBetweenWaves' parameter
-    public draw(currentWaveCountdown: number, isBetweenWaves: boolean) {
+
+    // MODIFIED: Accepts currentWaveToDisplay from GameCanvas
+    public draw(currentWaveToDisplay: number, currentWaveCountdown: number, isBetweenWaves: boolean) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -516,7 +519,8 @@ export class Game {
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx);
 
-        // Pass isBetweenWaves to UI draw
-        this.ui.draw(this.player, this.score, this.boss, this.currentWave, this.enemies.length, currentWaveCountdown, isBetweenWaves);
+
+        // MODIFIED: Pass currentWaveToDisplay to UI.draw
+        this.ui.draw(this.player, this.score, this.boss, currentWaveToDisplay, this.enemies.length, currentWaveCountdown, isBetweenWaves);
     }
 }
