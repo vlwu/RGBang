@@ -10,7 +10,7 @@ import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
 import { SoundManager, SoundType } from './sound-manager';
-import { WAVE_CONFIGS, WaveConfig, EnemySpawnConfig, EnemyType, FALLBACK_WAVE_CONFIG } from './wave-data';
+import { WAVE_CONFIGS, WaveConfig, EnemySpawnConfig, EnemyType, FALLBACK_WAVE_CONFIG, generateProceduralWave } from './wave-data';
 
 class EnemySpawner {
     private spawnTimer = 0;
@@ -23,7 +23,11 @@ class EnemySpawner {
     }
 
     initializeForWave(waveConfig: WaveConfig) {
-        this.currentWaveEnemiesToSpawn = [...waveConfig.enemySpawnPatterns];
+        if (waveConfig.bossType) {
+            this.currentWaveEnemiesToSpawn = waveConfig.enemySpawnPatterns || [];
+        } else {
+            this.currentWaveEnemiesToSpawn = generateProceduralWave(waveConfig.waveNumber);
+        }
         this.currentSpawnConfigIndex = 0;
         this.spawnTimer = 0;
     }
@@ -193,7 +197,7 @@ export class Game {
         if (this.currentWave === 0) {
             this.startWave(1);
         } else {
-            const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
+            const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || { ...FALLBACK_WAVE_CONFIG, waveNumber: this.currentWave };
             this.enemySpawner.initializeForWave(waveConfig);
             this.waveInProgress = true;
             if (waveConfig.bossType) {
@@ -241,14 +245,13 @@ export class Game {
         this.boss = null;
         this.fragmentsCollectedThisWave = 0;
 
-        const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || FALLBACK_WAVE_CONFIG;
+        const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || { ...FALLBACK_WAVE_CONFIG, waveNumber };
+
+        this.enemySpawner.initializeForWave(waveConfig);
+        this.waveInProgress = true;
 
         if (waveConfig.bossType) {
             this.spawnBossByType(waveConfig.bossType);
-            this.waveInProgress = true;
-        } else {
-            this.enemySpawner.initializeForWave(waveConfig);
-            this.waveInProgress = true;
         }
     }
 
@@ -306,7 +309,7 @@ export class Game {
             this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
 
             if (this.waveInProgress && !this.isBossSpawning) {
-                const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
+                const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || { ...FALLBACK_WAVE_CONFIG, waveNumber: this.currentWave };
                 this.enemySpawner.update(this.createEnemy, waveConfig);
             }
 
@@ -499,8 +502,6 @@ export class Game {
         this.fragments.forEach(p => p.draw(this.ctx));
         this.bullets.forEach(b => b.draw(this.ctx));
         this.player.draw(this.ctx);
-
-
 
         this.ui.draw(this.player, this.score, this.boss, currentWaveToDisplay, this.enemies.length, currentWaveCountdown, isBetweenWaves);
     }

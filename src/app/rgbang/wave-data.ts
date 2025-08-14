@@ -1,5 +1,3 @@
-// src/app/rgbang/wave-data.ts
-
 import { GameColor } from './color';
 
 export enum EnemyType {
@@ -10,99 +8,136 @@ export enum EnemyType {
     MAIN_BOSS_1 = 'MAIN_BOSS_1',
 }
 
-// Defines a single group of enemies to spawn within a wave
+export const ENEMY_COSTS: Record<EnemyType, number> = {
+    [EnemyType.RED_BLOB]: 5,
+    [EnemyType.BLUE_SHARD]: 10,
+    [EnemyType.CHROMA_SENTINEL]: 25,
+    [EnemyType.MINI_BOSS_1]: 0, // Not spawned procedurally
+    [EnemyType.MAIN_BOSS_1]: 0, // Not spawned procedurally
+};
+
+const ENEMY_UNLOCK_WAVE: Record<EnemyType, number> = {
+    [EnemyType.RED_BLOB]: 1,
+    [EnemyType.BLUE_SHARD]: 3,
+    [EnemyType.CHROMA_SENTINEL]: 6,
+    [EnemyType.MINI_BOSS_1]: 999, // Arbitrarily high to prevent procedural spawn
+    [EnemyType.MAIN_BOSS_1]: 999,
+};
+
+function getAvailableEnemies(waveNumber: number): EnemyType[] {
+    return (Object.keys(ENEMY_UNLOCK_WAVE) as EnemyType[]).filter(
+        type => waveNumber >= ENEMY_UNLOCK_WAVE[type] && ENEMY_COSTS[type] > 0
+    );
+}
+
+const BASE_WAVE_BUDGET = 40;
+const BUDGET_PER_WAVE = 20;
+
+export function generateProceduralWave(waveNumber: number): EnemySpawnConfig[] {
+    const budget = BASE_WAVE_BUDGET + (waveNumber * BUDGET_PER_WAVE);
+    let remainingBudget = budget;
+    const spawnPatterns: EnemySpawnConfig[] = [];
+    const availableEnemies = getAvailableEnemies(waveNumber);
+
+    let isFirstSpawn = true;
+
+    while (remainingBudget > 0 && availableEnemies.length > 0) {
+        const cheapestEnemyCost = Math.min(...availableEnemies.map(e => ENEMY_COSTS[e]));
+        if (remainingBudget < cheapestEnemyCost) {
+            break;
+        }
+
+        const affordableEnemies = availableEnemies.filter(e => ENEMY_COSTS[e] <= remainingBudget);
+        const enemyType = affordableEnemies[Math.floor(Math.random() * affordableEnemies.length)];
+        const enemyCost = ENEMY_COSTS[enemyType];
+
+        const maxInGroup = Math.floor(remainingBudget / enemyCost);
+        let groupSize;
+        if (Math.random() > 0.8 && maxInGroup > 1) { // 20% chance of a large group
+            const minSize = Math.floor(maxInGroup / 2);
+            groupSize = minSize + Math.floor(Math.random() * (maxInGroup - minSize + 1));
+        } else {
+            groupSize = 1 + Math.floor(Math.random() * Math.min(maxInGroup, 4));
+        }
+        groupSize = Math.max(1, Math.min(groupSize, maxInGroup));
+
+        const delay = isFirstSpawn ? 120 : (60 + Math.random() * 120); // 2s initial, 1-3s after
+        isFirstSpawn = false;
+
+        spawnPatterns.push({
+            type: enemyType,
+            count: groupSize,
+            delay: Math.round(delay),
+        });
+
+        remainingBudget -= enemyCost * groupSize;
+    }
+    
+    return spawnPatterns;
+}
+
+
 export interface EnemySpawnConfig {
     type: EnemyType;
-    color?: GameColor; // Optional, can be 'random' for enemy types that support it
+    color?: GameColor;
     count: number;
-    delay?: number; // Delay in frames before this group starts spawning after wave begins
+    delay?: number;
 }
 
-// Defines the configuration for a single wave
+
 export interface WaveConfig {
     waveNumber: number;
-    name: string; // E.g., "First Contact", "Color Shards"
-    enemySpawnPatterns: EnemySpawnConfig[];
-    bossType?: EnemyType.MINI_BOSS_1 | EnemyType.MAIN_BOSS_1; // Optional: if this is a boss wave
-    nextWaveHint: string; // Hint for the next wave's challenge
-    fragmentsAwarded: number; // Number of upgrade fragments awarded for completing this wave
-    // Add other wave-specific modifiers here later (e.g., speedMultiplier, healthMultiplier)
+    name: string;
+    enemySpawnPatterns?: EnemySpawnConfig[];
+    bossType?: EnemyType.MINI_BOSS_1 | EnemyType.MAIN_BOSS_1;
+    nextWaveHint: string;
+    fragmentsAwarded: number;
+
 }
 
-// Define the full progression of waves
+
 export const WAVE_CONFIGS: WaveConfig[] = [
     {
         waveNumber: 1,
         name: "First Contact",
-        enemySpawnPatterns: [
-            { type: EnemyType.RED_BLOB, color: GameColor.RED, count: 5 },
-            { type: EnemyType.RED_BLOB, color: GameColor.YELLOW, count: 5 },
-            { type: EnemyType.RED_BLOB, color: GameColor.BLUE, count: 5 },
-        ],
         nextWaveHint: "More enemies are adapting to your colors!",
         fragmentsAwarded: 1,
     },
     {
         waveNumber: 2,
         name: "Color Echoes",
-        enemySpawnPatterns: [
-            { type: EnemyType.RED_BLOB, color: GameColor.RED, count: 7 },
-            { type: EnemyType.RED_BLOB, color: GameColor.YELLOW, count: 7 },
-            { type: EnemyType.RED_BLOB, color: GameColor.BLUE, count: 7 },
-        ],
         nextWaveHint: "Prepare for a new kind of threat!",
         fragmentsAwarded: 1,
     },
     {
         waveNumber: 3,
         name: "Shifting Sands",
-        enemySpawnPatterns: [
-            { type: EnemyType.RED_BLOB, color: GameColor.RED, count: 5 },
-            { type: EnemyType.RED_BLOB, color: GameColor.YELLOW, count: 5 },
-            { type: EnemyType.RED_BLOB, color: GameColor.BLUE, count: 5 },
-            { type: EnemyType.BLUE_SHARD, color: GameColor.BLUE, count: 2, delay: 60 }, // Introduce Blue Shard
-        ],
         nextWaveHint: "The assault intensifies. Watch out for reflections!",
         fragmentsAwarded: 1,
     },
     {
         waveNumber: 4,
         name: "Reflective Gauntlet",
-        enemySpawnPatterns: [
-            { type: EnemyType.RED_BLOB, count: 8 }, // Random color blobs
-            { type: EnemyType.BLUE_SHARD, color: GameColor.BLUE, count: 4 },
-            { type: EnemyType.BLUE_SHARD, color: GameColor.YELLOW, count: 2, delay: 120 },
-        ],
         nextWaveHint: "A formidable opponent approaches. Focus your fire!",
         fragmentsAwarded: 1,
     },
     {
         waveNumber: 5,
         name: "Mini-Boss: Sentinel Prime",
-        enemySpawnPatterns: [], // Boss waves might not have regular spawns or limited ones
+        enemySpawnPatterns: [],
         bossType: EnemyType.MINI_BOSS_1,
         nextWaveHint: "The core challenge awaits. Master all colors!",
-        fragmentsAwarded: 3, // More fragments for boss
+        fragmentsAwarded: 3,
     },
     {
         waveNumber: 6,
         name: "Chromatic Confusion",
-        enemySpawnPatterns: [
-            { type: EnemyType.RED_BLOB, count: 10 },
-            { type: EnemyType.BLUE_SHARD, count: 6 },
-            { type: EnemyType.CHROMA_SENTINEL, count: 1, delay: 180 }, // Introduce Chroma Sentinel
-        ],
         nextWaveHint: "Enemies are adapting faster now. Stay sharp!",
         fragmentsAwarded: 1,
     },
     {
         waveNumber: 7,
         name: "Adaptive Onslaught",
-        enemySpawnPatterns: [
-            { type: EnemyType.RED_BLOB, count: 12 },
-            { type: EnemyType.BLUE_SHARD, count: 8 },
-            { type: EnemyType.CHROMA_SENTINEL, count: 2, delay: 120 },
-        ],
         nextWaveHint: "The final test nears. Prepare for the Prism Guardian!",
         fragmentsAwarded: 1,
     },
@@ -112,44 +147,29 @@ export const WAVE_CONFIGS: WaveConfig[] = [
         enemySpawnPatterns: [],
         bossType: EnemyType.MAIN_BOSS_1,
         nextWaveHint: "You've survived the worst. How long can you last?",
-        fragmentsAwarded: 5, // Even more fragments for main boss
+        fragmentsAwarded: 5,
     },
-    // Add more waves here to extend game length
-    // Example for continuing after main boss:
+
+
     {
         waveNumber: 9,
         name: "Endless Surge I",
-        enemySpawnPatterns: [
-            { type: EnemyType.RED_BLOB, count: 15 },
-            { type: EnemyType.BLUE_SHARD, count: 10 },
-            { type: EnemyType.CHROMA_SENTINEL, count: 3, delay: 60 },
-        ],
         nextWaveHint: "The waves are endless. Max out your power!",
-        fragmentsAwarded: 2, // Slightly more fragments for endless waves
+        fragmentsAwarded: 2,
     },
     {
         waveNumber: 10,
         name: "Endless Surge II",
-        enemySpawnPatterns: [
-            { type: EnemyType.RED_BLOB, count: 18 },
-            { type: EnemyType.BLUE_SHARD, count: 12 },
-            { type: EnemyType.CHROMA_SENTINEL, count: 4, delay: 30 },
-        ],
         nextWaveHint: "Can you beat your high score?",
         fragmentsAwarded: 2,
     },
-    // ... continue as needed
+
 ];
 
-// Fallback wave if WAVE_CONFIGS index is out of bounds (for endless mode beyond defined waves)
+
 export const FALLBACK_WAVE_CONFIG: WaveConfig = {
-    waveNumber: 999, // Placeholder for endless
+    waveNumber: 999,
     name: "Endless Wave",
-    enemySpawnPatterns: [
-        { type: EnemyType.RED_BLOB, count: 20 },
-        { type: EnemyType.BLUE_SHARD, count: 15 },
-        { type: EnemyType.CHROMA_SENTINEL, count: 5 },
-    ],
     nextWaveHint: "The waves are endless. How far can you go?",
     fragmentsAwarded: 2,
 };
