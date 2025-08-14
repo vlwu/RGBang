@@ -371,12 +371,12 @@ export class Game {
                 }
             });
         }
-        if (this.player.gravityWellLevel > 0 && bullet.color === GameColor.BLUE) {
+        if (this.player.gravityWellLevel > 0 && bullet.color === GameColor.PURPLE) {
             this.vortexes.push({
                 pos: enemy.pos,
-                radius: 80 + this.player.gravityWellLevel * 20,
-                strength: 0.5 + this.player.gravityWellLevel * 0.2,
-                lifespan: 180
+                radius: 60 + this.player.gravityWellLevel * 15,
+                strength: 0.3 + this.player.gravityWellLevel * 0.1,
+                lifespan: 120
             });
         }
         if (this.player.igniteLevel > 0 && bullet.color === GameColor.RED) {

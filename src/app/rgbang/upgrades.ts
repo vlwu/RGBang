@@ -219,18 +219,6 @@ export const ALL_UPGRADES: Upgrade[] = [
         apply: (player, level) => { player.iceSpikerLevel += 1; }
     },
     {
-        id: 'gravity-well',
-        name: 'Gravity Well',
-        description: 'Blue bullets create a vortex on hit, pulling in nearby enemies.',
-        type: UpgradeType.GUN,
-        color: GameColor.BLUE,
-        getMaxLevel: () => 3,
-        getValue: (level) => level,
-        apply: (player) => {
-            player.gravityWellLevel += 1;
-        }
-    },
-    {
         id: 'chain-lightning',
         name: 'Chain Lightning',
         description: 'Yellow bullets chain to more enemies with more damage per level.',
@@ -309,5 +297,17 @@ export const ALL_UPGRADES: Upgrade[] = [
         apply: (player) => {
             player.voidLevel += 1;
         }
-    }
+    },
+    {
+        id: 'gravity-well',
+        name: 'Gravity Well',
+        description: 'Purple bullets create a vortex on hit, pulling in nearby enemies.',
+        type: UpgradeType.GUN,
+        color: GameColor.PURPLE,
+        getMaxLevel: () => 3,
+        getValue: (level) => level,
+        apply: (player) => {
+            player.gravityWellLevel += 1;
+        }
+    },
 ];
