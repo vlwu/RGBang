@@ -22,6 +22,8 @@ interface UpgradeModalProps {
     onSelect: (upgrade: Upgrade) => void;
     upgradeData: PlayerUpgradeData;
     runUpgrades: Map<string, number>;
+    upgradesRemainingToSelect: number;
+    totalUpgradesToSelect: number;
 }
 
 export const iconMap: { [key: string]: React.ElementType } = {
@@ -104,7 +106,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
     )
 }
 
-export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrades }: UpgradeModalProps) {
+export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrades, upgradesRemainingToSelect, totalUpgradesToSelect }: UpgradeModalProps) {
     const [isSelectable, setIsSelectable] = useState(false);
 
     useEffect(() => {
@@ -125,7 +127,9 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
                 hideCloseButton={true}
             >
                 <DialogHeader>
-                    <DialogTitle className="text-3xl text-center font-headline text-primary tracking-wider">Choose Your Power</DialogTitle>
+                    <DialogTitle className="text-3xl text-center font-headline text-primary tracking-wider">
+                        Choose Your Power ({totalUpgradesToSelect - upgradesRemainingToSelect + 1}/{totalUpgradesToSelect})
+                    </DialogTitle>
                     <DialogDescription className="text-center text-lg">
                         Your journey evolves. Select an upgrade to continue.
                     </DialogDescription>

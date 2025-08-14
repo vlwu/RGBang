@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from 'react';
@@ -81,6 +80,8 @@ export default function Home() {
     const [currentWave, setCurrentWave] = useState(0);
     const [nextWaveHint, setNextWaveHint] = useState("");
     const [betweenWaveCountdown, setBetweenWaveCountdown] = useState(0);
+    const [upgradesRemainingToSelect, setUpgradesRemainingToSelect] = useState(0);
+    const [totalUpgradesToSelect, setTotalUpgradesToSelect] = useState(0);
 
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -317,13 +318,14 @@ export default function Home() {
     }, []);
 
     const handleWaveCompleted = useCallback((waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => {
-        // MODIFIED: Use the score parameter from the callback, don't access private gameRef.current?.score
-        setScore(gameRef.current?.getCurrentState().score || 0); // Still need gameRef to get current score if it's not passed
+        setScore(gameRef.current?.getCurrentState().score || 0);
 
         const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
         setNextWaveHint(waveConfig.nextWaveHint);
 
         if (fragmentsToAward > 0) {
+            setUpgradesRemainingToSelect(fragmentsToAward);
+            setTotalUpgradesToSelect(fragmentsToAward); // Store total for display
             if (gameRef.current) {
                 const options = gameRef.current.player.upgradeManager.getUpgradeOptions(
                     isBossWave ? null : getRandomElement(PRIMARY_COLORS),
@@ -341,7 +343,7 @@ export default function Home() {
             soundManager.play(SoundType.GamePause);
         }
         setCurrentWave(waveNumber);
-    }, []); // MODIFIED: No change to dependencies here, as waveNumber and isBossWave are direct params.
+    }, []);
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
@@ -358,7 +360,7 @@ export default function Home() {
 
                 if (originalUpgrade) {
                     gameRef.current.player.upgradeManager.applyMax(originalUpgrade);
-                    setRunUpgrades(new Map(runUpgrades.set(originalId, originalUpgrade.getMaxLevel())));
+                    setRunUpgrades(prev => new Map(prev).set(originalId, originalUpgrade.getMaxLevel()));
 
                     const data = await getPlayerUpgradeData();
                     data.unlockedUpgradeIds.add(originalId);
@@ -371,23 +373,47 @@ export default function Home() {
                 upgrade.apply(gameRef.current.player, 1, addScoreCallback);
             } else {
                  gameRef.current.player.applyUpgrade(upgrade);
-                 const currentLevel = runUpgrades.get(upgrade.id) || 0;
-                 setRunUpgrades(new Map(runUpgrades.set(upgrade.id, currentLevel + 1)));
+                 setRunUpgrades(prev => {
+                     const currentLevel = prev.get(upgrade.id) || 0;
+                     const newMap = new Map(prev);
+                     newMap.set(upgrade.id, currentLevel + 1);
+                     return newMap;
+                 });
 
                  await unlockUpgrade(upgrade.id);
                  const finalData = await levelUpUpgrade(upgrade.id);
                  setUpgradeData(finalData);
                  upgradeDataRef.current = finalData;
             }
-        }
 
-        setIsUpgradeModalOpen(false);
-        setGameState('betweenWaves');
-        const nextWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === currentWave + 1) || FALLBACK_WAVE_CONFIG;
-        setNextWaveHint(nextWaveConfig.nextWaveHint);
-        setBetweenWaveCountdown(0);
-        soundManager.play(SoundType.GamePause);
-    }, [runUpgrades, currentWave]);
+            // Decrement the counter and check if more upgrades are left
+            setUpgradesRemainingToSelect(prev => {
+                const newCount = prev - 1;
+                if (newCount <= 0) {
+                    // No more upgrades to select, close modal and proceed to next wave phase
+                    setIsUpgradeModalOpen(false);
+                    setGameState('betweenWaves');
+                    setBetweenWaveCountdown(0); // Moved this line here
+                    soundManager.play(SoundType.GamePause); // Ensure pause sound is played once here
+                } else {
+                    // Still more upgrades to select, generate new options
+                    if (gameRef.current) {
+                        const currentWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === currentWave) || FALLBACK_WAVE_CONFIG;
+                        const nextFragmentColor = currentWaveConfig.bossType ? null : getRandomElement(PRIMARY_COLORS);
+
+                        const newOptions = gameRef.current.player.upgradeManager.getUpgradeOptions(
+                            nextFragmentColor,
+                            upgradeDataRef.current,
+                            gameRef.current.addScore
+                        );
+                        setUpgradeOptions(newOptions);
+                        // Game state remains 'upgrading', modal remains open
+                    }
+                }
+                return newCount;
+            });
+        }
+    }, [runUpgrades, currentWave, soundManager, upgradeDataRef]);
 
     const handleGameOver = useCallback((finalScore: number) => {
         setScore(finalScore);
@@ -525,6 +551,8 @@ export default function Home() {
                 onSelect={handleUpgradeSelected}
                 upgradeData={upgradeData}
                 runUpgrades={runUpgrades}
+                upgradesRemainingToSelect={upgradesRemainingToSelect}
+                totalUpgradesToSelect={totalUpgradesToSelect}
             />
             <UpgradesOverviewModal
                 isOpen={isUpgradeOverviewOpen}
