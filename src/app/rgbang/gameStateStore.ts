@@ -12,7 +12,7 @@ export interface UIState {
     waveCompletedFragments: number;
     isBossWave: boolean;
     lastFragmentCollected: GameColor | null | 'special';
-    fragmentCollectCount: number; // Used to trigger toasts on each collection
+    fragmentCollectCount: number;
 }
 
 const initialUIState: UIState = {
@@ -39,6 +39,9 @@ export const gameStateStore = {
     },
     getSnapshot(): UIState {
         return gameState;
+    },
+    getServerSnapshot(): UIState {
+        return initialUIState;
     },
     updateState(newState: Partial<UIState>): void {
         gameState = { ...gameState, ...newState };

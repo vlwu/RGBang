@@ -55,11 +55,11 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
     const isGamePausedRef = useRef(isGamePausedExternally);
     const drawParamsRef = useRef({ currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves });
-    
+
     useEffect(() => {
         isGamePausedRef.current = isGamePausedExternally;
     }, [isGamePausedExternally]);
-    
+
     useEffect(() => {
         drawParamsRef.current = { currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves };
     });
@@ -144,8 +144,8 @@ export default function Home() {
     const { toast } = useToast();
     const [volume, setVolume] = useState(1.0);
     const [isMuted, setIsMuted] = useState(false);
-    
-    const gameStoreState = useSyncExternalStore(gameStateStore.subscribe, gameStateStore.getSnapshot);
+
+    const gameStoreState = useSyncExternalStore(gameStateStore.subscribe, gameStateStore.getSnapshot, gameStateStore.getServerSnapshot);
 
     const upgradeDataRef = useRef(upgradeData);
     useEffect(() => {
@@ -331,8 +331,8 @@ export default function Home() {
             window.removeEventListener('keyup', handleKeyUp);
         }
     }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isUpgradeOverviewOpen, handleNextWaveStart]);
-    
-    // Effect to react to game state changes from the store
+
+
     useEffect(() => {
         if (gameStoreState.isGameOver) {
             const finalScore = gameStoreState.score;
@@ -345,7 +345,7 @@ export default function Home() {
         } else if (gameStoreState.isBetweenWaves && uiState !== 'betweenWaves' && uiState !== 'upgrading') {
             const { waveCompletedFragments, isBossWave } = gameStoreState;
             setCurrentWave(gameStoreState.currentWave);
-            
+
             const waveConfigForNextHint = WAVE_CONFIGS.find(w => w.waveNumber === gameStoreState.currentWave + 1) || FALLBACK_WAVE_CONFIG;
             setNextWaveHint(waveConfigForNextHint.nextWaveHint);
 
@@ -357,7 +357,7 @@ export default function Home() {
                 setTotalUpgradesToSelect(totalUpgradesToOffer);
                 setUiState('upgrading');
                 soundManager.play(SoundType.GamePause);
-                
+
                 toast({
                     title: "Wave Cleared!",
                     description: `You've earned ${totalUpgradesToOffer} upgrade choice${totalUpgradesToOffer > 1 ? 's' : ''}! Choose wisely.`,
@@ -375,7 +375,7 @@ export default function Home() {
         }
     }, [gameStoreState.isGameOver, gameStoreState.isBetweenWaves]);
 
-    // Effect for fragment collection toasts
+
     const lastFragmentCount = useRef(0);
     useEffect(() => {
         if (gameStoreState.fragmentCollectCount > lastFragmentCount.current) {
@@ -413,7 +413,7 @@ export default function Home() {
             soundManager.play(SoundType.GameResume);
         }
     }, [upgradesRemainingToSelect, upgradeDataRef, toast]);
-    
+
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
         if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
@@ -578,8 +578,17 @@ export default function Home() {
         localStorage.setItem('rgBangMuted', JSON.stringify(newMute));
     };
 
+    const handleContextMenu = (e: React.MouseEvent) => {
+        if (uiState !== 'playing') {
+            e.preventDefault();
+        }
+    };
+
     return (
-        <main className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative">
+        <main
+            className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground p-4 relative"
+            onContextMenu={handleContextMenu}
+        >
              <SettingsModal
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
