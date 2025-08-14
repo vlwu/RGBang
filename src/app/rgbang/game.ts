@@ -600,11 +600,24 @@ export class Game {
             }
         }
 
-        for (let i = 0; i < this.enemies.length; i++) {
-            for (let j = i + 1; j < this.enemies.length; j++) {
-                const enemy1 = this.enemies[i];
-                const enemy2 = this.enemies[j];
-                if (enemy1.isAlive && enemy2.isAlive && circleCollision(enemy1, enemy2)) {
+        for (const enemy1 of this.enemies) {
+            if (!enemy1.isAlive) continue;
+
+            const queryBounds = {
+                x: enemy1.pos.x, y: enemy1.pos.y,
+                width: enemy1.radius * 2, height: enemy1.radius * 2
+            };
+
+            const potentialColliders = this.quadtree.query(queryBounds);
+
+            for (const quadObj of potentialColliders) {
+                const enemy2 = quadObj.entity as Enemy;
+
+                if (!enemy2.isAlive || enemy1.id >= enemy2.id) {
+                    continue;
+                }
+
+                if (circleCollision(enemy1, enemy2)) {
                     this.resolveEnemyCollision(enemy1, enemy2);
                 }
             }

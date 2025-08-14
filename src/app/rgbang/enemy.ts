@@ -13,6 +13,9 @@ export enum PunishmentType {
 }
 
 export class Enemy {
+    private static nextId = 0;
+    public readonly id: number;
+
     pos: Vec2;
     radius: number;
     health: number;
@@ -63,6 +66,7 @@ export class Enemy {
     private readonly colorShiftImmunityDuration = 60;
 
     constructor(x: number, y: number, color: GameColor, radius: number, health: number, speed: number, points: number, soundManager: SoundManager, isChromaSentinel = false) {
+        this.id = Enemy.nextId++;
         this.pos = new Vec2(x, y);
         this.color = color;
         this.hexColor = COLOR_DETAILS[color].hex;
