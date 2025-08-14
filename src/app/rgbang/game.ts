@@ -4,182 +4,36 @@ import { Enemy, PunishmentType } from './enemy';
 import { Boss } from './boss';
 import { UI } from './ui';
 import { ParticleSystem } from './particle';
-import { circleCollision, Vec2, distance, ObjectPool, Quadtree, QuadtreeObject } from './utils';
-import { getRandomElement, PRIMARY_COLORS, GameColor, ALL_COLORS, COLOR_DETAILS } from './color';
+import { circleCollision, Vec2, distance, Quadtree, QuadtreeObject } from './utils';
+import { GameColor, COLOR_DETAILS } from './color';
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
 import { SoundManager, SoundType } from './sound-manager';
-import { WAVE_CONFIGS, WaveConfig, EnemySpawnConfig, EnemyType, FALLBACK_WAVE_CONFIG, generateProceduralWave } from './wave-data';
+import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG } from './wave-data';
 import { gameStateStore } from './gameStateStore';
+import { EntityManager } from './entityManager';
+import { WaveManager } from './waveManager';
 
-class EnemySpawner {
-    private spawnTimer = 0;
-    private currentSpawnConfigIndex = 0;
-    private currentWaveEnemiesToSpawn: EnemySpawnConfig[] = [];
-    private soundManager: SoundManager;
-
-    private enemiesLeftInGroup = 0;
-    private groupSpawnTimer = 0;
-
-    constructor(private canvasWidth: number, private canvasHeight: number, soundManager: SoundManager) {
-        this.soundManager = soundManager;
-    }
-
-    initializeForWave(waveConfig: WaveConfig) {
-        if (waveConfig.bossType) {
-            this.currentWaveEnemiesToSpawn = waveConfig.enemySpawnPatterns || [];
-        } else {
-            this.currentWaveEnemiesToSpawn = generateProceduralWave(waveConfig.waveNumber);
-        }
-        this.currentSpawnConfigIndex = 0;
-        this.spawnTimer = 0;
-        this.enemiesLeftInGroup = 0;
-        this.groupSpawnTimer = 0;
-    }
-
-    update(createEnemy: (enemy: Enemy) => void, waveConfig: WaveConfig, currentEnemyCount: number) {
-        if (this.enemiesLeftInGroup > 0) {
-            this.groupSpawnTimer--;
-            if (this.groupSpawnTimer <= 0) {
-                const currentPattern = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex];
-                this.spawnEnemy(createEnemy, currentPattern.type, currentPattern.color, waveConfig.waveNumber);
-                this.enemiesLeftInGroup--;
-
-                if (this.enemiesLeftInGroup === 0) {
-                    this.currentSpawnConfigIndex++;
-                    if (this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length) {
-                        this.spawnTimer = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex].delay ?? 0;
-                    }
-                } else {
-                    const baseInterval = 8;
-                    const dynamicInterval = baseInterval + Math.floor(currentEnemyCount * 0.4);
-                    this.groupSpawnTimer = Math.max(5, dynamicInterval);
-                }
-            }
-            return;
-        }
-
-        if (this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length) {
-            const currentPattern = this.currentWaveEnemiesToSpawn[this.currentSpawnConfigIndex];
-
-            if (this.spawnTimer === 0 && currentPattern.delay !== undefined) {
-                this.spawnTimer = currentPattern.delay;
-            }
-
-            this.spawnTimer--;
-
-            if (this.spawnTimer <= 0) {
-                this.enemiesLeftInGroup = currentPattern.count;
-                this.groupSpawnTimer = 0;
-            }
-        }
-    }
-
-    private spawnEnemy(createEnemy: (enemy: Enemy) => void, enemyType: EnemyType, fixedColor: GameColor | undefined, waveNumber: number) {
-        const edge = Math.floor(Math.random() * 4);
-        let x, y;
-        if (edge === 0) {
-            x = Math.random() * this.canvasWidth;
-            y = -30;
-        } else if (edge === 1) {
-            x = this.canvasWidth + 30;
-            y = Math.random() * this.canvasHeight;
-        } else if (edge === 2) {
-            x = Math.random() * this.canvasWidth;
-            y = this.canvasHeight + 30;
-        } else {
-            x = -30;
-            y = Math.random() * this.canvasHeight;
-        }
-
-        let color: GameColor;
-        let radius: number;
-        let health: number;
-        let speed: number;
-        let points: number;
-        let damage: number;
-        let isChromaSentinel = false;
-
-        const healthMultiplier = 1 + waveNumber * 0.1;
-        const speedMultiplier = 1 + waveNumber * 0.02;
-        const pointsMultiplier = 1 + waveNumber * 0.05;
-
-        switch (enemyType) {
-            case EnemyType.RED_BLOB:
-                color = fixedColor || getRandomElement(PRIMARY_COLORS);
-                radius = 15;
-                health = Math.round(30 * healthMultiplier);
-                speed = 1.5 * speedMultiplier;
-                points = Math.round(10 * pointsMultiplier);
-                damage = 10;
-                break;
-            case EnemyType.BLUE_SHARD:
-                color = fixedColor || getRandomElement(PRIMARY_COLORS);
-                radius = 18;
-                health = Math.round(50 * healthMultiplier);
-                speed = 1.8 * speedMultiplier;
-                points = Math.round(20 * pointsMultiplier);
-                damage = 15;
-                break;
-            case EnemyType.CHROMA_SENTINEL:
-                color = fixedColor || getRandomElement(PRIMARY_COLORS);
-                radius = 20;
-                health = Math.round(80 * healthMultiplier);
-                speed = 1.2 * speedMultiplier;
-                points = Math.round(30 * pointsMultiplier);
-                damage = 20;
-                isChromaSentinel = true;
-                break;
-            default:
-                color = getRandomElement(PRIMARY_COLORS);
-                radius = 15;
-                health = Math.round(30 * healthMultiplier);
-                speed = 1.5 * speedMultiplier;
-                points = Math.round(10 * pointsMultiplier);
-                damage = 10;
-                break;
-        }
-
-        const newEnemy = new Enemy(x, y, color, radius, health, speed, points, this.soundManager, isChromaSentinel);
-        newEnemy.damage = damage;
-        createEnemy(newEnemy);
-    }
-
-    hasMoreEnemiesToSpawn(): boolean {
-        return this.currentSpawnConfigIndex < this.currentWaveEnemiesToSpawn.length || this.enemiesLeftInGroup > 0;
-    }
-}
 
 export class Game {
     public canvas!: HTMLCanvasElement;
     private ctx!: CanvasRenderingContext2D;
     public player!: Player;
-    private bullets: Bullet[] = [];
-    private bulletPool!: ObjectPool<Bullet>;
     private quadtree!: Quadtree;
-    private enemies: Enemy[] = [];
-    private boss: Boss | null = null;
-    private fragments: PrismFragment[] = [];
     public particles: ParticleSystem;
-    private enemySpawner!: EnemySpawner;
     private ui!: UI;
     private soundManager!: SoundManager;
 
+    private entityManager!: EntityManager;
+    private waveManager!: WaveManager;
+
     private score = 0;
     private nextBossScoreThreshold = 150;
-    private firstBossDefeated = false;
     public isRunning = false;
-    private isBossSpawning = false;
-    private ricochetBulletsOnScreen = 0;
-    private readonly MAX_RICOCHET_BULLETS = 30;
+    private bankedUpgrades = 0;
 
     private vortexes: {pos: Vec2, radius: number, strength: number, lifespan: number}[] = [];
-
-    public currentWave = 0;
-    private waveInProgress = false;
-    private fragmentsCollectedThisWave: number = 0;
-    private bankedUpgrades = 0;
 
     constructor() {
         this.particles = new ParticleSystem();
@@ -194,19 +48,17 @@ export class Game {
         this.ctx = canvas.getContext('2d')!;
         this.soundManager = soundManager;
 
-        this.bulletPool = new ObjectPool<Bullet>(() => new Bullet(new Vec2(), new Vec2(), GameColor.RED), 100);
         this.quadtree = new Quadtree({ x: 0, y: 0, width: canvas.width, height: canvas.height }, 4);
-
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor, this.soundManager);
-
-        this.enemySpawner = new EnemySpawner(canvas.width, this.canvas.height, this.soundManager);
         this.ui = new UI(canvas);
+
+        this.entityManager = new EntityManager(this.particles);
+        this.waveManager = new WaveManager(canvas.width, canvas.height, this.soundManager, this.entityManager);
 
         this.score = initialState.score;
         this.player.health = initialState.playerHealth;
         this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
-        this.firstBossDefeated = initialState.nextBossScoreThreshold > 150;
-        this.currentWave = initialState.currentWave || 0;
+        this.waveManager.currentWave = initialState.currentWave || 0;
         this.bankedUpgrades = initialState.bankedUpgrades || 0;
 
         if (initialState.activeUpgrades) {
@@ -220,15 +72,10 @@ export class Game {
 
     public start() {
         this.isRunning = true;
-        if (this.currentWave === 0) {
+        if (this.waveManager.currentWave === 0) {
             this.startWave(1);
         } else {
-            const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || { ...FALLBACK_WAVE_CONFIG, waveNumber: this.currentWave };
-            this.enemySpawner.initializeForWave(waveConfig);
-            this.waveInProgress = true;
-            if (waveConfig.bossType) {
-                this.spawnBossByType(waveConfig.bossType);
-            }
+            this.waveManager.startWave(this.waveManager.currentWave);
         }
     }
 
@@ -243,7 +90,7 @@ export class Game {
             activeUpgrades: this.player.upgradeManager.getActiveUpgradeMap(),
             nextBossScoreThreshold: this.nextBossScoreThreshold,
             initialColor: this.player.currentColor,
-            currentWave: this.currentWave,
+            currentWave: this.waveManager.currentWave,
             bankedUpgrades: this.bankedUpgrades,
         };
     }
@@ -254,121 +101,13 @@ export class Game {
     }
 
     public createBullet = (bullet: Bullet) => {
-        if (bullet.isRicochet) {
-            if (this.ricochetBulletsOnScreen >= this.MAX_RICOCHET_BULLETS) {
-                return;
-            }
-            this.ricochetBulletsOnScreen++;
-        }
-        const pooledBullet = this.bulletPool.get(bullet.pos, bullet.vel.normalize(), bullet.color, bullet.isFromBoss);
-
-        pooledBullet.damage = bullet.damage;
-        pooledBullet.penetrationsLeft = bullet.penetrationsLeft;
-        pooledBullet.ricochetsLeft = bullet.ricochetsLeft;
-        pooledBullet.isSeeking = bullet.isSeeking;
-        pooledBullet.isSlowing = bullet.isSlowing;
-        pooledBullet.isFission = bullet.isFission;
-        pooledBullet.isVoid = bullet.isVoid;
-        pooledBullet.lifespan = bullet.lifespan;
-        pooledBullet.isRicochet = bullet.isRicochet;
-
-        this.bullets.push(pooledBullet);
-    }
-
-    private createEnemy = (enemy: Enemy) => {
-        enemy.onSplit = (newEnemy) => {
-            this.createEnemy(newEnemy);
-        };
-        this.enemies.push(enemy);
+        this.entityManager.addBullet(bullet);
     }
 
     public startWave(waveNumber: number) {
-        this.currentWave = waveNumber;
-        this.enemies = [];
-        this.bullets.forEach(b => { if(b.isActive) this.bulletPool.release(b) });
-        this.bullets = [];
-        this.fragments = [];
+        this.waveManager.startWave(waveNumber);
         this.vortexes = [];
-        this.isBossSpawning = false;
-        this.boss = null;
-        this.fragmentsCollectedThisWave = 0;
-
-        let waveConfig: WaveConfig;
-
-        if (waveNumber > 0 && waveNumber % 5 === 0) {
-            waveConfig = {
-                waveNumber: waveNumber,
-                name: `Giga-Threat Level ${waveNumber / 5}`,
-                bossType: EnemyType.MAIN_BOSS_1,
-                enemySpawnPatterns: [],
-                nextWaveHint: "The chromatic chaos intensifies...",
-                fragmentsAwarded: 5,
-            };
-        } else {
-            waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || { ...FALLBACK_WAVE_CONFIG, waveNumber };
-        }
-
-        this.enemySpawner.initializeForWave(waveConfig);
-        this.waveInProgress = true;
-
-        if (waveConfig.bossType) {
-            this.spawnBossByType(waveConfig.bossType);
-        }
-        gameStateStore.updateState({ currentWave: this.currentWave, isBetweenWaves: false });
-    }
-
-    private endWave() {
-        this.waveInProgress = false;
-        const isBossWave = !!this.boss;
-        gameStateStore.updateState({
-            isBetweenWaves: true,
-            waveCompletedFragments: this.fragmentsCollectedThisWave,
-            isBossWave
-        });
-        this.boss = null;
-        this.isBossSpawning = false;
-    }
-
-    private spawnBossByType(bossType: EnemyType.MINI_BOSS_1 | EnemyType.MAIN_BOSS_1) {
-        const bossX = this.canvas.width / 2;
-        const bossY = 100;
-
-        if (bossType === EnemyType.MAIN_BOSS_1) {
-            const waveMultiplier = Math.floor(this.currentWave / 5);
-            const scaledHealth = 800 + (waveMultiplier * 300);
-            const scaledDamage = 25 + (waveMultiplier * 5);
-            const scaledAttackInterval = Math.max(40, 100 - (waveMultiplier * 6));
-
-            this.boss = new Boss(
-                bossX,
-                bossY,
-                (bullet) => {
-                    const pooledBullet = this.bulletPool.get(bullet.pos, bullet.vel, bullet.color, bullet.isFromBoss);
-                    this.bullets.push(pooledBullet);
-                },
-                this.canvas.width,
-                this.canvas.height,
-                this.soundManager,
-                scaledHealth,
-                scaledDamage,
-                scaledAttackInterval
-            );
-        } else if (bossType === EnemyType.MINI_BOSS_1) {
-            let bossHealthMultiplier = 1 + (this.currentWave * 0.1);
-            const miniBossRadius = 30;
-            const miniBossHealth = Math.round(300 * bossHealthMultiplier);
-            const miniBossSpeed = 2.0;
-            const miniBossPoints = Math.round(100 * (this.currentWave / 2));
-            const miniBossColor = getRandomElement(PRIMARY_COLORS);
-
-            const miniBoss = new Enemy(bossX, bossY, miniBossColor, miniBossRadius, miniBossHealth, miniBossSpeed, miniBossPoints, this.soundManager);
-            miniBoss.damage = 20;
-            miniBoss.onSplit = (newEnemy) => {
-                this.createEnemy(newEnemy);
-            };
-            this.enemies.push(miniBoss);
-        }
-        this.isBossSpawning = true;
+        gameStateStore.updateState({ currentWave: this.waveManager.currentWave, isBetweenWaves: false });
     }
 
     public update(inputHandler: InputHandler, isGamePaused: boolean) {
@@ -382,7 +121,7 @@ export class Game {
         });
 
         this.quadtree.clear();
-        for (const enemy of this.enemies) {
+        for (const enemy of this.entityManager.enemies) {
             if (enemy.isAlive) {
                 this.quadtree.insert({
                     x: enemy.pos.x,
@@ -395,34 +134,16 @@ export class Game {
         }
 
         if (!isGamePaused) {
-            this.bullets.forEach(bullet => {
-                if(bullet.isActive) bullet.update(this.enemies, this.canvas.width, this.canvas.height)
-            });
-            this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles, this.vortexes));
-            this.boss?.update();
-            this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
-
-            if (this.waveInProgress && !this.isBossSpawning) {
-                const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || { ...FALLBACK_WAVE_CONFIG, waveNumber: this.currentWave };
-                this.enemySpawner.update(this.createEnemy, waveConfig, this.enemies.length);
-            }
-
+            this.entityManager.updateAll(this.player, this.canvas.width, this.canvas.height, this.vortexes);
+            this.waveManager.update();
             this.handleCollisions();
-            this.cleanupEntities();
+            this.entityManager.cleanup(this.canvas.width, this.canvas.height);
 
-            if (this.boss) {
-                if (!this.boss.isAlive) {
-                    this.soundManager.play(SoundType.BossDestroy);
-                    this.particles.add(this.boss.pos, this.boss.color, 100);
-                    this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null));
-                    this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5);
-
-                    this.endWave();
-                }
-            } else {
-                if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.fragments.length === 0) {
-                    this.endWave();
-                }
+            if (this.entityManager.boss && !this.entityManager.boss.isAlive) {
+                this.soundManager.play(SoundType.BossDestroy);
+                this.particles.add(this.entityManager.boss.pos, this.entityManager.boss.color, 100);
+                this.entityManager.addFragment(new PrismFragment(this.entityManager.boss.pos.x, this.entityManager.boss.pos.y, null));
+                this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5);
             }
         }
 
@@ -440,7 +161,7 @@ export class Game {
 
     private dealAreaDamage(pos: Vec2, radius: number, damage: number, color: GameColor) {
         this.particles.add(pos, color, 40);
-        this.enemies.forEach(enemy => {
+        this.entityManager.enemies.forEach(enemy => {
             if (enemy.isAlive && distance({pos}, enemy) < radius + enemy.radius) {
                 const result = enemy.takeDamage(damage, color);
                 if (result.hit && this.player.lifestealPercent > 0) {
@@ -455,7 +176,7 @@ export class Game {
             enemy.applyVoid(120 + this.player.voidLevel * 60);
         }
         if (bullet.isSlowing) {
-            this.enemies.forEach(e => {
+            this.entityManager.enemies.forEach(e => {
                 if(distance(e, {pos: bullet.pos}) < 50) {
                      e.applySlow(120 + this.player.slowingTrailLevel * 30, 0.5);
                 }
@@ -487,7 +208,7 @@ export class Game {
     }
 
     private handleCollisions() {
-        for (const bullet of this.bullets) {
+        for (const bullet of this.entityManager.bullets) {
             if (!bullet.isActive) continue;
 
             if (bullet.isFromBoss) {
@@ -550,9 +271,9 @@ export class Game {
 
                     if (result.killed) {
                         this.addScore(enemy.points * this.player.scoreMultiplier);
-                        this.fragments.push(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
+                        this.entityManager.addFragment(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
                         if (this.player.fragmentDuplicationChance > 0 && Math.random() < this.player.fragmentDuplicationChance) {
-                             this.fragments.push(new PrismFragment(enemy.pos.x + 10, enemy.pos.y, enemy.color));
+                             this.entityManager.addFragment(new PrismFragment(enemy.pos.x + 10, enemy.pos.y, enemy.color));
                         }
                         if (this.player.explosiveFinishLevel > 0 && Math.random() < this.player.explosiveFinishLevel * 0.1) {
                             this.dealAreaDamage(enemy.pos, 50 + this.player.explosiveFinishLevel * 10, 10 + this.player.explosiveFinishLevel * 5, enemy.color);
@@ -565,14 +286,15 @@ export class Game {
             }
             if (!bullet.isActive) continue;
 
-            if (this.boss && this.boss.isAlive && circleCollision(bullet, this.boss)) {
+            const boss = this.entityManager.boss;
+            if (boss && boss.isAlive && circleCollision(bullet, boss)) {
                 this.particles.add(bullet.pos, bullet.color, 15);
-                this.boss.takeDamage(bullet.damage, bullet.color);
+                boss.takeDamage(bullet.damage, bullet.color);
                 bullet.isActive = false;
             }
         }
 
-        for (const enemy of this.enemies) {
+        for (const enemy of this.entityManager.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(enemy.damage);
                 enemy.isAlive = false;
@@ -580,13 +302,14 @@ export class Game {
             }
         }
 
-        if (this.boss && this.boss.isAlive && this.player.isAlive && circleCollision(this.player, this.boss)) {
-            this.player.takeDamage(this.boss.damage);
-            this.player.applyKnockback(this.boss.pos, 15);
+        const boss = this.entityManager.boss;
+        if (boss && boss.isAlive && this.player.isAlive && circleCollision(this.player, boss)) {
+            this.player.takeDamage(boss.damage);
+            this.player.applyKnockback(boss.pos, 15);
         }
 
-        for (let i = this.fragments.length - 1; i >= 0; i--) {
-            const fragment = this.fragments[i];
+        for (let i = this.entityManager.fragments.length - 1; i >= 0; i--) {
+            const fragment = this.entityManager.fragments[i];
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
                 this.soundManager.play(SoundType.FragmentCollect);
                 const currentState = gameStateStore.getSnapshot();
@@ -594,13 +317,13 @@ export class Game {
                     lastFragmentCollected: fragment.color || 'special',
                     fragmentCollectCount: currentState.fragmentCollectCount + 1,
                 });
-                this.fragmentsCollectedThisWave++;
+                this.waveManager.onFragmentCollected();
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
                 fragment.isAlive = false;
             }
         }
 
-        for (const enemy1 of this.enemies) {
+        for (const enemy1 of this.entityManager.enemies) {
             if (!enemy1.isAlive) continue;
 
             const queryBounds = {
@@ -622,36 +345,6 @@ export class Game {
                 }
             }
         }
-    }
-
-    private cleanupEntities() {
-        this.enemies.forEach(enemy => {
-            if (!enemy.isAlive) {
-                this.particles.add(enemy.pos, enemy.color, 30);
-                if (enemy.isIgnited) {
-                   this.particles.add(enemy.pos, GameColor.RED, 15);
-                }
-            }
-        });
-
-        this.enemies = this.enemies.filter(e => e.isAlive);
-        this.fragments = this.fragments.filter(f => f.isAlive);
-
-        const activeBullets: Bullet[] = [];
-        for (const bullet of this.bullets) {
-            const isOutOfBounds = bullet.pos.x < 0 || bullet.pos.x > this.canvas.width || bullet.pos.y < 0 || bullet.pos.y > this.canvas.height;
-
-            if (bullet.isActive && (!isOutOfBounds || bullet.ricochetsLeft > 0)) {
-                activeBullets.push(bullet);
-            } else {
-                if (bullet.isRicochet) {
-                    this.ricochetBulletsOnScreen = Math.max(0, this.ricochetBulletsOnScreen - 1);
-                }
-                bullet.isActive = false;
-                this.bulletPool.release(bullet);
-            }
-        }
-        this.bullets = activeBullets;
     }
 
     private resolveEnemyCollision(enemy1: Enemy, enemy2: Enemy) {
@@ -682,14 +375,10 @@ export class Game {
             this.ctx.fill();
             this.ctx.restore();
         });
-        this.boss?.draw(this.ctx);
-        this.enemies.forEach(e => e.draw(this.ctx));
-        this.fragments.forEach(p => p.draw(this.ctx));
-        this.bullets.forEach(b => {
-            if (b.isActive) b.draw(this.ctx);
-        });
+
+        this.entityManager.drawAll(this.ctx);
         this.player.draw(this.ctx);
 
-        this.ui.draw(this.player, this.score, this.boss, currentWaveToDisplay, this.enemies, currentWaveCountdown, isBetweenWaves);
+        this.ui.draw(this.player, this.score, this.entityManager.boss, currentWaveToDisplay, this.entityManager.enemies, currentWaveCountdown, isBetweenWaves);
     }
 }
