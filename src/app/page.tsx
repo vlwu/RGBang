@@ -32,7 +32,7 @@ import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG } from './rgbang/wave-data';
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0 };
-const BETWEEN_WAVES_DURATION = 15; // 15 seconds for upgrades and break
+const BETWEEN_WAVES_DURATION = 15;
 
 
 interface GameCanvasHandle {
@@ -49,7 +49,7 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
     height: number,
     initialGameState: SavedGameState,
     isGamePausedExternally: boolean;
-    currentWaveCountdown: number; // New prop for countdown
+    currentWaveCountdown: number;
 }> (({ onGameOver, onFragmentCollected, onWaveCompleted, width, height, initialGameState, isGamePausedExternally, currentWaveCountdown }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const gameInstanceRef = useRef<Game | null>(null);
@@ -73,10 +73,10 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
 
         gameInstanceRef.current.update(inputHandler, isGamePausedRef.current);
-        gameInstanceRef.current.draw(currentWaveCountdown); // Pass countdown to draw
+        gameInstanceRef.current.draw(currentWaveCountdown);
         inputHandler.resetEvents();
         animationFrameIdRef.current = requestAnimationFrame(gameLoop);
-    }, [inputHandler, currentWaveCountdown]); // Add currentWaveCountdown to dependencies
+    }, [inputHandler, currentWaveCountdown]);
 
 
     useImperativeHandle(ref, () => ({
@@ -347,27 +347,7 @@ export default function Home() {
         // directly trigger upgrade modal unless a wave ends.
     }, []);
 
-    const handleWaveCompleted = useCallback((waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => {
-        setScore(gameCanvasRef.current?.getGameInstance()?.getCurrentState().score || 0);
-
-        const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
-        setNextWaveHint(waveConfig.nextWaveHint);
-        setCurrentWave(waveNumber); // Update currentWave after it's completed
-
-        setBetweenWaveCountdown(BETWEEN_WAVES_DURATION); // Start the countdown
-        setGameState('betweenWaves'); // Transition to betweenWaves state
-        soundManager.play(SoundType.GamePause); // Play pause sound for the break
-
-        if (fragmentsToAward > 0) {
-            setUpgradesRemainingToSelect(fragmentsToAward);
-            setTotalUpgradesToSelect(fragmentsToAward);
-            // Upgrade options will be generated when player explicitly opens the upgrade modal
-        } else {
-            setUpgradesRemainingToSelect(0); // Ensure no upgrades are prompted if none are awarded
-            setTotalUpgradesToSelect(0);
-        }
-    }, []);
-
+    // Define openUpgradeSelection before handleWaveCompleted
     const openUpgradeSelection = useCallback(() => {
         if (upgradesRemainingToSelect > 0 && gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
             const gameInstance = gameCanvasRef.current.getGameInstance()!;
@@ -383,6 +363,8 @@ export default function Home() {
             setIsUpgradeModalOpen(true);
             setGameState('upgrading');
         } else {
+            // This toast is now less likely to be hit, as we only call openUpgradeSelection
+            // when upgradesRemainingToSelect > 0 in handleWaveCompleted
             toast({
                 title: "No Upgrades Available",
                 description: "You have no fragments to convert into upgrades at this time.",
@@ -390,6 +372,31 @@ export default function Home() {
         }
     }, [upgradesRemainingToSelect, currentWave, upgradeDataRef, toast]);
 
+    const handleWaveCompleted = useCallback((waveNumber: number, isBossWave: boolean, fragmentsToAward: number) => {
+        setScore(gameCanvasRef.current?.getGameInstance()?.getCurrentState().score || 0);
+
+        const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
+        setNextWaveHint(waveConfig.nextWaveHint);
+        setCurrentWave(waveNumber); // Update currentWave after it's completed
+
+        if (fragmentsToAward > 0) {
+            setUpgradesRemainingToSelect(fragmentsToAward);
+            setTotalUpgradesToSelect(fragmentsToAward);
+            setGameState('upgrading'); // Transition to upgrading state
+            soundManager.play(SoundType.GamePause); // Play pause sound for the break
+            // Automatically open upgrade selection
+            setTimeout(() => { // Small delay to ensure state updates
+                openUpgradeSelection();
+            }, 100);
+
+        } else {
+            setUpgradesRemainingToSelect(0); // Ensure no upgrades are prompted if none are awarded
+            setTotalUpgradesToSelect(0);
+            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION); // Start the countdown
+            setGameState('betweenWaves'); // Transition to betweenWaves state
+            soundManager.play(SoundType.GamePause); // Play pause sound for the break
+        }
+    }, [openUpgradeSelection]); // openUpgradeSelection is now correctly in the dependency array
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
@@ -437,10 +444,11 @@ export default function Home() {
                 if (newCount <= 0) {
                     // No more upgrades to select, close modal and proceed to next wave phase
                     setIsUpgradeModalOpen(false);
-                    setGameState('betweenWaves'); // Keep in between waves state
-                    // Countdown will resume naturally as isUpgradeModalOpen is now false
+                    setBetweenWaveCountdown(BETWEEN_WAVES_DURATION); // Start the countdown
+                    setGameState('betweenWaves'); // Transition to betweenWaves state
+
                 } else {
-                    // Still more upgrades to select, generate new options immediately
+                    // More upgrades to select, re-open with new options
                     if (gameInstance) {
                         const currentWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === currentWave) || FALLBACK_WAVE_CONFIG;
                         const nextFragmentColor = currentWaveConfig.bossType ? null : getRandomElement(PRIMARY_COLORS);
@@ -482,7 +490,7 @@ export default function Home() {
         await clearGameState();
         resetGameAndUpgradeState();
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
-        // Set a new object identity for initialGameState to ensure GameCanvas re-initializes
+
         const newInitialGameState = { ...DEFAULT_GAME_STATE, initialColor: lastColor, currentWave: 0 };
         setInitialGameState(newInitialGameState);
         setGameState('playing');
@@ -508,7 +516,7 @@ export default function Home() {
             setRunUpgrades(new Map(savedRun.activeUpgrades));
             setCurrentWave(savedRun.currentWave);
 
-            setInitialGameState(savedRun); // This will cause GameCanvas to re-render and re-initialize
+            setInitialGameState(savedRun);
             setGameState('playing');
         } else {
             startNewRun();
@@ -529,12 +537,11 @@ export default function Home() {
                 localStorage.setItem('rgBangHighScore', currentState.score.toString());
                 setHighScore(currentState.score);
             }
-            setScore(currentState.score);
             localStorage.setItem('rgBangLastColor', currentState.initialColor);
             setCurrentWave(currentState.currentWave);
         }
-        setGameState('menu'); // This will cause GameCanvas to unmount
-        loadInitialData(); // Load menu specific data
+        setGameState('menu');
+        loadInitialData();
     };
 
     const resumeGame = () => {
