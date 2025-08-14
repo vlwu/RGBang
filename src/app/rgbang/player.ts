@@ -261,6 +261,36 @@ export class Player {
     }
 
     draw(ctx: CanvasRenderingContext2D) {
+        if (this.adrenalineTimer > 0) {
+            ctx.save();
+            const rotation = (Date.now() / 1000) % (Math.PI * 2);
+            const gradient = ctx.createConicGradient(rotation, this.pos.x, this.pos.y);
+
+            gradient.addColorStop(0, "hsl(0, 100%, 70%)");
+            gradient.addColorStop(1 / 7, "hsl(30, 100%, 70%)");
+            gradient.addColorStop(2 / 7, "hsl(60, 100%, 70%)");
+            gradient.addColorStop(3 / 7, "hsl(120, 100%, 70%)");
+            gradient.addColorStop(4 / 7, "hsl(180, 100%, 70%)");
+            gradient.addColorStop(5 / 7, "hsl(240, 100%, 70%)");
+            gradient.addColorStop(6 / 7, "hsl(270, 100%, 70%)");
+            gradient.addColorStop(1, "hsl(0, 100%, 70%)");
+
+            ctx.strokeStyle = gradient;
+
+            const pulse = Math.abs(Math.sin(Date.now() / 150));
+            ctx.lineWidth = 2 + pulse * 2;
+            ctx.globalAlpha = 0.6 + pulse * 0.3;
+
+            ctx.shadowColor = "white";
+            ctx.shadowBlur = 10;
+
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, this.radius + 12, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
         if (this.kineticShieldHits > 0) {
             ctx.save();
             const pulse = Math.abs(Math.sin(Date.now() / 200));
@@ -298,7 +328,7 @@ export class Player {
         ctx.fillStyle = gradient;
         ctx.shadowColor = hexColor;
         ctx.shadowBlur = 15;
-        
+
         ctx.beginPath();
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();

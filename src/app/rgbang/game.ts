@@ -392,7 +392,7 @@ export class Game {
                     this.endWave();
                 }
             } else {
-                if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.bullets.length === 0 && this.fragments.length === 0) {
+                if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.fragments.length === 0) {
                     this.endWave();
                 }
             }

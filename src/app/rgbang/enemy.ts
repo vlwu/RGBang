@@ -25,7 +25,7 @@ export class Enemy {
     isAlive = true;
     damage = 10;
 
-    // Status Effect Timers
+
     isIgnited = false;
     igniteDamage = 0;
     igniteTimer = 0;
@@ -128,7 +128,7 @@ export class Enemy {
         const direction = player.pos.sub(this.pos).normalize();
         this.pos = this.pos.add(direction.scale(this.speed));
     }
-    
+
     private handleStatusEffects() {
         if (this.frozenTimer > 0) {
             this.frozenTimer--;
@@ -154,7 +154,7 @@ export class Enemy {
         let currentSpeed = this.baseSpeed;
         if (this.isFrozen) currentSpeed *= 0;
         else if (this.isSlowed) currentSpeed *= this.slowFactor;
-        
+
         if (this.activePunishment === PunishmentType.SPEED_BOOST) {
             currentSpeed *= 1.5;
         }
@@ -221,7 +221,7 @@ export class Enemy {
         }
     }
 
-    takeDamage(amount: number, damageColor: GameColor): { hit: boolean, killed: boolean, damageDealt: number } {
+    takeDamage(amount: number, damageColor: GameColor, bypassColorCheck = false): { hit: boolean, killed: boolean, damageDealt: number } {
         const damageColorDetail = COLOR_DETAILS[damageColor];
 
         if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) {
@@ -229,8 +229,8 @@ export class Enemy {
             return { hit: false, killed: false, damageDealt: 0 };
         }
 
-        const isEffectiveHit = this.isVoided || damageColor === this.color || (damageColorDetail.components?.includes(this.color) ?? false);
-        
+        const isEffectiveHit = bypassColorCheck || this.isVoided || damageColor === this.color || (damageColorDetail.components?.includes(this.color) ?? false);
+
         if (isEffectiveHit) {
             this.health -= amount;
             if (this.health <= 0) {
@@ -276,7 +276,7 @@ export class Enemy {
         this.slowTimer = Math.max(this.slowTimer, duration);
         this.slowFactor = factor;
     }
-    
+
     applyVoid(duration: number) {
         this.isVoided = true;
         this.voidTimer = duration;
@@ -300,7 +300,7 @@ export class Enemy {
 
         if (closestEnemy) {
             particles.addLightning(originEnemy.pos, closestEnemy.pos);
-            closestEnemy.takeDamage(damage, GameColor.YELLOW);
+            closestEnemy.takeDamage(damage, GameColor.YELLOW, true);
             closestEnemy.triggerChainLightning(maxChains - 1, damage, range);
         }
     }
