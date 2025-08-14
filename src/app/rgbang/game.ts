@@ -1,4 +1,3 @@
-// src/app/rgbang/game.ts
 import { Player } from './player';
 import { Bullet } from './bullet';
 import { Enemy, PunishmentType } from './enemy';
@@ -52,7 +51,6 @@ class EnemySpawner {
             }
         }
     }
-
 
     private spawnEnemy(createEnemy: (enemy: Enemy) => void, enemyType: EnemyType, fixedColor: GameColor | undefined, waveNumber: number) {
         const edge = Math.floor(Math.random() * 4);
@@ -119,8 +117,6 @@ class EnemySpawner {
                 break;
         }
 
-
-
         const newEnemy = new Enemy(x, y, color, radius, health, speed, points, this.soundManager, isChromaSentinel);
         newEnemy.damage = damage;
         createEnemy(newEnemy);
@@ -150,8 +146,9 @@ export class Game {
     public isRunning = false;
     private isBossSpawning = false;
 
-    public currentWave = 0; // Internal wave tracking for game logic
+    public currentWave = 0;
     private waveInProgress = false;
+    private fragmentsCollectedThisWave: number = 0; // New property to track collected fragments
 
     private onGameOver: (finalScore: number) => void;
     private onFragmentCollected: (color: GameColor | null) => void;
@@ -178,13 +175,11 @@ export class Game {
         this.ui = new UI(canvas);
         this.particles = new ParticleSystem();
 
-
         this.score = initialState.score;
         this.player.health = initialState.playerHealth;
         this.nextBossScoreThreshold = initialState.nextBossScoreThreshold;
         this.firstBossDefeated = initialState.nextBossScoreThreshold > 150;
-        this.currentWave = initialState.currentWave || 0; // Use initial state for internal wave tracking
-
+        this.currentWave = initialState.currentWave || 0;
 
         if (initialState.activeUpgrades) {
             initialState.activeUpgrades.forEach((level, id) => {
@@ -194,12 +189,10 @@ export class Game {
     }
 
     public start() {
-
         this.isRunning = true;
         if (this.currentWave === 0) {
             this.startWave(1);
         } else {
-            // If continuing from a saved game, start the wave specified by initial state
             const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
             this.enemySpawner.initializeForWave(waveConfig);
             this.waveInProgress = true;
@@ -220,7 +213,7 @@ export class Game {
             activeUpgrades: this.player.upgradeManager.getActiveUpgradeMap(),
             nextBossScoreThreshold: this.nextBossScoreThreshold,
             initialColor: this.player.currentColor,
-            currentWave: this.currentWave, // Save current internal wave
+            currentWave: this.currentWave,
         };
     }
 
@@ -240,12 +233,13 @@ export class Game {
     }
 
     public startWave(waveNumber: number) {
-        this.currentWave = waveNumber; // Update internal wave tracking
+        this.currentWave = waveNumber;
         this.enemies = [];
         this.bullets = [];
         this.fragments = [];
         this.isBossSpawning = false;
         this.boss = null;
+        this.fragmentsCollectedThisWave = 0; // Reset fragment count for new wave
 
         const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || FALLBACK_WAVE_CONFIG;
 
@@ -258,9 +252,9 @@ export class Game {
         }
     }
 
-    private endWave(fragmentsToAward: number) {
+    private endWave() {
         this.waveInProgress = false;
-        this.onWaveCompleted(this.currentWave, !!this.boss, fragmentsToAward);
+        this.onWaveCompleted(this.currentWave, !!this.boss, this.fragmentsCollectedThisWave); // Pass collected count
         this.boss = null;
         this.isBossSpawning = false;
     }
@@ -289,7 +283,6 @@ export class Game {
             const miniBossPoints = Math.round(100 * (this.currentWave / 2));
             const miniBossColor = getRandomElement(PRIMARY_COLORS);
 
-
             const miniBoss = new Enemy(bossX, bossY, miniBossColor, miniBossRadius, miniBossHealth, miniBossSpeed, miniBossPoints, this.soundManager);
             miniBoss.damage = 20;
             miniBoss.onSplit = (newEnemy) => {
@@ -301,24 +294,17 @@ export class Game {
         this.isBossSpawning = true;
     }
 
-
-
-    // MODIFIED: Accepts currentWaveToDisplay from outside (Home component)
     public update(inputHandler: InputHandler, isGamePaused: boolean) {
         if (!this.isRunning) return;
 
-
         this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height, isGamePaused);
-
         this.particles.update();
-
 
         if (!isGamePaused) {
             this.bullets.forEach(bullet => bullet.update());
             this.enemies.forEach(enemy => enemy.update(this.player, this.enemies, this.particles));
             this.boss?.update();
             this.fragments.forEach(fragment => fragment.update(this.player, this.particles));
-
 
             this.handleCollisions();
             this.cleanupEntities();
@@ -330,24 +316,14 @@ export class Game {
                     this.fragments.push(new PrismFragment(this.boss.pos.x, this.boss.pos.y, null));
                     this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5);
 
-                    const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
-                    this.endWave(waveConfig.fragmentsAwarded);
+                    this.endWave();
                 }
             } else {
-                const waveConfig = WAVE_CONFIGS.find(w => w.waveNumber === this.currentWave) || FALLBACK_WAVE_CONFIG;
-
-                if (this.enemySpawner.hasMoreEnemiesToSpawn()) {
-                    this.enemySpawner.update(this.createEnemy, waveConfig);
-                }
-
-
                 if (this.waveInProgress && !this.enemySpawner.hasMoreEnemiesToSpawn() && this.enemies.length === 0 && this.bullets.length === 0 && this.fragments.length === 0 && !this.isBossSpawning) {
-                    this.endWave(waveConfig.fragmentsAwarded);
+                    this.endWave();
                 }
             }
         }
-
-
 
         if (!this.player.isAlive) {
             this.soundManager.play(SoundType.GameOver);
@@ -454,6 +430,7 @@ export class Game {
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
                 this.soundManager.play(SoundType.FragmentCollect);
                 this.onFragmentCollected(fragment.color);
+                this.fragmentsCollectedThisWave++; // Increment collected fragments count
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
                 fragment.isAlive = false;
             }
@@ -506,7 +483,7 @@ export class Game {
     }
 
 
-    // MODIFIED: Accepts currentWaveToDisplay from GameCanvas
+
     public draw(currentWaveToDisplay: number, currentWaveCountdown: number, isBetweenWaves: boolean) {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
@@ -520,7 +497,7 @@ export class Game {
         this.player.draw(this.ctx);
 
 
-        // MODIFIED: Pass currentWaveToDisplay to UI.draw
+
         this.ui.draw(this.player, this.score, this.boss, currentWaveToDisplay, this.enemies.length, currentWaveCountdown, isBetweenWaves);
     }
 }

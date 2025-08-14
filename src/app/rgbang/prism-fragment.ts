@@ -10,36 +10,39 @@ export class PrismFragment {
     color: GameColor | null;
     hexColor: string;
 
-    // Removed lifespan and related properties
     private attractRadius = 100;
     private attractSpeed = 0.08;
     private canAttract = false;
-    private initialDelay = 30; // Renamed attractDelay to initialDelay for clarity
+    private initialDelay = 30;
 
     private angle = Math.random() * Math.PI * 2;
     private rotationSpeed = (Math.random() - 0.5) * 0.1;
 
+    private lifespan: number;
+    private readonly maxLifespan = 300; // 5 seconds * 60 frames/second
 
     constructor(x: number, y: number, color: GameColor | null) {
         this.pos = new Vec2(x, y);
         this.color = color;
         this.hexColor = color ? COLOR_DETAILS[color].hex : '#FFFFFF';
+        this.lifespan = this.maxLifespan; // Initialize lifespan
     }
 
     update(player: Player, particles: ParticleSystem) {
         if (!this.isAlive) return;
 
-        // Removed lifespan decrement
-        this.initialDelay--; // Decrement initial delay
-
+        this.initialDelay--;
         this.angle += this.rotationSpeed;
+        this.lifespan--; // Decrement lifespan
 
-        if (this.initialDelay <= 0) { // Check initial delay
-            this.canAttract = true;
+        if (this.lifespan <= 0) { // Check if lifespan expired
+            this.isAlive = false;
+            return; // No need to continue updating if not alive
         }
 
-        // Removed lifespan check for isAlive = false
-
+        if (this.initialDelay <= 0) {
+            this.canAttract = true;
+        }
 
         if (this.canAttract) {
             const distVec = player.pos.sub(this.pos);
@@ -58,19 +61,14 @@ export class PrismFragment {
 
         ctx.save();
 
-        const pulse = (Math.sin(Date.now() / 200) + 1) / 2; // Keep a visual pulse
-
+        const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+        ctx.globalAlpha = Math.max(0, this.lifespan / this.maxLifespan); // Fade out towards end of life
 
         ctx.shadowColor = this.hexColor;
         ctx.shadowBlur = 10 + pulse * 10;
 
-        // Removed lifespan-based alpha fading
-        ctx.globalAlpha = 1;
-
-
         ctx.translate(this.pos.x, this.pos.y);
         ctx.rotate(this.angle);
-
 
         ctx.fillStyle = this.hexColor;
         ctx.beginPath();
