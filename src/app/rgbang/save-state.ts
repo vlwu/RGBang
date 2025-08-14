@@ -1,4 +1,3 @@
-// src/app/rgbang/save-state.ts
 import { GameColor } from './color';
 
 export interface SavedGameState {
@@ -7,7 +6,8 @@ export interface SavedGameState {
     activeUpgrades: Map<string, number>;
     nextBossScoreThreshold: number;
     initialColor: GameColor;
-    currentWave: number; // NEW
+    currentWave: number;
+    bankedUpgrades: number;
 }
 
 const GAME_STATE_KEY = 'rgBangGameState';

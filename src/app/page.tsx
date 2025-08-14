@@ -31,7 +31,7 @@ import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG } from './rgbang/wave-data';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
-const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0 };
+const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map<string, number>(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0, bankedUpgrades: 0 };
 const BETWEEN_WAVES_DURATION = 15;
 
 
@@ -162,6 +162,7 @@ export default function Home() {
     const [betweenWaveCountdown, setBetweenWaveCountdown] = useState(0);
     const [upgradesRemainingToSelect, setUpgradesRemainingToSelect] = useState(0);
     const [totalUpgradesToSelect, setTotalUpgradesToSelect] = useState(0);
+    const [bankedUpgrades, setBankedUpgrades] = useState(0);
 
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -228,9 +229,11 @@ export default function Home() {
         if (savedRun && savedRun.score > 0) {
             setSavedGame(savedRun);
             setCurrentWave(savedRun.currentWave);
+            setBankedUpgrades(savedRun.bankedUpgrades || 0);
         } else {
             setSavedGame(null);
             setCurrentWave(0);
+            setBankedUpgrades(0);
         }
 
         const data = await getPlayerUpgradeData();
@@ -259,7 +262,11 @@ export default function Home() {
     useEffect(() => {
         const handleBeforeUnload = () => {
             if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance() && (gameState === 'playing' || gameState === 'paused' || gameState === 'betweenWaves' || gameState === 'upgrading')) {
-                const stateToSave = gameCanvasRef.current.getGameInstance()!.getCurrentState();
+                const stateFromGame = gameCanvasRef.current.getGameInstance()!.getCurrentState();
+                const stateToSave: SavedGameState = {
+                    ...stateFromGame,
+                    bankedUpgrades: bankedUpgrades + upgradesRemainingToSelect
+                };
                 if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
                 }
@@ -271,7 +278,7 @@ export default function Home() {
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [gameState]);
+    }, [gameState, bankedUpgrades, upgradesRemainingToSelect]);
 
 
     useEffect(() => {
@@ -281,13 +288,23 @@ export default function Home() {
 
     const handleNextWaveStart = useCallback(() => {
         if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
+            if (upgradesRemainingToSelect > 0) {
+                setBankedUpgrades(prev => prev + upgradesRemainingToSelect);
+                toast({
+                    title: "Upgrades Banked",
+                    description: `You've saved ${upgradesRemainingToSelect} upgrade choice${upgradesRemainingToSelect > 1 ? 's' : ''} for later.`,
+                    duration: 3000,
+                });
+                setUpgradesRemainingToSelect(0);
+            }
+
             const nextWaveNum = currentWave + 1;
             setCurrentWave(nextWaveNum);
             gameCanvasRef.current.getGameInstance()!.startWave(nextWaveNum);
             setGameState('playing');
             soundManager.play(SoundType.GameResume);
         }
-    }, [currentWave]);
+    }, [currentWave, upgradesRemainingToSelect, toast]);
 
 
     useEffect(() => {
@@ -396,17 +413,20 @@ export default function Home() {
         const waveConfigForNextHint = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber + 1) || FALLBACK_WAVE_CONFIG;
         setNextWaveHint(waveConfigForNextHint.nextWaveHint);
 
+        const totalUpgradesToOffer = fragmentsToAward + bankedUpgrades;
+        setBankedUpgrades(0);
 
-        if (fragmentsToAward > 0) {
-            setUpgradesRemainingToSelect(fragmentsToAward);
-            setTotalUpgradesToSelect(fragmentsToAward);
+
+        if (totalUpgradesToOffer > 0) {
+            setUpgradesRemainingToSelect(totalUpgradesToOffer);
+            setTotalUpgradesToSelect(totalUpgradesToOffer);
             setGameState('upgrading');
             soundManager.play(SoundType.GamePause);
 
 
             toast({
                 title: "Wave Cleared!",
-                description: `You've earned ${fragmentsToAward} upgrade${fragmentsToAward > 1 ? 's' : ''}! Choose wisely.`,
+                description: `You've earned ${totalUpgradesToOffer} upgrade choice${totalUpgradesToOffer > 1 ? 's' : ''}! Choose wisely.`,
                 duration: 3000,
             });
 
@@ -421,7 +441,7 @@ export default function Home() {
             setGameState('betweenWaves');
             soundManager.play(SoundType.GamePause);
         }
-    }, [openUpgradeSelection, toast]);
+    }, [bankedUpgrades, openUpgradeSelection, toast]);
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
@@ -509,6 +529,7 @@ export default function Home() {
         setScore(0);
         setSavedGame(null);
         setCurrentWave(0);
+        setBankedUpgrades(0);
     };
 
     const startNewRun = async () => {
@@ -540,6 +561,7 @@ export default function Home() {
             upgradeDataRef.current = data;
             setRunUpgrades(new Map(savedRun.activeUpgrades));
             setCurrentWave(savedRun.currentWave);
+            setBankedUpgrades(savedRun.bankedUpgrades || 0);
 
             setInitialGameState(savedRun);
             setGameState('playing');
@@ -552,8 +574,13 @@ export default function Home() {
         soundManager.play(SoundType.GameQuit);
         if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
             const currentState = gameCanvasRef.current.getGameInstance()!.getCurrentState();
-            if (currentState.score > 0) {
-                 saveGameState(currentState);
+            const stateToSave: SavedGameState = {
+                ...currentState,
+                bankedUpgrades: bankedUpgrades + upgradesRemainingToSelect
+            };
+
+            if (stateToSave.score > 0) {
+                 saveGameState(stateToSave);
             } else {
                  clearGameState();
             }
