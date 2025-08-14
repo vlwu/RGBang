@@ -72,6 +72,7 @@ export class UpgradeManager {
             }
         }
 
+        const initialOptionsCount = options.length;
 
         const fallbackHeal: Upgrade = {
             id: 'fallback-heal',
@@ -109,11 +110,14 @@ export class UpgradeManager {
         }
 
 
-        while (options.length < 3) {
-            options.push(fallbackHeal);
+        if (initialOptionsCount > 0) {
+            let fallbackCounter = 0;
+            while (options.length < 3) {
+                options.push({ ...fallbackHeal, id: `${fallbackHeal.id}-${fallbackCounter++}` });
+            }
         }
 
-        return shuffle(options.slice(0,3));
+        return shuffle(options);
     }
 
     apply(upgrade: Upgrade, level: number) {
