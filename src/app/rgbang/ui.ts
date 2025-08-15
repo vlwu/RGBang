@@ -17,9 +17,9 @@ export class UI {
     private hexToRgb(hex: string): { r: number, g: number, b: number } | null {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {
-            r: parseInt(result[1], 16),
-            g: parseInt(result[2], 16),
-            b: parseInt(result[3], 16)
+            r: parseInt(result, 16),
+            g: parseInt(result, 16),
+            b: parseInt(result, 16)
         } : null;
     }
 
@@ -218,8 +218,6 @@ export class UI {
     }
 
     private drawDashCooldownBar(player: Player) {
-        if (player.dashCooldownTimer <= 0) return;
-
         const boxSize = 50;
         const spacing = 12;
         const hotbarTotalWidth = (boxSize + spacing) * ALL_COLORS.length - spacing;
@@ -233,32 +231,58 @@ export class UI {
         this.ctx.save();
 
         this.ctx.fillStyle = 'rgba(20, 20, 30, 0.7)';
-        this.ctx.strokeStyle = 'rgba(150, 150, 180, 0.3)';
-        this.ctx.lineWidth = 1.5;
         this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
         this.ctx.shadowBlur = 10;
         this.ctx.beginPath();
         roundRect(this.ctx, x, y, barWidth, barHeight, borderRadius);
         this.ctx.fill();
-        this.ctx.stroke();
+        this.ctx.shadowColor = 'transparent';
 
-        const progress = 1 - (player.dashCooldownTimer / player.getDashCooldown());
+        const progress = player.dashCooldownTimer <= 0 ? 1 : 1 - (player.dashCooldownTimer / player.getDashCooldown());
+
         if (progress > 0) {
             const progressWidth = barWidth * progress;
 
-            const gradient = this.ctx.createLinearGradient(x, y, x + progressWidth, y);
-            gradient.addColorStop(0, '#ff4d4d');
-            gradient.addColorStop(0.5, '#ffff66');
-            gradient.addColorStop(1, '#4d94ff');
-
-            this.ctx.fillStyle = gradient;
-            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
-            this.ctx.shadowBlur = 15;
-
+            this.ctx.save();
             this.ctx.beginPath();
             roundRect(this.ctx, x, y, progressWidth, barHeight, borderRadius);
-            this.ctx.fill();
+            this.ctx.clip();
+
+            const panOffset = (Date.now() / 2000 * barWidth) % (barWidth);
+            const gradient = this.ctx.createLinearGradient(x - panOffset, y, x + barWidth * 2 - panOffset, y);
+
+            const colors = ['#ff4d4d', '#ffff66', '#66ff8c', '#4d94ff', '#d966ff'];
+            for(let i = 0; i < colors.length * 2; i++) {
+                gradient.addColorStop(i / (colors.length * 2 -1), colors[i % colors.length]);
+            }
+
+            this.ctx.fillStyle = gradient;
+            this.ctx.fillRect(x, y, barWidth, barHeight);
+
+            const highlightOffset = (Math.sin(Date.now() / 400) + 1) / 2;
+            const highlightGradient = this.ctx.createLinearGradient(x, y, x + barWidth, y);
+            highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            highlightGradient.addColorStop(Math.max(0, highlightOffset - 0.2), 'rgba(255, 255, 255, 0.4)');
+            highlightGradient.addColorStop(highlightOffset, 'rgba(255, 255, 255, 0)');
+            highlightGradient.addColorStop(Math.min(1, highlightOffset + 0.2), 'rgba(255, 255, 255, 0.4)');
+            highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            this.ctx.fillStyle = highlightGradient;
+            this.ctx.fillRect(x, y, barWidth, barHeight);
+
+            this.ctx.restore();
+
+            this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            this.ctx.lineWidth = 1;
+            this.ctx.beginPath();
+            roundRect(this.ctx, x, y, progressWidth, barHeight, borderRadius);
+            this.ctx.stroke();
         }
+
+        this.ctx.strokeStyle = 'rgba(229, 231, 235, 0.7)';
+        this.ctx.lineWidth = 1;
+        this.ctx.beginPath();
+        roundRect(this.ctx, x, y, barWidth, barHeight, borderRadius);
+        this.ctx.stroke();
 
         this.ctx.restore();
     }
