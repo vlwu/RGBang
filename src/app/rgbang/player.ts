@@ -77,6 +77,10 @@ export class Player {
     private knockbackVelocity = new Vec2(0, 0);
     private knockbackDamping = 0.95;
 
+    private collectionRippleTimer = 0;
+    private readonly collectionRippleDuration = 30; // in frames
+    private collectionRippleColor: string = '#FFFFFF';
+
     constructor(x: number, y: number, initialColor: GameColor, soundManager: SoundManager) {
         this.pos = new Vec2(x, y);
         this.health = this.maxHealth;
@@ -95,6 +99,7 @@ export class Player {
         if (this.dashCooldownTimer > 0) this.dashCooldownTimer--;
         if (this.adrenalineTimer > 0) this.adrenalineTimer--;
         if (this.adrenalineCooldown > 0) this.adrenalineCooldown--;
+        if (this.collectionRippleTimer > 0) this.collectionRippleTimer--;
 
         this.handleColorSelection(input, createBullet);
 
@@ -226,6 +231,11 @@ export class Player {
         this.health = Math.min(this.getMaxHealth(), this.health + amount);
     }
 
+    public triggerCollectionEffect(color: GameColor | null) {
+        this.collectionRippleTimer = this.collectionRippleDuration;
+        this.collectionRippleColor = color ? COLOR_DETAILS[color].hex : '#FFFFFF';
+    }
+
     private applyBulletUpgrades(bullet: Bullet) {
         bullet.damage *= this.bulletDamageMultiplier;
 
@@ -265,7 +275,28 @@ export class Player {
         }
     }
 
+    private drawCollectionRipple(ctx: CanvasRenderingContext2D) {
+        const progress = 1 - (this.collectionRippleTimer / this.collectionRippleDuration);
+        const radius = this.radius + 40 * progress;
+        const alpha = (1 - progress) * 0.8;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = this.collectionRippleColor;
+        ctx.lineWidth = 3 - (progress * 2);
+        ctx.shadowColor = this.collectionRippleColor;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
     draw(ctx: CanvasRenderingContext2D) {
+        if (this.collectionRippleTimer > 0) {
+            this.drawCollectionRipple(ctx);
+        }
+
         if (this.adrenalineTimer > 0) {
             ctx.save();
             const rotation = (Date.now() / 1000) % (Math.PI * 2);

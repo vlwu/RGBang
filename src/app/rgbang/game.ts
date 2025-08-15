@@ -319,6 +319,7 @@ export class Game {
                 });
                 this.waveManager.onFragmentCollected();
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
+                this.player.triggerCollectionEffect(fragment.color);
                 fragment.isAlive = false;
             }
         }

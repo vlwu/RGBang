@@ -396,10 +396,18 @@ export default function Home() {
     useEffect(() => {
         if (gameStoreState.fragmentCollectCount > lastFragmentCount.current) {
             const color = gameStoreState.lastFragmentCollected;
+            const colorHex = color === 'special'
+                ? '#FFFFFF'
+                : color
+                ? COLOR_DETAILS[color].hex
+                : '#A9A9A9';
+
             toast({
                 title: "Fragment Collected!",
                 description: `You picked up a ${color === 'special' ? 'special' : (color ? COLOR_DETAILS[color].name : '')} fragment.`,
                 duration: 1500,
+                className: "toast-glow",
+                style: { '--toast-glow-color': colorHex } as React.CSSProperties,
             });
         }
         lastFragmentCount.current = gameStoreState.fragmentCollectCount;
