@@ -297,7 +297,8 @@ export class Game {
         for (const enemy of this.entityManager.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 this.player.takeDamage(enemy.damage);
-                enemy.isAlive = false;
+                this.player.applyKnockback(enemy.pos, 10);
+                enemy.takeDamage(enemy.health * 0.5, enemy.color, true);
                 this.particles.add(enemy.pos, enemy.color, 10);
             }
         }
