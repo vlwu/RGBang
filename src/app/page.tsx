@@ -779,7 +779,7 @@ export default function Home() {
                            <span>High Score: {highScore}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); loadInitialData();}} onMouseEnter={playHoverSound} className="font-bold text-lg mt-4 w-64 btn-liquid-glass btn-liquid-secondary">
+                     <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); gameStateStore.resetState(); loadInitialData();}} onMouseEnter={playHoverSound} className="font-bold text-lg mt-4 w-64 btn-liquid-glass btn-liquid-secondary">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>
