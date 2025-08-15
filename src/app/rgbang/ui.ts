@@ -44,6 +44,7 @@ export class UI {
         const liveEnemies = enemies.filter(e => e.isAlive);
 
         this.drawHealthBar(player);
+        this.drawDashCooldownBar(player);
         this.drawHotbar(player);
 
         if (boss && boss.isAlive) {
@@ -216,10 +217,56 @@ export class UI {
         this.ctx.restore();
     }
 
+    private drawDashCooldownBar(player: Player) {
+        if (player.dashCooldownTimer <= 0) return;
+
+        const boxSize = 50;
+        const spacing = 12;
+        const hotbarTotalWidth = (boxSize + spacing) * ALL_COLORS.length - spacing;
+        const barWidth = hotbarTotalWidth;
+        const barHeight = 12;
+        const borderRadius = 6;
+
+        const x = (this.canvas.width - barWidth) / 2;
+        const y = this.canvas.height - boxSize - 20 - spacing - barHeight;
+
+        this.ctx.save();
+
+        this.ctx.fillStyle = 'rgba(20, 20, 30, 0.7)';
+        this.ctx.strokeStyle = 'rgba(150, 150, 180, 0.3)';
+        this.ctx.lineWidth = 1.5;
+        this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        this.ctx.shadowBlur = 10;
+        this.ctx.beginPath();
+        roundRect(this.ctx, x, y, barWidth, barHeight, borderRadius);
+        this.ctx.fill();
+        this.ctx.stroke();
+
+        const progress = 1 - (player.dashCooldownTimer / player.getDashCooldown());
+        if (progress > 0) {
+            const progressWidth = barWidth * progress;
+
+            const gradient = this.ctx.createLinearGradient(x, y, x + progressWidth, y);
+            gradient.addColorStop(0, '#ff4d4d');
+            gradient.addColorStop(0.5, '#ffff66');
+            gradient.addColorStop(1, '#4d94ff');
+
+            this.ctx.fillStyle = gradient;
+            this.ctx.shadowColor = 'rgba(255, 255, 255, 0.5)';
+            this.ctx.shadowBlur = 15;
+
+            this.ctx.beginPath();
+            roundRect(this.ctx, x, y, progressWidth, barHeight, borderRadius);
+            this.ctx.fill();
+        }
+
+        this.ctx.restore();
+    }
+
     private drawHotbar(player: Player) {
         const boxSize = 50;
         const spacing = 12;
-        const totalWidth = (boxSize + spacing) * ALL_COLORS.length + spacing;
+        const totalWidth = (boxSize + spacing) * ALL_COLORS.length - spacing;
         const startX = (this.canvas.width - totalWidth) / 2;
         const y = this.canvas.height - boxSize - 20;
         const borderRadius = 10;
@@ -233,13 +280,13 @@ export class UI {
         this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
         this.ctx.shadowBlur = 15;
         this.ctx.beginPath();
-        roundRect(this.ctx, startX, y - spacing/2, totalWidth - spacing, boxSize + spacing, borderRadius + 5);
+        roundRect(this.ctx, startX, y, totalWidth, boxSize, borderRadius);
         this.ctx.fill();
         this.ctx.stroke();
         this.ctx.shadowColor = 'transparent';
 
         ALL_COLORS.forEach((color, index) => {
-            const x = startX + spacing/2 + index * (boxSize + spacing);
+            const x = startX + (boxSize + spacing) * index;
             const detail = COLOR_DETAILS[color];
             const isAvailable = player.availableColors.has(color);
 

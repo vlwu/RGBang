@@ -64,14 +64,14 @@ export class Player {
 
     private baseBulletSpread = 0.15;
     private shootCooldown = 10;
-    private shootTimer = 0;
+    public shootTimer = 0;
 
     private isDashing = false;
     private dashTimer = 0;
     private dashDuration = 12;
     private baseDashSpeed = 12;
     private baseDashCooldown = 180;
-    private dashCooldownTimer = 0;
+    public dashCooldownTimer = 0;
 
     private knockbackVelocity = new Vec2(0, 0);
     private knockbackDamping = 0.95;
@@ -114,7 +114,7 @@ export class Player {
 
         for (const field of slowingFields) {
             if (circleCollision(this, field)) {
-                this.applySlow(60); 
+                this.applySlow(60);
                 break;
             }
         }
@@ -401,10 +401,6 @@ export class Player {
         ctx.fill();
         ctx.restore();
 
-        if (this.dashCooldownTimer > 0) {
-            this.drawDashIndicator(ctx);
-        }
-
         if (this.radialMenu.active) {
             this.radialMenu.draw(ctx);
         } else {
@@ -417,29 +413,6 @@ export class Player {
             drawShapeForColor(ctx, reticlePos, 10, this.currentColor, COLOR_DETAILS[this.currentColor].hex, true);
             ctx.restore();
         }
-    }
-
-     private drawDashIndicator(ctx: CanvasRenderingContext2D) {
-        ctx.save();
-        const indicatorWidth = 20;
-        const indicatorHeight = 4;
-        const indicatorX = this.pos.x - indicatorWidth / 2;
-        const indicatorY = this.pos.y - this.radius - 12;
-
-        const progress = 1 - (this.dashCooldownTimer / this.getDashCooldown());
-
-        ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
-        ctx.fillRect(indicatorX, indicatorY, indicatorWidth, indicatorHeight);
-
-        const gradient = ctx.createLinearGradient(indicatorX, indicatorY, indicatorX + (indicatorWidth * progress), indicatorY);
-        gradient.addColorStop(0, '#ff4d4d');
-        gradient.addColorStop(0.5, '#ffff66');
-        gradient.addColorStop(1, '#4d94ff');
-
-        ctx.fillStyle = gradient;
-        ctx.fillRect(indicatorX, indicatorY, indicatorWidth * progress, indicatorHeight);
-
-        ctx.restore();
     }
 
     takeDamage(amount: number) {
@@ -517,9 +490,5 @@ export class Player {
 
     public getBulletSpread(): number {
         return this.baseBulletSpread * this.accuracyModifier;
-    }
-
-    public getDashCooldownProgress(): number {
-        return this.dashCooldownTimer / this.getDashCooldown();
     }
 }
