@@ -147,7 +147,7 @@ export class Enemy {
                 this.move(player);
                 if (this.stateTimer <= 0) {
                     this.state = EnemyState.TELEGRAPHING_ATTACK;
-                    this.stateTimer = 90; 
+                    this.stateTimer = 90;
                     this.attackTargetPos = new Vec2(player.pos.x, player.pos.y);
                 }
                 break;
@@ -181,7 +181,7 @@ export class Enemy {
         } else if (this.color === GameColor.PURPLE) {
             const dist = distance(this, player);
             if (dist < 250) {
-                direction = this.pos.sub(player.pos).normalize(); 
+                direction = this.pos.sub(player.pos).normalize();
             } else {
                 this.movementAngleOffset += 0.02;
                 const perpendicular = new Vec2(-direction.y, direction.x);
@@ -202,7 +202,7 @@ export class Enemy {
 
                     if (this.color === GameColor.ORANGE) {
                         particles.add(this.pos, GameColor.RED, 2);
-                        if (this.stateTimer <= 1) { 
+                        if (this.stateTimer <= 1) {
                             actionCallbacks.dealAreaDamage(this.pos, 60, 15, GameColor.ORANGE);
                         }
                     }
@@ -217,7 +217,7 @@ export class Enemy {
                     if (this.color === GameColor.BLUE) {
                         bullet.slowsPlayer = true;
                         bullet.damage = 5;
-                    } else { 
+                    } else {
                         bullet.isGravityOrb = true;
                         bullet.damage = 10;
                         bullet.radius = 10;
@@ -227,7 +227,7 @@ export class Enemy {
                 }
                 break;
             case GameColor.GREEN:
-                 if (this.stateTimer === 29) { 
+                 if (this.stateTimer === 29) {
                     actionCallbacks.createSlowField(this.pos, 100, 480);
                  }
                  break;
@@ -286,6 +286,27 @@ export class Enemy {
                 ctx.arc(this.pos.x, this.pos.y, radius, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.stroke();
+            }
+            
+            if ((this.color === GameColor.RED || this.color === GameColor.ORANGE) && this.attackTargetPos) {
+                const attackDuration = 30;
+                const dashSpeed = this.baseSpeed * 4;
+                const totalDashDistance = dashSpeed * attackDuration;
+                const direction = this.attackTargetPos.sub(this.pos).normalize();
+                const actualDashEndPos = this.pos.add(direction.scale(totalDashDistance));
+
+                ctx.save();
+                ctx.strokeStyle = this.hexColor;
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 10]);
+                ctx.globalAlpha = 0.5 + pulse * 0.3;
+
+                ctx.beginPath();
+                ctx.moveTo(this.pos.x, this.pos.y);
+                ctx.lineTo(actualDashEndPos.x, actualDashEndPos.y);
+                ctx.stroke();
+                
+                ctx.restore();
             }
 
         } else if (this.isFrozen) ctx.shadowColor = '#4d94ff';
