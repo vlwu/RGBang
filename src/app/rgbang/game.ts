@@ -223,9 +223,12 @@ export class Game {
         for (const bullet of this.entityManager.bullets) {
             if (!bullet.isActive) continue;
 
-            if (bullet.isFromBoss) {
+            if (bullet.isFromBoss || bullet.isEnemyProjectile) {
                 if (this.player.isAlive && circleCollision(bullet, this.player)) {
                     this.player.takeDamage(bullet.damage);
+                    if (bullet.slowsPlayer) {
+                        this.player.applySlow(180); // 3 second slow
+                    }
                     this.particles.add(bullet.pos, bullet.color, 10);
                     bullet.isActive = false;
                 }

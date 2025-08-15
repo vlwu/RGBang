@@ -23,7 +23,6 @@ export class Player {
     public isRadialMenuOpen = false;
     private soundManager: SoundManager;
 
-
     public movementSpeedMultiplier = 1;
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
@@ -31,10 +30,8 @@ export class Player {
     public accuracyModifier = 1;
     public scoreMultiplier = 1;
 
-
     public flatHealthIncrease = 0;
     public flatDamageReduction = 0;
-
 
     public chainLightningLevel = 0;
     public igniteLevel = 0;
@@ -46,7 +43,6 @@ export class Player {
     public fissionLevel = 0;
     public voidLevel = 0;
 
-
     public lifestealPercent = 0;
     public adrenalineRushLevel = 0;
     public kineticShieldLevel = 0;
@@ -55,13 +51,15 @@ export class Player {
     public bulletPenetrationLevel = 0;
     public explosiveFinishLevel = 0;
 
-
     public adrenalineTimer = 0;
     private adrenalineCooldown = 0;
     private readonly ADRENALINE_COOLDOWN_TIME = 600;
     public kineticShieldHits = 0;
     public punishmentReversalMeter = 0;
     private readonly PUNISHMENT_METER_MAX = 10;
+
+    private isSlowed = false;
+    private slowTimer = 0;
 
     private baseBulletSpread = 0.15;
     private shootCooldown = 10;
@@ -78,7 +76,7 @@ export class Player {
     private knockbackDamping = 0.95;
 
     private collectionRippleTimer = 0;
-    private readonly collectionRippleDuration = 30; // in frames
+    private readonly collectionRippleDuration = 30;
     private collectionRippleColor: string = '#FFFFFF';
 
     constructor(x: number, y: number, initialColor: GameColor, soundManager: SoundManager) {
@@ -100,6 +98,10 @@ export class Player {
         if (this.adrenalineTimer > 0) this.adrenalineTimer--;
         if (this.adrenalineCooldown > 0) this.adrenalineCooldown--;
         if (this.collectionRippleTimer > 0) this.collectionRippleTimer--;
+        if (this.slowTimer > 0) {
+            this.slowTimer--;
+            if (this.slowTimer <= 0) this.isSlowed = false;
+        }
 
         this.handleColorSelection(input, createBullet);
 
@@ -297,6 +299,19 @@ export class Player {
             this.drawCollectionRipple(ctx);
         }
 
+        if (this.isSlowed) {
+            ctx.save();
+            const pulse = Math.abs(Math.sin(Date.now() / 200));
+            ctx.fillStyle = `rgba(77, 148, 255, ${0.1 + pulse * 0.2})`;
+            ctx.strokeStyle = `rgba(77, 148, 255, ${0.4 + pulse * 0.3})`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, this.radius + 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
         if (this.adrenalineTimer > 0) {
             ctx.save();
             const rotation = (Date.now() / 1000) % (Math.PI * 2);
@@ -436,6 +451,11 @@ export class Player {
         }
     }
 
+    public applySlow(duration: number) {
+        this.isSlowed = true;
+        this.slowTimer = Math.max(this.slowTimer, duration);
+    }
+
     public addPunishmentMeter() {
         if (this.punishmentReversalLevel === 0) return;
         this.punishmentReversalMeter = Math.min(this.PUNISHMENT_METER_MAX, this.punishmentReversalMeter + 1);
@@ -466,7 +486,8 @@ export class Player {
 
     public getSpeed(): number {
         const adrenalineBonus = this.adrenalineTimer > 0 ? 1 + this.adrenalineRushLevel * 0.12 : 1;
-        return this.baseSpeed * this.movementSpeedMultiplier * adrenalineBonus;
+        const slowPenalty = this.isSlowed ? 0.5 : 1;
+        return this.baseSpeed * this.movementSpeedMultiplier * adrenalineBonus * slowPenalty;
     }
 
     public getDashCooldown(): number {

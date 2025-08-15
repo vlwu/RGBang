@@ -43,6 +43,8 @@ export class EntityManager {
         pooledBullet.isVoid = bullet.isVoid;
         pooledBullet.lifespan = bullet.lifespan;
         pooledBullet.isRicochet = bullet.isRicochet;
+        pooledBullet.isEnemyProjectile = bullet.isEnemyProjectile;
+        pooledBullet.slowsPlayer = bullet.slowsPlayer;
 
         this.bullets.push(pooledBullet);
     }
@@ -59,7 +61,14 @@ export class EntityManager {
         this.bullets.forEach(bullet => {
             if (bullet.isActive) bullet.update(this.enemies, canvasWidth, canvasHeight);
         });
-        this.enemies.forEach(enemy => enemy.update(player, this.enemies, this.particles, vortexes));
+
+        this.enemies.forEach(enemy => {
+            const newBullet = enemy.update(player, this.enemies, this.particles, vortexes);
+            if (newBullet) {
+                this.addBullet(newBullet);
+            }
+        });
+
         this.boss?.update();
         this.fragments.forEach(fragment => fragment.update(player, this.particles));
     }

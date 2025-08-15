@@ -20,6 +20,10 @@ export class Bullet {
     public isSlowing = false;
     public isFission = false;
     public isVoid = false;
+
+    public isEnemyProjectile = false;
+    public slowsPlayer = false;
+
     public hitEnemies: Set<Enemy> = new Set();
     public trailPoints: Vec2[] = [];
 
@@ -38,14 +42,14 @@ export class Bullet {
     reset(pos: Vec2, direction: Vec2, color: GameColor, isFromBoss = false) {
         this.pos.x = pos.x;
         this.pos.y = pos.y;
-        this.vel = direction.normalize().scale(isFromBoss ? 4 : 10);
+        this.vel = direction.normalize().scale(isFromBoss || this.isEnemyProjectile ? 4 : 10);
         this.color = color;
         this.hexColor = COLOR_DETAILS[color].hex;
         this.isFromBoss = isFromBoss;
-        this.radius = isFromBoss ? 8 : 5;
-        this.damage = 10;
+        this.radius = isFromBoss || this.isEnemyProjectile ? 8 : 5;
+        this.damage = isFromBoss ? 10 : 10;
         this.isActive = true;
-        this.lifespan = isFromBoss ? 420 : 300;
+        this.lifespan = isFromBoss || this.isEnemyProjectile ? 420 : 300;
         this.isRicochet = false;
 
         this.penetrationsLeft = 0;
@@ -54,6 +58,8 @@ export class Bullet {
         this.isSlowing = false;
         this.isFission = false;
         this.isVoid = false;
+        this.isEnemyProjectile = false;
+        this.slowsPlayer = false;
         this.hitEnemies.clear();
         this.trailPoints = [];
     }

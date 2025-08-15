@@ -12,6 +12,12 @@ export enum PunishmentType {
     REFLECT_BULLET = 'REFLECT_BULLET',
 }
 
+enum EnemyState {
+    CHASING,
+    TELEGRAPHING_ATTACK,
+    ATTACKING,
+}
+
 export class Enemy {
     private static nextId = 0;
     public readonly id: number;
@@ -27,7 +33,6 @@ export class Enemy {
     points: number;
     isAlive = true;
     damage = 10;
-
 
     isIgnited = false;
     igniteDamage = 0;
@@ -65,6 +70,11 @@ export class Enemy {
     private colorShiftImmunityTimer = 0;
     private readonly colorShiftImmunityDuration = 60;
 
+    private state: EnemyState = EnemyState.CHASING;
+    private stateTimer = 0;
+    private attackTargetPos: Vec2 | null = null;
+    private movementAngleOffset = Math.random() * Math.PI * 2;
+
     constructor(x: number, y: number, color: GameColor, radius: number, health: number, speed: number, points: number, soundManager: SoundManager, isChromaSentinel = false) {
         this.id = Enemy.nextId++;
         this.pos = new Vec2(x, y);
@@ -84,21 +94,18 @@ export class Enemy {
         }
     }
 
-    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem, vortexes: {pos: Vec2, radius: number, strength: number}[]) {
-        if (!this.isAlive) return;
+    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem, vortexes: {pos: Vec2, radius: number, strength: number}[]): Bullet | null {
+        if (!this.isAlive) return null;
 
         if (this.activePunishment) {
             this.punishmentTimer--;
-            if (this.punishmentTimer <= 0) {
-                this.deactivatePunishment();
-            }
+            if (this.punishmentTimer <= 0) this.deactivatePunishment();
         }
 
+        this.stateTimer--;
         this.handleStatusEffects();
 
-        if (this.isFrozen) {
-            return;
-        }
+        if (this.isFrozen) return null;
 
         for (const vortex of vortexes) {
             const distVec = vortex.pos.sub(this.pos);
@@ -115,11 +122,8 @@ export class Enemy {
         }
 
         if (this.isChromaSentinel) {
-            if (this.colorShiftImmunityTimer > 0) {
-                this.colorShiftImmunityTimer--;
-            } else {
-                this.colorShiftTimer--;
-            }
+            if (this.colorShiftImmunityTimer > 0) this.colorShiftImmunityTimer--;
+            else this.colorShiftTimer--;
 
             if (this.colorShiftTimer <= 0) {
                 this.changeChromaColor();
@@ -129,8 +133,74 @@ export class Enemy {
             }
         }
 
-        const direction = player.pos.sub(this.pos).normalize();
+        return this.runStateMachine(player);
+    }
+
+    private runStateMachine(player: Player): Bullet | null {
+        switch (this.state) {
+            case EnemyState.CHASING:
+                this.move(player);
+                if (this.stateTimer <= 0) {
+                    this.state = EnemyState.TELEGRAPHING_ATTACK;
+                    this.stateTimer = 90; // 1.5s telegraph
+                    this.attackTargetPos = player.pos;
+                }
+                break;
+
+            case EnemyState.TELEGRAPHING_ATTACK:
+                if (this.stateTimer <= 0) {
+                    this.state = EnemyState.ATTACKING;
+                    this.stateTimer = 30; // 0.5s attack phase
+                }
+                break;
+
+            case EnemyState.ATTACKING:
+                const newBullet = this.performAttack(player);
+                if (this.stateTimer <= 0) {
+                    this.state = EnemyState.CHASING;
+                    this.stateTimer = 180 + Math.random() * 120; // 3-5s chase time
+                    this.attackTargetPos = null;
+                }
+                return newBullet;
+        }
+        return null;
+    }
+
+    private move(player: Player) {
+        let direction = player.pos.sub(this.pos).normalize();
+
+        if (this.color === GameColor.YELLOW) {
+            this.movementAngleOffset += 0.05;
+            const perpendicular = new Vec2(-direction.y, direction.x);
+            direction = direction.add(perpendicular.scale(Math.sin(this.movementAngleOffset) * 0.8)).normalize();
+        }
+
         this.pos = this.pos.add(direction.scale(this.speed));
+    }
+
+    private performAttack(player: Player): Bullet | null {
+        switch (this.color) {
+            case GameColor.RED:
+                if (this.attackTargetPos) {
+                    const direction = this.attackTargetPos.sub(this.pos).normalize();
+                    this.pos = this.pos.add(direction.scale(this.baseSpeed * 4)); // Lunge
+                }
+                break;
+            case GameColor.BLUE:
+                if (this.attackTargetPos && this.stateTimer === 29) { // Fire only on the first frame of attack
+                    const direction = this.attackTargetPos.sub(this.pos);
+                    const bullet = new Bullet(this.pos, direction, this.color, false);
+                    bullet.isEnemyProjectile = true;
+                    bullet.slowsPlayer = true;
+                    bullet.damage = 5;
+                    return bullet;
+                }
+                break;
+            case GameColor.YELLOW:
+                // Yellow's "attack" is its erratic movement, handled in move()
+                break;
+        }
+        return null;
     }
 
     private handleStatusEffects() {
@@ -156,7 +226,7 @@ export class Enemy {
         }
 
         let currentSpeed = this.baseSpeed;
-        if (this.isFrozen) currentSpeed *= 0;
+        if (this.isFrozen || this.state === EnemyState.TELEGRAPHING_ATTACK) currentSpeed *= 0;
         else if (this.isSlowed) currentSpeed *= this.slowFactor;
 
         if (this.activePunishment === PunishmentType.SPEED_BOOST) {
@@ -169,11 +239,16 @@ export class Enemy {
         if (!this.isAlive) return;
 
         ctx.save();
-        if (this.isFrozen) ctx.shadowColor = '#4d94ff';
+        if (this.state === EnemyState.TELEGRAPHING_ATTACK) {
+            const pulse = Math.abs(Math.sin(Date.now() / 150));
+            ctx.shadowColor = 'white';
+            ctx.shadowBlur = 15 + pulse * 10;
+        } else if (this.isFrozen) ctx.shadowColor = '#4d94ff';
         else if (this.isReflecting) ctx.shadowColor = '#7DF9FF';
         else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) ctx.shadowColor = 'white';
         else if (this.isVoided) ctx.shadowColor = '#d966ff';
-        ctx.shadowBlur = 15;
+        else ctx.shadowBlur = 15;
+
 
         ctx.fillStyle = this.hexColor;
         ctx.beginPath();
@@ -182,7 +257,12 @@ export class Enemy {
 
         drawShapeForColor(ctx, this.pos, this.radius, this.color, 'black');
 
-        if (this.isFrozen) ctx.strokeStyle = "rgba(173, 216, 230, 0.8)";
+        if (this.state === EnemyState.TELEGRAPHING_ATTACK) {
+            const pulse = Math.abs(Math.sin(Date.now() / 150));
+            ctx.strokeStyle = `rgba(255, 255, 255, ${0.5 + pulse * 0.5})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        } else if (this.isFrozen) ctx.strokeStyle = "rgba(173, 216, 230, 0.8)";
         else if (this.isReflecting) ctx.strokeStyle = "rgba(125, 249, 255, 0.8)";
         else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
         else if (this.isVoided) ctx.strokeStyle = "rgba(217, 102, 255, 0.8)";
