@@ -102,17 +102,6 @@
         text-shadow: 0 0 8px #ff4d4d, 0 0 16px #ffff66, 0 0 24px #4d94ff;
     }
 
-    .toast-glow > div {
-        @apply bg-background rounded-md h-full w-full;
-    }
-
-    .toast-glow {
-        @apply relative rounded-lg p-px;
-        background-size: 400% 400%;
-        background-image: linear-gradient(-45deg, #fde047, #a855f7, #22d3ee, #4ade80, #fde047);
-        animation: border-pan 10s ease infinite;
-    }
-
     .border-liquid-glass {
         @apply relative rounded-lg p-px;
         background-size: 400% 400%;

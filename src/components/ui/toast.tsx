@@ -51,9 +51,15 @@ const Toast = React.forwardRef<
       className={cn(toastVariants({ variant }), className)}
       {...props}
     >
-        <div className="p-6 pr-8">
+      {variant === "destructive" ? (
+        <div className="p-6 pr-8">{props.children}</div>
+      ) : (
+        <div className="border-liquid-glass h-full">
+          <div className="border-liquid-glass-content p-6 pr-8">
             {props.children}
+          </div>
         </div>
+      )}
     </ToastPrimitives.Root>
   )
 })
