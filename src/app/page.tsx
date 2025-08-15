@@ -410,9 +410,9 @@ export default function Home() {
                 className: "toast-glow",
                 style: { '--toast-glow-color': colorHex } as React.CSSProperties,
             });
+            lastFragmentCount.current = gameStoreState.fragmentCollectCount;
         }
-        lastFragmentCount.current = gameStoreState.fragmentCollectCount;
-    }, [gameStoreState.fragmentCollectCount, gameStoreState.lastFragmentCollected, toast]);
+    }, [gameStoreState.fragmentCollectCount, toast]);
 
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
