@@ -164,9 +164,19 @@ export class Game {
         this.particles.addExplosionRipple(pos, radius);
         this.entityManager.enemies.forEach(enemy => {
             if (enemy.isAlive && distance({pos}, enemy) < radius + enemy.radius) {
-                const result = enemy.takeDamage(damage, color);
+                const result = enemy.takeDamage(damage, color, true);
                 if (result.hit && this.player.lifestealPercent > 0) {
                     this.player.heal(result.damageDealt * this.player.lifestealPercent);
+                }
+
+                if (result.killed) {
+                    this.particles.addExplosionRipple(enemy.pos, enemy.radius * 2.5);
+
+                    this.addScore(enemy.points * this.player.scoreMultiplier);
+                    this.entityManager.addFragment(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
+                    if (this.player.fragmentDuplicationChance > 0 && Math.random() < this.player.fragmentDuplicationChance) {
+                         this.entityManager.addFragment(new PrismFragment(enemy.pos.x + 10, enemy.pos.y, enemy.color));
+                    }
                 }
             }
         });
