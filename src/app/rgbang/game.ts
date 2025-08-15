@@ -34,6 +34,7 @@ export class Game {
     private bankedUpgrades = 0;
 
     private vortexes: {pos: Vec2, radius: number, strength: number, lifespan: number}[] = [];
+    private slowingFields: {pos: Vec2, radius: number, lifespan: number}[] = [];
 
     constructor() {
         this.particles = new ParticleSystem();
@@ -52,7 +53,7 @@ export class Game {
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor, this.soundManager);
         this.ui = new UI(canvas);
 
-        this.entityManager = new EntityManager(this.particles);
+        this.entityManager = new EntityManager(this.particles, this.createVortex);
         this.waveManager = new WaveManager(canvas.width, canvas.height, this.soundManager, this.entityManager);
 
         this.score = initialState.score;
@@ -108,17 +109,22 @@ export class Game {
         const upgradeCount = this.player.upgradeManager.getActiveUpgradeMap().size;
         this.waveManager.startWave(waveNumber, upgradeCount);
         this.vortexes = [];
+        this.slowingFields = [];
         gameStateStore.updateState({ currentWave: this.waveManager.currentWave, isBetweenWaves: false });
     }
 
     public update(inputHandler: InputHandler, isGamePaused: boolean) {
         if (!this.isRunning) return;
 
-        this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height, isGamePaused);
+        this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height, isGamePaused, this.slowingFields);
         this.particles.update();
         this.vortexes.forEach((v, i) => {
             v.lifespan--;
             if (v.lifespan <= 0) this.vortexes.splice(i, 1);
+        });
+        this.slowingFields.forEach((f, i) => {
+            f.lifespan--;
+            if (f.lifespan <= 0) this.slowingFields.splice(i, 1);
         });
 
         this.quadtree.clear();
@@ -135,7 +141,12 @@ export class Game {
         }
 
         if (!isGamePaused) {
-            this.entityManager.updateAll(this.player, this.canvas.width, this.canvas.height, this.vortexes);
+            const actionCallbacks = {
+                dealAreaDamage: this.dealAreaDamage,
+                createSlowField: this.createSlowField,
+            };
+
+            this.entityManager.updateAll(this.player, this.canvas.width, this.canvas.height, this.vortexes, actionCallbacks);
             this.waveManager.update();
             this.handleCollisions();
             this.entityManager.cleanup(this.canvas.width, this.canvas.height);
@@ -160,7 +171,15 @@ export class Game {
         }
     }
 
-    private dealAreaDamage(pos: Vec2, radius: number, damage: number, color: GameColor) {
+    public createVortex = (pos: Vec2, radius: number, strength: number, lifespan: number) => {
+        this.vortexes.push({ pos, radius, strength, lifespan });
+    }
+
+    private createSlowField = (pos: Vec2, radius: number, lifespan: number) => {
+        this.slowingFields.push({ pos, radius, lifespan });
+    }
+
+    private dealAreaDamage = (pos: Vec2, radius: number, damage: number, color: GameColor) => {
         this.particles.add(pos, color, 40);
         this.particles.addExplosionRipple(pos, radius);
         this.entityManager.enemies.forEach(enemy => {
@@ -227,7 +246,7 @@ export class Game {
                 if (this.player.isAlive && circleCollision(bullet, this.player)) {
                     this.player.takeDamage(bullet.damage);
                     if (bullet.slowsPlayer) {
-                        this.player.applySlow(180); // 3 second slow
+                        this.player.applySlow(180);
                     }
                     this.particles.add(bullet.pos, bullet.color, 10);
                     bullet.isActive = false;
@@ -390,6 +409,20 @@ export class Game {
             this.ctx.beginPath();
             this.ctx.arc(v.pos.x, v.pos.y, v.radius, 0, Math.PI * 2);
             this.ctx.fill();
+            this.ctx.restore();
+        });
+
+        this.slowingFields.forEach(f => {
+            this.ctx.save();
+            const pulse = Math.abs(Math.sin(Date.now() / 250 + f.pos.x));
+            const progress = f.lifespan / 300;
+            this.ctx.fillStyle = `rgba(102, 255, 140, ${0.1 + pulse * 0.2 * progress})`;
+            this.ctx.strokeStyle = `rgba(102, 255, 140, ${0.3 + pulse * 0.2 * progress})`;
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(f.pos.x, f.pos.y, f.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+            this.ctx.stroke();
             this.ctx.restore();
         });
 

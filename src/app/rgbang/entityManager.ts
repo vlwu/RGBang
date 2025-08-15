@@ -15,9 +15,14 @@ export class EntityManager {
     public bulletPool: ObjectPool<Bullet>;
     private ricochetBulletsOnScreen = 0;
     private readonly MAX_RICOCHET_BULLETS = 30;
+    private createVortex: (pos: Vec2, radius: number, strength: number, lifespan: number) => void;
 
-    constructor(private particles: ParticleSystem) {
+    constructor(
+        private particles: ParticleSystem,
+        createVortex: (pos: Vec2, radius: number, strength: number, lifespan: number) => void
+    ) {
         this.bulletPool = new ObjectPool<Bullet>(() => new Bullet(new Vec2(), new Vec2(), GameColor.RED), 100);
+        this.createVortex = createVortex;
     }
 
     public addEnemy(enemy: Enemy): void {
@@ -41,6 +46,7 @@ export class EntityManager {
         pooledBullet.isSlowing = bullet.isSlowing;
         pooledBullet.isFission = bullet.isFission;
         pooledBullet.isVoid = bullet.isVoid;
+        pooledBullet.isGravityOrb = bullet.isGravityOrb;
         pooledBullet.lifespan = bullet.lifespan;
         pooledBullet.isRicochet = bullet.isRicochet;
         pooledBullet.isEnemyProjectile = bullet.isEnemyProjectile;
@@ -57,13 +63,19 @@ export class EntityManager {
         this.boss = boss;
     }
 
-    public updateAll(player: Player, canvasWidth: number, canvasHeight: number, vortexes: any[]): void {
+    public updateAll(
+        player: Player,
+        canvasWidth: number,
+        canvasHeight: number,
+        vortexes: any[],
+        actionCallbacks: any
+    ): void {
         this.bullets.forEach(bullet => {
             if (bullet.isActive) bullet.update(this.enemies, canvasWidth, canvasHeight);
         });
 
         this.enemies.forEach(enemy => {
-            const newBullet = enemy.update(player, this.enemies, this.particles, vortexes);
+            const newBullet = enemy.update(player, this.enemies, this.particles, vortexes, actionCallbacks);
             if (newBullet) {
                 this.addBullet(newBullet);
             }
@@ -93,6 +105,9 @@ export class EntityManager {
             if (bullet.isActive && (!isOutOfBounds || bullet.ricochetsLeft > 0)) {
                 activeBullets.push(bullet);
             } else {
+                if (bullet.isGravityOrb && bullet.isActive) {
+                    this.createVortex(bullet.pos, 100, 0.4, 240);
+                }
                 if (bullet.isRicochet) {
                     this.ricochetBulletsOnScreen = Math.max(0, this.ricochetBulletsOnScreen - 1);
                 }

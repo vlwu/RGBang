@@ -1,5 +1,5 @@
 import { Vec2, drawShapeForColor, distance } from './utils';
-import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
+import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, SECONDARY_COLORS, getRandomElement } from './color';
 import { Player } from './player';
 import { ParticleSystem } from './particle';
 import { Bullet } from './bullet';
@@ -16,6 +16,11 @@ enum EnemyState {
     CHASING,
     TELEGRAPHING_ATTACK,
     ATTACKING,
+}
+
+interface ActionCallbacks {
+    dealAreaDamage: (pos: Vec2, radius: number, damage: number, color: GameColor) => void;
+    createSlowField: (pos: Vec2, radius: number, lifespan: number) => void;
 }
 
 export class Enemy {
@@ -94,7 +99,7 @@ export class Enemy {
         }
     }
 
-    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem, vortexes: {pos: Vec2, radius: number, strength: number}[]): Bullet | null {
+    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem, vortexes: {pos: Vec2, radius: number, strength: number}[], actionCallbacks: ActionCallbacks): Bullet | null {
         if (!this.isAlive) return null;
 
         if (this.activePunishment) {
@@ -133,32 +138,32 @@ export class Enemy {
             }
         }
 
-        return this.runStateMachine(player);
+        return this.runStateMachine(player, particles, actionCallbacks);
     }
 
-    private runStateMachine(player: Player): Bullet | null {
+    private runStateMachine(player: Player, particles: ParticleSystem, actionCallbacks: ActionCallbacks): Bullet | null {
         switch (this.state) {
             case EnemyState.CHASING:
                 this.move(player);
                 if (this.stateTimer <= 0) {
                     this.state = EnemyState.TELEGRAPHING_ATTACK;
-                    this.stateTimer = 90; // 1.5s telegraph
-                    this.attackTargetPos = player.pos;
+                    this.stateTimer = 90; 
+                    this.attackTargetPos = new Vec2(player.pos.x, player.pos.y);
                 }
                 break;
 
             case EnemyState.TELEGRAPHING_ATTACK:
                 if (this.stateTimer <= 0) {
                     this.state = EnemyState.ATTACKING;
-                    this.stateTimer = 30; // 0.5s attack phase
+                    this.stateTimer = 30;
                 }
                 break;
 
             case EnemyState.ATTACKING:
-                const newBullet = this.performAttack(player);
+                const newBullet = this.performAttack(player, particles, actionCallbacks);
                 if (this.stateTimer <= 0) {
                     this.state = EnemyState.CHASING;
-                    this.stateTimer = 180 + Math.random() * 120; // 3-5s chase time
+                    this.stateTimer = 180 + Math.random() * 120;
                     this.attackTargetPos = null;
                 }
                 return newBullet;
@@ -169,36 +174,63 @@ export class Enemy {
     private move(player: Player) {
         let direction = player.pos.sub(this.pos).normalize();
 
-        if (this.color === GameColor.YELLOW) {
+        if (this.color === GameColor.YELLOW || this.color === GameColor.ORANGE || this.color === GameColor.GREEN) {
             this.movementAngleOffset += 0.05;
             const perpendicular = new Vec2(-direction.y, direction.x);
             direction = direction.add(perpendicular.scale(Math.sin(this.movementAngleOffset) * 0.8)).normalize();
+        } else if (this.color === GameColor.PURPLE) {
+            const dist = distance(this, player);
+            if (dist < 250) {
+                direction = this.pos.sub(player.pos).normalize(); 
+            } else {
+                this.movementAngleOffset += 0.02;
+                const perpendicular = new Vec2(-direction.y, direction.x);
+                direction = direction.add(perpendicular.scale(Math.cos(this.movementAngleOffset))).normalize();
+            }
         }
 
         this.pos = this.pos.add(direction.scale(this.speed));
     }
 
-    private performAttack(player: Player): Bullet | null {
+    private performAttack(player: Player, particles: ParticleSystem, actionCallbacks: ActionCallbacks): Bullet | null {
         switch (this.color) {
             case GameColor.RED:
+            case GameColor.ORANGE:
                 if (this.attackTargetPos) {
                     const direction = this.attackTargetPos.sub(this.pos).normalize();
-                    this.pos = this.pos.add(direction.scale(this.baseSpeed * 4)); // Lunge
+                    this.pos = this.pos.add(direction.scale(this.baseSpeed * 4));
+
+                    if (this.color === GameColor.ORANGE) {
+                        particles.add(this.pos, GameColor.RED, 2);
+                        if (this.stateTimer <= 1) { 
+                            actionCallbacks.dealAreaDamage(this.pos, 60, 15, GameColor.ORANGE);
+                        }
+                    }
                 }
                 break;
             case GameColor.BLUE:
-                if (this.attackTargetPos && this.stateTimer === 29) { // Fire only on the first frame of attack
+            case GameColor.PURPLE:
+                if (this.attackTargetPos && this.stateTimer === 29) {
                     const direction = this.attackTargetPos.sub(this.pos);
                     const bullet = new Bullet(this.pos, direction, this.color, false);
                     bullet.isEnemyProjectile = true;
-                    bullet.slowsPlayer = true;
-                    bullet.damage = 5;
+                    if (this.color === GameColor.BLUE) {
+                        bullet.slowsPlayer = true;
+                        bullet.damage = 5;
+                    } else { 
+                        bullet.isGravityOrb = true;
+                        bullet.damage = 10;
+                        bullet.radius = 10;
+                        bullet.vel = bullet.vel.scale(0.7);
+                    }
                     return bullet;
                 }
                 break;
-            case GameColor.YELLOW:
-                // Yellow's "attack" is its erratic movement, handled in move()
-                break;
+            case GameColor.GREEN:
+                 if (this.stateTimer === 29) { 
+                    actionCallbacks.createSlowField(this.pos, 100, 480);
+                 }
+                 break;
         }
         return null;
     }
@@ -243,6 +275,19 @@ export class Enemy {
             const pulse = Math.abs(Math.sin(Date.now() / 150));
             ctx.shadowColor = 'white';
             ctx.shadowBlur = 15 + pulse * 10;
+
+            if (this.color === GameColor.GREEN && this.attackTargetPos) {
+                const telegraphProgress = 1 - (this.stateTimer / 90);
+                const radius = 100 * telegraphProgress;
+                ctx.strokeStyle = `rgba(102, 255, 140, ${0.2 + telegraphProgress * 0.5})`;
+                ctx.fillStyle = `rgba(102, 255, 140, ${0.1 * telegraphProgress})`;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(this.pos.x, this.pos.y, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
+
         } else if (this.isFrozen) ctx.shadowColor = '#4d94ff';
         else if (this.isReflecting) ctx.shadowColor = '#7DF9FF';
         else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) ctx.shadowColor = 'white';

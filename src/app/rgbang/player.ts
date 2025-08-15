@@ -7,6 +7,7 @@ import { ParticleSystem } from './particle';
 import { UpgradeManager } from './upgrade-manager';
 import { Upgrade } from './upgrades';
 import { SoundManager, SoundType } from './sound-manager';
+import { circleCollision } from './utils';
 
 export class Player {
     pos: Vec2;
@@ -90,7 +91,15 @@ export class Player {
         this.updateAvailableColors(initialColor, true);
     }
 
-    update(input: InputHandler, createBullet: (bullet: Bullet) => void, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number, isGamePaused = false) {
+    update(
+        input: InputHandler,
+        createBullet: (bullet: Bullet) => void,
+        particleSystem: ParticleSystem,
+        canvasWidth: number,
+        canvasHeight: number,
+        isGamePaused = false,
+        slowingFields: { pos: Vec2, radius: number }[] = []
+    ) {
         if (!this.isAlive) return;
 
         if (this.shootTimer > 0) this.shootTimer--;
@@ -101,6 +110,13 @@ export class Player {
         if (this.slowTimer > 0) {
             this.slowTimer--;
             if (this.slowTimer <= 0) this.isSlowed = false;
+        }
+
+        for (const field of slowingFields) {
+            if (circleCollision(this, field)) {
+                this.applySlow(60); 
+                break;
+            }
         }
 
         this.handleColorSelection(input, createBullet);
@@ -302,8 +318,8 @@ export class Player {
         if (this.isSlowed) {
             ctx.save();
             const pulse = Math.abs(Math.sin(Date.now() / 200));
-            ctx.fillStyle = `rgba(77, 148, 255, ${0.1 + pulse * 0.2})`;
-            ctx.strokeStyle = `rgba(77, 148, 255, ${0.4 + pulse * 0.3})`;
+            ctx.fillStyle = `rgba(102, 255, 140, ${0.1 + pulse * 0.2})`;
+            ctx.strokeStyle = `rgba(102, 255, 140, ${0.4 + pulse * 0.3})`;
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(this.pos.x, this.pos.y, this.radius + 6, 0, Math.PI * 2);

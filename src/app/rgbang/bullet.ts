@@ -20,6 +20,7 @@ export class Bullet {
     public isSlowing = false;
     public isFission = false;
     public isVoid = false;
+    public isGravityOrb = false;
 
     public isEnemyProjectile = false;
     public slowsPlayer = false;
@@ -58,6 +59,7 @@ export class Bullet {
         this.isSlowing = false;
         this.isFission = false;
         this.isVoid = false;
+        this.isGravityOrb = false;
         this.isEnemyProjectile = false;
         this.slowsPlayer = false;
         this.hitEnemies.clear();
@@ -127,6 +129,17 @@ export class Bullet {
             ctx.lineCap = "round";
             ctx.stroke();
         }
+
+        if (this.isGravityOrb) {
+            const pulse = Math.abs(Math.sin(Date.now() / 150));
+            ctx.shadowColor = this.hexColor;
+            ctx.shadowBlur = 10 + pulse * 10;
+            ctx.fillStyle = `rgba(30, 0, 50, ${0.4 + pulse * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(this.pos.x, this.pos.y, this.radius + 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
 
         ctx.fillStyle = this.hexColor;
         ctx.shadowColor = this.hexColor;
