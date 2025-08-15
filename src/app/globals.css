@@ -103,9 +103,11 @@
     }
 
     .toast-glow {
+        @apply p-px;
         --toast-glow-color: hsl(var(--primary));
-        box-shadow: 0 0 15px -3px var(--toast-glow-color);
-        border-color: var(--toast-glow-color);
+        background-image: linear-gradient(-45deg, #fde047, #a855f7, #22d3ee, #4ade80, #fde047);
+        background-size: 400% 400%;
+        animation: border-pan 10s ease infinite;
     }
 
     .border-liquid-glass {
@@ -116,6 +118,6 @@
     }
 
     .border-liquid-glass-content {
-        @apply bg-background rounded-md;
+        @apply bg-background rounded-md h-full w-full;
     }
 }
