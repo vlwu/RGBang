@@ -289,6 +289,65 @@ class DashParticle implements IParticle {
     }
 }
 
+class ExplosionRippleParticle implements IParticle {
+    pos: Vec2;
+    vel: Vec2;
+    lifespan: number;
+    maxLifespan: number;
+    radius: number;
+    private maxRadius: number;
+    private color: string = '#FF0000';
+    public isActive: boolean = true;
+
+    constructor(pos: Vec2, maxRadius: number) {
+        this.pos = new Vec2(pos.x, pos.y);
+        this.vel = new Vec2(0, 0);
+        this.maxLifespan = this.lifespan = 45;
+        this.radius = 0;
+        this.maxRadius = maxRadius;
+    }
+
+    reset(pos: Vec2, maxRadius: number) {
+        this.pos.x = pos.x;
+        this.pos.y = pos.y;
+        this.maxLifespan = this.lifespan = 45;
+        this.radius = 0;
+        this.maxRadius = maxRadius;
+        this.isActive = true;
+    }
+
+    update() {
+        if (!this.isActive) return;
+        this.lifespan--;
+
+        const lifeRatio = this.lifespan / this.maxLifespan;
+        const hue = (1 - lifeRatio) * 360;
+        this.color = `hsl(${hue}, 100%, 70%)`;
+        this.radius = this.maxRadius * (1 - lifeRatio);
+
+        if (this.lifespan <= 0) {
+            this.isActive = false;
+        }
+    }
+
+    draw(ctx: CanvasRenderingContext2D) {
+        if (!this.isActive) return;
+        const progress = 1 - (this.lifespan / this.maxLifespan);
+        const alpha = (1 - progress) * 0.9;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = this.color;
+        ctx.lineWidth = 4 - (progress * 3);
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+    }
+}
+
 
 export class ParticleSystem {
     particles: IParticle[] = [];
@@ -299,6 +358,7 @@ export class ParticleSystem {
     private fragmentParticlePool: ObjectPool<FragmentParticle>;
     private pickupParticlePool: ObjectPool<PickupParticle>;
     private lightningParticlePool: ObjectPool<LightningParticle>;
+    private explosionRippleParticlePool: ObjectPool<ExplosionRippleParticle>;
 
     constructor() {
         this.particlePool = new ObjectPool<Particle>(() => new Particle(new Vec2(), GameColor.RED), 200);
@@ -306,6 +366,7 @@ export class ParticleSystem {
         this.fragmentParticlePool = new ObjectPool<FragmentParticle>(() => new FragmentParticle(new Vec2(), '#FFFFFF'), 100);
         this.pickupParticlePool = new ObjectPool<PickupParticle>(() => new PickupParticle(new Vec2(), '#FFFFFF'), 50);
         this.lightningParticlePool = new ObjectPool<LightningParticle>(() => new LightningParticle(new Vec2(), new Vec2()), 20);
+        this.explosionRippleParticlePool = new ObjectPool<ExplosionRippleParticle>(() => new ExplosionRippleParticle(new Vec2(), 70), 10);
     }
 
     update() {
@@ -319,6 +380,7 @@ export class ParticleSystem {
                 else if (p instanceof FragmentParticle) this.fragmentParticlePool.release(p);
                 else if (p instanceof PickupParticle) this.pickupParticlePool.release(p);
                 else if (p instanceof LightningParticle) this.lightningParticlePool.release(p);
+                else if (p instanceof ExplosionRippleParticle) this.explosionRippleParticlePool.release(p);
             }
         }
     }
@@ -362,6 +424,12 @@ export class ParticleSystem {
     addLightning(startPos: Vec2, endPos: Vec2) {
         if (this.particles.length >= this.MAX_PARTICLES) return;
         const p = this.lightningParticlePool.get(startPos, endPos);
+        this.particles.push(p);
+    }
+
+    addExplosionRipple(pos: Vec2, radius: number) {
+        if (this.particles.length >= this.MAX_PARTICLES) return;
+        const p = this.explosionRippleParticlePool.get(pos, radius);
         this.particles.push(p);
     }
 }

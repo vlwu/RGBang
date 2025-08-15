@@ -161,6 +161,7 @@ export class Game {
 
     private dealAreaDamage(pos: Vec2, radius: number, damage: number, color: GameColor) {
         this.particles.add(pos, color, 40);
+        this.particles.addExplosionRipple(pos, radius);
         this.entityManager.enemies.forEach(enemy => {
             if (enemy.isAlive && distance({pos}, enemy) < radius + enemy.radius) {
                 const result = enemy.takeDamage(damage, color);
