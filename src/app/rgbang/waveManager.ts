@@ -19,11 +19,11 @@ class EnemySpawner {
         this.soundManager = soundManager;
     }
 
-    initializeForWave(waveConfig: WaveConfig) {
+    initializeForWave(waveConfig: WaveConfig, upgradeCount: number) {
         if (waveConfig.bossType) {
             this.currentWaveEnemiesToSpawn = waveConfig.enemySpawnPatterns || [];
         } else {
-            this.currentWaveEnemiesToSpawn = generateProceduralWave(waveConfig.waveNumber);
+            this.currentWaveEnemiesToSpawn = generateProceduralWave(waveConfig.waveNumber, upgradeCount);
         }
         this.currentSpawnConfigIndex = 0;
         this.spawnTimer = 0;
@@ -162,7 +162,7 @@ export class WaveManager {
         this.enemySpawner = new EnemySpawner(canvasWidth, canvasHeight, soundManager);
     }
 
-    public startWave(waveNumber: number) {
+    public startWave(waveNumber: number, upgradeCount: number) {
         this.currentWave = waveNumber;
         this.entityManager.resetForNewWave();
         this.isBossSpawning = false;
@@ -181,7 +181,7 @@ export class WaveManager {
             this.currentWaveConfig = WAVE_CONFIGS.find(w => w.waveNumber === waveNumber) || { ...FALLBACK_WAVE_CONFIG, waveNumber };
         }
 
-        this.enemySpawner.initializeForWave(this.currentWaveConfig);
+        this.enemySpawner.initializeForWave(this.currentWaveConfig, upgradeCount);
         this.waveInProgress = true;
 
         if (this.currentWaveConfig.bossType) {

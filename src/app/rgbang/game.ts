@@ -75,7 +75,7 @@ export class Game {
         if (this.waveManager.currentWave === 0) {
             this.startWave(1);
         } else {
-            this.waveManager.startWave(this.waveManager.currentWave);
+            this.startWave(this.waveManager.currentWave);
         }
     }
 
@@ -105,7 +105,8 @@ export class Game {
     }
 
     public startWave(waveNumber: number) {
-        this.waveManager.startWave(waveNumber);
+        const upgradeCount = this.player.upgradeManager.getActiveUpgradeMap().size;
+        this.waveManager.startWave(waveNumber, upgradeCount);
         this.vortexes = [];
         gameStateStore.updateState({ currentWave: this.waveManager.currentWave, isBetweenWaves: false });
     }

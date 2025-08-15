@@ -32,9 +32,10 @@ function getAvailableEnemies(waveNumber: number): EnemyType[] {
 
 const BASE_WAVE_BUDGET = 40;
 const BUDGET_PER_WAVE = 20;
+const BUDGET_PER_UPGRADE = 5;
 
-export function generateProceduralWave(waveNumber: number): EnemySpawnConfig[] {
-    const budget = BASE_WAVE_BUDGET + (waveNumber * BUDGET_PER_WAVE);
+export function generateProceduralWave(waveNumber: number, upgradeCount: number): EnemySpawnConfig[] {
+    const budget = BASE_WAVE_BUDGET + (waveNumber * BUDGET_PER_WAVE) + (upgradeCount * BUDGET_PER_UPGRADE);
     let remainingBudget = budget;
     const spawnPatterns: EnemySpawnConfig[] = [];
     const availableEnemies = getAvailableEnemies(waveNumber);
