@@ -210,5 +210,39 @@ export class Boss {
         drawShapeForColor(ctx, this.pos, this.radius, this.color, 'black');
 
         ctx.restore();
+
+        // Health Bar
+        const barWidth = this.radius * 2.5;
+        const barHeight = 12;
+        const barX = this.pos.x - barWidth / 2;
+        const barY = this.pos.y - this.radius - 25;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(20, 20, 30, 0.8)';
+        ctx.fillRect(barX, barY, barWidth, barHeight);
+
+        const healthPercentage = this.health / this.maxHealth;
+        const healthWidth = barWidth * healthPercentage;
+        const bossColorHex = COLOR_DETAILS[this.color].hex;
+
+        if (healthWidth > 0) {
+            ctx.fillStyle = bossColorHex;
+            ctx.fillRect(barX, barY, healthWidth, barHeight);
+        }
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(barX, barY, barWidth, barHeight);
+
+        // Health Text
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 10px "Space Grotesk"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'black';
+        ctx.shadowBlur = 4;
+        ctx.fillText(`${Math.round(this.health)} / ${this.maxHealth}`, this.pos.x, barY + barHeight / 2 + 1);
+        
+        ctx.restore();
     }
 }
