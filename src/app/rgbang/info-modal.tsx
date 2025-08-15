@@ -67,7 +67,7 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button onClick={onClose}>Got it!</Button>
+                    <Button onClick={onClose} className="btn-liquid-glass btn-liquid-confirm">Got it!</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

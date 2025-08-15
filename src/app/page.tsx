@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, useSyncExternalStore } from 'react';
 import { Game } from './rgbang/game';
 import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History, X } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
@@ -30,6 +30,7 @@ import {
 import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG } from './rgbang/wave-data';
 import { gameEngine } from './rgbang/engine';
 import { gameStateStore } from './rgbang/gameStateStore';
+import { cn } from '@/lib/utils';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -621,21 +622,21 @@ export default function Home() {
                         <span>ang</span>
                     </h1>
                     <div className="flex flex-col gap-4 w-64">
-                        <Button size="lg" onClick={handlePlayClick} onMouseEnter={playHoverSound} className="font-bold text-lg btn-gradient btn-gradient-1 animate-gradient-shift">
+                        <Button size="lg" onClick={handlePlayClick} onMouseEnter={playHoverSound} className="font-bold text-lg btn-liquid-glass btn-liquid-primary">
                             <Gamepad2 className="mr-2" />
                             Play
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsSettingsOpen(true); }} onMouseEnter={playHoverSound}>
+                         <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsSettingsOpen(true); }} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-secondary">
                             <Settings className="mr-2" />
                             Settings
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsInfoOpen(true); }} onMouseEnter={playHoverSound}>
+                         <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsInfoOpen(true); }} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-secondary">
                             <Info className="mr-2" />
                             How to Play
                         </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button size="lg" variant="destructive" onMouseEnter={playHoverSound}>
+                                <Button size="lg" onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-destructive">
                                     <Trash2 className="mr-2" />
                                     Reset Progress
                                 </Button>
@@ -676,15 +677,15 @@ export default function Home() {
                         <p>Wave: <span className="font-bold text-accent">{savedGame.currentWave}</span></p>
                     </div>
                     <div className="flex flex-col gap-4 w-64">
-                        <Button size="lg" onClick={continueRun} onMouseEnter={playHoverSound} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
+                        <Button size="lg" onClick={continueRun} onMouseEnter={playHoverSound} className="font-bold text-lg btn-liquid-glass btn-liquid-primary">
                             <History className="mr-2" />
                             Continue Run
                         </Button>
-                        <Button size="lg" variant="destructive" onClick={() => { soundManager.play(SoundType.ButtonClick); startNewRun(); }} onMouseEnter={playHoverSound}>
+                        <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); startNewRun(); }} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-destructive">
                             <Gamepad2 className="mr-2" />
                             Start Fresh
                         </Button>
-                         <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setUiState('menu'); }} onMouseEnter={playHoverSound}>
+                         <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); setUiState('menu'); }} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-secondary">
                             Main Menu
                         </Button>
                     </div>
@@ -722,15 +723,15 @@ export default function Home() {
                              </div>
                              <h2 className="text-6xl font-bold font-headline tracking-tighter mb-8 text-glow">Paused</h2>
                              <div className="flex flex-col space-y-4 w-52">
-                                <Button size="lg" onClick={resumeGame} onMouseEnter={playHoverSound} className="font-bold text-lg btn-gradient btn-gradient-2 animate-gradient-shift">
+                                <Button size="lg" onClick={resumeGame} onMouseEnter={playHoverSound} className="font-bold text-lg btn-liquid-glass btn-liquid-primary">
                                     <Play className="mr-2" />
                                     Resume
                                 </Button>
-                                <Button size="lg" variant="secondary" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsSettingsOpen(true); }} onMouseEnter={playHoverSound}>
+                                <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); setIsSettingsOpen(true); }} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-secondary">
                                     <Settings className="mr-2" />
                                     Settings
                                 </Button>
-                                <Button size="lg" onClick={quitToMenu} variant="destructive" onMouseEnter={playHoverSound} className="font-bold text-lg">
+                                <Button size="lg" onClick={quitToMenu} onMouseEnter={playHoverSound} className="font-bold text-lg btn-liquid-glass btn-liquid-destructive">
                                      <LogOut className="mr-2" />
                                      Save and Quit
                                  </Button>
@@ -747,7 +748,7 @@ export default function Home() {
                                     size="lg"
                                     onClick={() => openUpgradeSelection(gameStoreState.isBossWave)}
                                     onMouseEnter={playHoverSound}
-                                    className="font-bold text-lg mt-6 btn-gradient btn-gradient-3 animate-gradient-shift"
+                                    className="font-bold text-lg mt-6 btn-liquid-glass btn-liquid-confirm"
                                 >
                                     Choose Upgrades ({totalUpgradesToSelect - upgradesRemainingToSelect + 1}/{totalUpgradesToSelect} selected)
                                 </Button>
@@ -756,7 +757,7 @@ export default function Home() {
                                 size="lg"
                                 onClick={handleNextWaveStart}
                                 onMouseEnter={playHoverSound}
-                                className="font-bold text-lg mt-4 btn-gradient btn-gradient-1 animate-gradient-shift"
+                                className="font-bold text-lg mt-4 btn-liquid-glass btn-liquid-primary"
                             >
                                 <Play className="mr-2" />
                                 Start Next Wave Now
@@ -778,7 +779,7 @@ export default function Home() {
                            <span>High Score: {highScore}</span>
                         </div>
                     </div>
-                     <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); loadInitialData();}} onMouseEnter={playHoverSound} className="font-bold text-lg mt-4 w-64 btn-gradient btn-gradient-4 animate-gradient-shift">
+                     <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); loadInitialData();}} onMouseEnter={playHoverSound} className="font-bold text-lg mt-4 w-64 btn-liquid-glass btn-liquid-secondary">
                         <Gamepad2 className="mr-2" />
                         Main Menu
                     </Button>

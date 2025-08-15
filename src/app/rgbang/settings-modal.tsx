@@ -216,8 +216,8 @@ export function SettingsModal({
                     </div>
                 </div>
                 <DialogFooter className="pt-4 border-t border-border mt-auto">
-                    <Button onClick={handleCancel} onMouseEnter={playHoverSound} className="font-bold btn-gradient btn-gradient-1">Cancel</Button>
-                    <Button onClick={handleSave} onMouseEnter={playHoverSound} className="font-bold btn-gradient btn-gradient-3 text-slate-800 hover:text-slate-900">Save Changes</Button>
+                    <Button onClick={handleCancel} onMouseEnter={playHoverSound} className="font-bold btn-liquid-glass btn-liquid-neutral">Cancel</Button>
+                    <Button onClick={handleSave} onMouseEnter={playHoverSound} className="font-bold btn-liquid-glass btn-liquid-confirm">Save Changes</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
