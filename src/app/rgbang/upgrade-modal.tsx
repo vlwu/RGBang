@@ -71,13 +71,6 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
     const displayLevel = isFallback ? 0 : runLevel;
     const maxLevel = upgrade.getMaxLevel();
 
-    const cardClasses = cn(
-        "text-center bg-card/80 backdrop-blur-sm border-border flex flex-col transition-all duration-300 border-liquid-glass",
-        isSelectable
-            ? "cursor-pointer hover:border-primary hover:bg-card hover:-translate-y-2 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
-            : "opacity-60 cursor-not-allowed"
-    );
-
     const handleMouseEnter = () => {
         if (isSelectable) {
             soundManager.play(SoundType.UpgradeHover);
@@ -85,8 +78,13 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
     };
 
     return (
-        <Card
-            className={cardClasses}
+        <div
+            className={cn(
+                "border-liquid-glass group/wrapper transition-all duration-300",
+                isSelectable
+                    ? "cursor-pointer hover:-translate-y-2 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
+                    : "opacity-60 cursor-not-allowed"
+            )}
             onClick={() => {
                 if (isSelectable) {
                     onSelect(upgrade);
@@ -95,28 +93,35 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
             onMouseEnter={handleMouseEnter}
             style={{ '--card-glow-color': colorHex } as React.CSSProperties}
         >
-            <CardHeader className="items-center pb-4">
-                 <div className="p-3 rounded-full mb-2 bg-accent/20" style={{ boxShadow: `0 0 15px ${colorHex}` }}>
-                    <Icon className="w-8 h-8" style={{ color: colorHex }}/>
-                </div>
-                <CardTitle className="text-lg text-primary">{upgrade.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex-grow flex flex-col justify-between">
-                <CardDescription className="mb-4">{upgrade.description}</CardDescription>
-                {!isFallback && (
-                    <div>
-                        <div className="flex justify-center items-center mb-2">
-                            {Array.from({ length: maxLevel }).map((_, i) => (
-                                <Star key={i} className={`w-5 h-5 ${i < displayLevel ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
-                            ))}
-                        </div>
-                         {displayLevel >= maxLevel && (
-                            <p className="text-sm font-bold text-yellow-400">MAX LEVEL</p>
-                        )}
-                    </div>
+            <Card
+                className={cn(
+                    "h-full w-full text-center bg-card/80 backdrop-blur-sm flex flex-col transition-all duration-300 !border-0",
+                     isSelectable && "group-hover/wrapper:bg-card"
                 )}
-            </CardContent>
-        </Card>
+            >
+                <CardHeader className="items-center pb-4">
+                     <div className="p-3 rounded-full mb-2 bg-accent/20" style={{ boxShadow: `0 0 15px ${colorHex}` }}>
+                        <Icon className="w-8 h-8" style={{ color: colorHex }}/>
+                    </div>
+                    <CardTitle className="text-lg text-primary">{upgrade.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="flex-grow flex flex-col justify-between">
+                    <CardDescription className="mb-4">{upgrade.description}</CardDescription>
+                    {!isFallback && (
+                        <div>
+                            <div className="flex justify-center items-center mb-2">
+                                {Array.from({ length: maxLevel }).map((_, i) => (
+                                    <Star key={i} className={`w-5 h-5 ${i < displayLevel ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
+                                ))}
+                            </div>
+                             {displayLevel >= maxLevel && (
+                                <p className="text-sm font-bold text-yellow-400">MAX LEVEL</p>
+                            )}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     )
 }
 

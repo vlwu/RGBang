@@ -19,21 +19,23 @@ const UpgradeInfoCard = ({ upgrade, level }: { upgrade: Upgrade, level: number }
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#A9A9A9';
 
     return (
-        <Card className="bg-card/80 border-border/50 flex flex-col items-center p-3 border-liquid-glass">
-            <div className="p-2 rounded-full mb-2 bg-accent/10" style={{ boxShadow: `0 0 10px ${colorHex}` }}>
-                <Icon className="w-6 h-6" style={{ color: colorHex }} />
-            </div>
-            <CardHeader className="p-0 items-center">
-                <CardTitle className="text-base text-primary text-center">{upgrade.name}</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 mt-2">
-                 <div className="flex justify-center items-center">
-                    {Array.from({ length: upgrade.getMaxLevel() }).map((_, i) => (
-                        <Star key={i} className={`w-4 h-4 ${i < level ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
-                    ))}
+        <div className="border-liquid-glass h-full">
+            <Card className="bg-card/80 flex flex-col items-center p-3 !border-0 h-full w-full">
+                <div className="p-2 rounded-full mb-2 bg-accent/10" style={{ boxShadow: `0 0 10px ${colorHex}` }}>
+                    <Icon className="w-6 h-6" style={{ color: colorHex }} />
                 </div>
-            </CardContent>
-        </Card>
+                <CardHeader className="p-0 items-center">
+                    <CardTitle className="text-base text-primary text-center">{upgrade.name}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0 mt-2">
+                     <div className="flex justify-center items-center">
+                        {Array.from({ length: upgrade.getMaxLevel() }).map((_, i) => (
+                            <Star key={i} className={`w-4 h-4 ${i < level ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
     )
 }
 
