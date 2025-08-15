@@ -190,18 +190,18 @@ export class Game {
                 lifespan: 120
             });
         }
-        if (this.player.igniteLevel > 0 && bullet.color === GameColor.RED) {
+        if (bullet.color === GameColor.RED) {
             const igniteDamage = 1 + this.player.igniteLevel;
             const igniteDuration = 120 + this.player.igniteLevel * 30;
             enemy.applyIgnite(igniteDamage, igniteDuration);
         }
-        if (this.player.iceSpikerLevel > 0 && bullet.color === GameColor.BLUE) {
+        if (bullet.color === GameColor.BLUE) {
             const freezeDuration = 60 + this.player.iceSpikerLevel * 15;
             enemy.applyFreeze(freezeDuration);
         }
-        if (this.player.chainLightningLevel > 0 && bullet.color === GameColor.YELLOW) {
+        if (bullet.color === GameColor.YELLOW) {
             const chainRange = 100 + this.player.chainLightningLevel * 20;
-            const maxChains = this.player.chainLightningLevel;
+            const maxChains = 1 + this.player.chainLightningLevel;
             const chainDamage = 5 + this.player.chainLightningLevel;
             enemy.triggerChainLightning(maxChains, chainDamage, chainRange);
         }

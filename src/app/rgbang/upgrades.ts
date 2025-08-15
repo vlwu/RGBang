@@ -211,7 +211,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'ice-spiker',
         name: 'Ice Spiker',
-        description: 'Blue bullets freeze enemies, duration and power increase with level.',
+        description: 'Increases the duration of the freeze effect from Blue bullets.',
         type: UpgradeType.GUN,
         color: GameColor.BLUE,
         getMaxLevel: () => 5,
@@ -221,7 +221,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'chain-lightning',
         name: 'Chain Lightning',
-        description: 'Yellow bullets chain to more enemies with more damage per level.',
+        description: 'Increases the number of chains, range, and damage of the lightning from Yellow bullets.',
         type: UpgradeType.GUN,
         color: GameColor.YELLOW,
         getMaxLevel: () => 5,
@@ -243,7 +243,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'ignite',
         name: 'Ignite',
-        description: 'Red bullets set enemies on fire, damage and duration increase per level.',
+        description: 'Increases the damage and duration of the fire effect from Red bullets.',
         type: UpgradeType.GUN,
         color: GameColor.RED,
         getMaxLevel: () => 5,
