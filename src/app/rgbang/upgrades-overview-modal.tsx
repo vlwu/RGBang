@@ -19,7 +19,7 @@ const UpgradeInfoCard = ({ upgrade, level }: { upgrade: Upgrade, level: number }
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#A9A9A9';
 
     return (
-        <Card className="bg-card/80 border-border/50 flex flex-col items-center p-3">
+        <Card className="bg-card/80 border-border/50 flex flex-col items-center p-3 border-liquid-glass">
             <div className="p-2 rounded-full mb-2 bg-accent/10" style={{ boxShadow: `0 0 10px ${colorHex}` }}>
                 <Icon className="w-6 h-6" style={{ color: colorHex }} />
             </div>

@@ -694,7 +694,7 @@ export default function Home() {
 
 
             {(uiState === 'playing' || uiState === 'paused' || uiState === 'upgrading' || uiState === 'betweenWaves') && (
-                <div className="relative">
+                <div className="relative border-liquid-glass">
                     <GameCanvas
                         width={canvasSize.width}
                         height={canvasSize.height}

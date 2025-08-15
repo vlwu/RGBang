@@ -72,7 +72,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
     const maxLevel = upgrade.getMaxLevel();
 
     const cardClasses = cn(
-        "text-center bg-card/80 backdrop-blur-sm border-border flex flex-col transition-all duration-300",
+        "text-center bg-card/80 backdrop-blur-sm border-border flex flex-col transition-all duration-300 border-liquid-glass",
         isSelectable
             ? "cursor-pointer hover:border-primary hover:bg-card hover:-translate-y-2 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
             : "opacity-60 cursor-not-allowed"
