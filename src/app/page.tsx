@@ -709,6 +709,7 @@ export default function Home() {
                             <UpgradesOverviewModal
                                 isOpen={isUpgradeOverviewOpen}
                                 upgradeManager={gameCanvasRef.current?.getGameInstance()?.player.upgradeManager}
+                                onClose={() => setIsUpgradeOverviewOpen(false)}
                             />
                         </div>
                     )}

@@ -5,11 +5,13 @@ import { Upgrade, UpgradeType } from "./upgrades";
 import { COLOR_DETAILS } from './color';
 import { UpgradeManager } from './upgrade-manager';
 import { iconMap } from './upgrade-modal';
-import { Star } from 'lucide-react';
+import { Star, X } from 'lucide-react';
+import { Button } from "@/components/ui/button";
 
 interface UpgradesOverviewModalProps {
     isOpen: boolean;
     upgradeManager?: UpgradeManager;
+    onClose: () => void;
 }
 
 const UpgradeInfoCard = ({ upgrade, level }: { upgrade: Upgrade, level: number }) => {
@@ -35,7 +37,7 @@ const UpgradeInfoCard = ({ upgrade, level }: { upgrade: Upgrade, level: number }
     )
 }
 
-export function UpgradesOverviewModal({ isOpen, upgradeManager }: UpgradesOverviewModalProps) {
+export function UpgradesOverviewModal({ isOpen, upgradeManager, onClose }: UpgradesOverviewModalProps) {
     if (!isOpen || !upgradeManager) return null;
 
     const activeUpgrades = upgradeManager.getActiveUpgradeDetails();
@@ -44,7 +46,10 @@ export function UpgradesOverviewModal({ isOpen, upgradeManager }: UpgradesOvervi
     const playerUpgrades = activeUpgrades.filter(u => u.type === UpgradeType.PLAYER_STAT || u.type === UpgradeType.GENERAL);
 
     return (
-        <div className="w-full max-w-2xl p-6 flex flex-col h-full">
+        <div className="w-full max-w-4xl p-6 flex flex-col h-full relative">
+            <Button size="icon" variant="ghost" onClick={onClose} className="absolute top-4 right-4">
+                <X/>
+            </Button>
             <h2 className="text-3xl font-bold text-center text-primary mb-8 font-headline tracking-wider shrink-0">Current Upgrades</h2>
             <div className="overflow-y-auto pr-4 flex-grow">
                 {activeUpgrades.length > 0 ? (
