@@ -296,7 +296,10 @@ export default function Home() {
                     setIsInfoOpen(false);
                     soundManager.play(SoundType.ButtonClick);
                 } else if (isUpgradeModalOpen) {
-                    // Do nothing with escape in upgrade modal
+                    setIsUpgradeModalOpen(false);
+                    setBetweenWaveCountdown(BETWEEN_WAVES_DURATION);
+                    setUiState('betweenWaves');
+                    soundManager.play(SoundType.GamePause);
                 } else if (uiState === 'playing') {
                     setUiState('paused');
                     soundManager.play(SoundType.GamePause);
@@ -320,6 +323,31 @@ export default function Home() {
         };
     }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, handleNextWaveStart]);
 
+
+    const openUpgradeSelection = useCallback((isBossWave: boolean, upgradesCount?: number) => {
+        const count = upgradesCount ?? upgradesRemainingToSelect;
+        if (count > 0 && gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
+            const gameInstance = gameCanvasRef.current.getGameInstance()!;
+            const nextFragmentColorForOptions = isBossWave ? null : getRandomElement(PRIMARY_COLORS);
+
+            const options = gameInstance.player.upgradeManager.getUpgradeOptions(
+                nextFragmentColorForOptions,
+                upgradeDataRef.current,
+                gameInstance.addScore
+            );
+            setUpgradeOptions(options);
+            setIsUpgradeModalOpen(true);
+        } else {
+            toast({
+                title: "No Upgrades Available",
+                description: "You have no fragments to convert into upgrades at this time. Proceeding to next wave.",
+            });
+            setIsUpgradeModalOpen(false);
+            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION);
+            setUiState('betweenWaves');
+            soundManager.play(SoundType.GameResume);
+        }
+    }, [upgradesRemainingToSelect, upgradeDataRef, toast]);
 
     useEffect(() => {
         if (gameStoreState.isGameOver) {
@@ -352,7 +380,7 @@ export default function Home() {
                     duration: 3000,
                 });
 
-                setTimeout(() => openUpgradeSelection(isBossWave), 100);
+                setTimeout(() => openUpgradeSelection(isBossWave, totalUpgradesToOffer), 100);
             } else {
                 setUpgradesRemainingToSelect(0);
                 setTotalUpgradesToSelect(0);
@@ -361,7 +389,7 @@ export default function Home() {
                 soundManager.play(SoundType.GamePause);
             }
         }
-    }, [gameStoreState.isGameOver, gameStoreState.isBetweenWaves]);
+    }, [gameStoreState.isGameOver, gameStoreState.isBetweenWaves, bankedUpgrades, openUpgradeSelection, toast, uiState]);
 
 
     const lastFragmentCount = useRef(0);
@@ -377,30 +405,6 @@ export default function Home() {
         lastFragmentCount.current = gameStoreState.fragmentCollectCount;
     }, [gameStoreState.fragmentCollectCount, gameStoreState.lastFragmentCollected, toast]);
 
-
-    const openUpgradeSelection = useCallback((isBossWave: boolean) => {
-        if (upgradesRemainingToSelect > 0 && gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
-            const gameInstance = gameCanvasRef.current.getGameInstance()!;
-            const nextFragmentColorForOptions = isBossWave ? null : getRandomElement(PRIMARY_COLORS);
-
-            const options = gameInstance.player.upgradeManager.getUpgradeOptions(
-                nextFragmentColorForOptions,
-                upgradeDataRef.current,
-                gameInstance.addScore
-            );
-            setUpgradeOptions(options);
-            setIsUpgradeModalOpen(true);
-        } else {
-            toast({
-                title: "No Upgrades Available",
-                description: "You have no fragments to convert into upgrades at this time. Proceeding to next wave.",
-            });
-            setIsUpgradeModalOpen(false);
-            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION);
-            setUiState('betweenWaves');
-            soundManager.play(SoundType.GameResume);
-        }
-    }, [upgradesRemainingToSelect, upgradeDataRef, toast]);
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
         soundManager.play(SoundType.UpgradeSelect);
@@ -452,7 +456,7 @@ export default function Home() {
                 } else {
                     if (gameInstance) {
                         const isBossWaveRecentlyCompleted = WAVE_CONFIGS.find(w => w.waveNumber === gameStoreState.currentWave)?.bossType !== undefined;
-                        openUpgradeSelection(isBossWaveRecentlyCompleted);
+                        openUpgradeSelection(isBossWaveRecentlyCompleted, newCount);
                     }
                 }
                 return newCount;
