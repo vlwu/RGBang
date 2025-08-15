@@ -20,7 +20,7 @@ const UpgradeInfoCard = ({ upgrade, level }: { upgrade: Upgrade, level: number }
 
     return (
         <div className="border-liquid-glass h-full">
-            <Card className="bg-card/80 flex flex-col items-center p-3 !border-0 h-full w-full">
+            <Card className="bg-card flex flex-col items-center p-3 !border-0 h-full w-full">
                 <div className="p-2 rounded-full mb-2 bg-accent/10" style={{ boxShadow: `0 0 10px ${colorHex}` }}>
                     <Icon className="w-6 h-6" style={{ color: colorHex }} />
                 </div>

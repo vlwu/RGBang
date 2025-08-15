@@ -95,8 +95,8 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
         >
             <Card
                 className={cn(
-                    "h-full w-full text-center bg-card/80 backdrop-blur-sm flex flex-col transition-all duration-300 !border-0",
-                     isSelectable && "group-hover/wrapper:bg-card"
+                    "h-full w-full text-center bg-card flex flex-col transition-all duration-300 !border-0",
+                     isSelectable && "group-hover/wrapper:bg-secondary"
                 )}
             >
                 <CardHeader className="items-center pb-4">
