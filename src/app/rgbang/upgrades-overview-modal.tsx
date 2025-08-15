@@ -44,9 +44,9 @@ export function UpgradesOverviewModal({ isOpen, upgradeManager }: UpgradesOvervi
     const playerUpgrades = activeUpgrades.filter(u => u.type === UpgradeType.PLAYER_STAT || u.type === UpgradeType.GENERAL);
 
     return (
-        <div className="absolute inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center animate-fade-in z-50">
-            <div className="w-full max-w-2xl p-6">
-                <h2 className="text-3xl font-bold text-center text-primary mb-8 font-headline tracking-wider">Current Upgrades</h2>
+        <div className="w-full max-w-2xl p-6 flex flex-col h-full">
+            <h2 className="text-3xl font-bold text-center text-primary mb-8 font-headline tracking-wider shrink-0">Current Upgrades</h2>
+            <div className="overflow-y-auto pr-4 flex-grow">
                 {activeUpgrades.length > 0 ? (
                     <div className="space-y-8">
                         {gunUpgrades.length > 0 && (

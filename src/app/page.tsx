@@ -612,10 +612,6 @@ export default function Home() {
                 upgradesRemainingToSelect={upgradesRemainingToSelect}
                 totalUpgradesToSelect={totalUpgradesToSelect}
             />
-            <UpgradesOverviewModal
-                isOpen={isUpgradeOverviewOpen}
-                upgradeManager={gameCanvasRef.current?.getGameInstance()?.player.upgradeManager}
-            />
 
 
             {uiState === 'menu' && (
@@ -708,6 +704,14 @@ export default function Home() {
                         currentWaveToDisplay={currentWave}
                         isGameBetweenWaves={uiState === 'betweenWaves'}
                     />
+                    {isUpgradeOverviewOpen && (
+                         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20 p-8">
+                            <UpgradesOverviewModal
+                                isOpen={isUpgradeOverviewOpen}
+                                upgradeManager={gameCanvasRef.current?.getGameInstance()?.player.upgradeManager}
+                            />
+                        </div>
+                    )}
                     {uiState === 'paused' && (
                          <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
                              <div className="absolute top-4 right-4">
