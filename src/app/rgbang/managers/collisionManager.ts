@@ -11,8 +11,10 @@ import { EntityManager } from './entityManager';
 import { gameStateStore } from '../core/gameStateStore';
 import { WaveManager } from './waveManager';
 import { SandboxManager } from './sandboxManager';
+import { Game } from '../core/game';
 
 interface CollisionManagerDependencies {
+    game: Game;
     player: Player;
     entityManager: EntityManager;
     quadtree: Quadtree;
@@ -27,6 +29,7 @@ interface CollisionManagerDependencies {
 }
 
 export class CollisionManager {
+    private game: Game;
     private player: Player;
     private entityManager: EntityManager;
     private quadtree: Quadtree;
@@ -40,6 +43,7 @@ export class CollisionManager {
     private sandboxManager: SandboxManager | null;
 
     constructor(deps: CollisionManagerDependencies) {
+        this.game = deps.game;
         this.player = deps.player;
         this.entityManager = deps.entityManager;
         this.quadtree = deps.quadtree;
@@ -105,7 +109,7 @@ export class CollisionManager {
                         if (this.player.lifestealPercent > 0) {
                             this.player.heal(result.damageDealt * this.player.lifestealPercent);
                         }
-                        if (bullet.isFission && Math.random() < this.player.fissionLevel * 0.15) {
+                        if (bullet.isFission && (Math.random() < 0.25 + this.player.fissionLevel * 0.15)) {
                             const [c1, c2] = COLOR_DETAILS[bullet.color].components!;
                             const dir1 = new Vec2(Math.random() - 0.5, Math.random() - 0.5);
                             const dir2 = new Vec2(Math.random() - 0.5, Math.random() - 0.5);
@@ -239,19 +243,14 @@ export class CollisionManager {
             enemy.applyVoid(120 + this.player.voidLevel * 60);
         }
         if (bullet.isSlowing) {
-            this.entityManager.enemies.forEach(e => {
-                if(distance(e, {pos: bullet.pos}) < 50) {
-                     e.applySlow(120 + this.player.slowingTrailLevel * 30, 0.5);
-                }
-            });
+            const slowDuration = 120 + this.player.slowingTrailLevel * 30;
+            const slowRadius = 50 + this.player.slowingTrailLevel * 10;
+            this.game.createSlowField(enemy.pos, slowRadius, slowDuration);
         }
-        if (this.player.gravityWellLevel > 0 && bullet.color === GameColor.PURPLE) {
-
-
-            const game = (this.entityManager as any).game;
-            if (game) {
-                game.createVortex(enemy.pos, 60 + this.player.gravityWellLevel * 15, 0.3 + this.player.gravityWellLevel * 0.1, 120);
-            }
+        if (bullet.isGravityOrb) {
+            const radius = 60 + this.player.gravityWellLevel * 15;
+            const strength = 0.3 + this.player.gravityWellLevel * 0.1;
+            this.game.createVortex(enemy.pos, radius, strength, 120);
         }
         if (bullet.color === GameColor.RED) {
             const igniteDamage = 1 + this.player.igniteLevel;

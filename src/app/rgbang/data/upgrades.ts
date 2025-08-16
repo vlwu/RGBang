@@ -312,8 +312,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'growth-catalyst',
         name: 'Growth Catalyst',
-        description: 'Green bullets leave an area that slows enemies.',
-        getEffectDescription: (level) => `Slows enemies for ${2 + level * 0.5}s`,
+        description: 'Improves the slowing area from Green bullets.',
+        getEffectDescription: (level) => `+${0.5 * level}s duration, +${10 * level} radius`,
         type: UpgradeType.GUN,
         color: GameColor.GREEN,
         getMaxLevel: () => 5,
@@ -325,8 +325,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'fission-catalyst',
         name: 'Fission Catalyst',
-        description: 'Orange bullets can split into primary colors on impact.',
-        getEffectDescription: (level) => `${level * 15}% Split Chance`,
+        description: 'Increases the chance for Orange bullets to split on impact.',
+        getEffectDescription: (level) => `+${level * 15}% Split Chance`,
         type: UpgradeType.GUN,
         color: GameColor.ORANGE,
         getMaxLevel: () => 5,
@@ -351,7 +351,7 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'gravity-well',
         name: 'Gravity Well',
-        description: 'Purple bullets create a vortex, pulling in enemies.',
+        description: 'Improves the vortex from Purple bullets.',
         getEffectDescription: (level) => `+${15 * level} radius, +${0.1 * level} strength`,
         type: UpgradeType.GUN,
         color: GameColor.PURPLE,

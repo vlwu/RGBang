@@ -37,15 +37,16 @@ export function InfoModal({ isOpen, onClose, keybindings }: InfoModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-2xl w-[90vw] bg-background text-foreground flex flex-col max-h-[90vh] p-0">
-                <DialogHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-background z-10">
+                <DialogHeader className="p-6 pb-4 border-b border-border shrink-0">
                     <DialogTitle className="text-primary text-2xl font-headline">How to Play RGBang</DialogTitle>
                     <DialogDescription>
                         Master the colors and shapes to survive the chromatic onslaught!
                     </DialogDescription>
                 </DialogHeader>
 
-                <ScrollArea className="flex-grow min-h-0">
-                    <div className="grid gap-8 px-6 py-4 text-sm">
+                <div className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full">
+                        <div className="grid gap-8 px-6 py-4 text-sm">
                         <Section title="Core Objective">
                             <p>Survive for as long as you can against procedurally generated waves of enemies. Defeat them by matching your bullet's color and shape to theirs. Collect fragments they drop to earn powerful, persistent upgrades and achieve a new high score.</p>
                         </Section>
@@ -87,10 +88,11 @@ export function InfoModal({ isOpen, onClose, keybindings }: InfoModalProps) {
                             </ul>
                         </Section>
 
-                    </div>
-                </ScrollArea>
+                        </div>
+                    </ScrollArea>
+                </div>
 
-                <DialogFooter className="p-6 pt-4 border-t border-border sticky bottom-0 bg-background z-10">
+                <DialogFooter className="p-6 pt-4 border-t border-border shrink-0">
                     <Button onClick={onClose} className="w-full sm:w-auto btn-liquid-glass btn-liquid-confirm">Got it!</Button>
                 </DialogFooter>
             </DialogContent>

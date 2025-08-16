@@ -74,6 +74,7 @@ export class Game {
         }
 
         this.collisionManager = new CollisionManager({
+            game: this,
             player: this.player,
             entityManager: this.entityManager,
             waveManager: this.waveManager,
@@ -251,7 +252,7 @@ export class Game {
         this.vortexes.push({ pos, radius, strength, lifespan });
     }
 
-    private createSlowField = (pos: Vec2, radius: number, lifespan: number) => {
+    public createSlowField = (pos: Vec2, radius: number, lifespan: number) => {
         this.slowingFields.push({ pos, radius, lifespan });
     }
 

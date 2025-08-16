@@ -149,15 +149,16 @@ export function SettingsModal({
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
             <DialogContent className="sm:max-w-md w-[90vw] bg-background text-foreground flex flex-col max-h-[90vh] p-0">
-                <DialogHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-background z-10">
+                <DialogHeader className="p-6 pb-4 border-b border-border shrink-0">
                     <DialogTitle className="text-primary text-2xl font-headline">Settings</DialogTitle>
                     <DialogDescription>
                         Customize your controls and audio settings.
                     </DialogDescription>
                 </DialogHeader>
 
-                <ScrollArea className="flex-grow min-h-0">
-                    <div className="space-y-8 px-6 py-4">
+                <div className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-full">
+                        <div className="space-y-8 px-6 py-4">
                         <div className="space-y-4">
                             <h4 className="font-semibold text-muted-foreground text-sm tracking-wider">AUDIO</h4>
                             <div className="grid grid-cols-3 items-center gap-4">
@@ -222,10 +223,11 @@ export function SettingsModal({
                                 </div>
                             ))}
                         </div>
-                    </div>
-                </ScrollArea>
+                        </div>
+                    </ScrollArea>
+                </div>
 
-                <DialogFooter className="p-6 pt-4 border-t border-border sticky bottom-0 bg-background z-10">
+                <DialogFooter className="p-6 pt-4 border-t border-border shrink-0">
                     <Button onClick={handleCancel} onMouseEnter={playHoverSound} className="font-bold btn-liquid-glass btn-liquid-neutral">Cancel</Button>
                     <Button onClick={handleSave} onMouseEnter={playHoverSound} className="font-bold btn-liquid-glass btn-liquid-confirm">Save Changes</Button>
                 </DialogFooter>

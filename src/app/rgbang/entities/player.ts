@@ -1,4 +1,4 @@
-import { Vec2, drawShapeForColor, circleCollision } from '../common/utils';
+import { Vec2, drawShapeForColor, circleCollision, lerp } from '../common/utils';
 import { Bullet } from './bullet';
 import InputHandler from '../managers/input-handler';
 import { GameColor, COLOR_DETAILS, ALL_COLORS, isSecondaryColor } from '../data/color';
@@ -83,6 +83,10 @@ export class Player {
     private readonly collectionRippleDuration = 30;
     private collectionRippleColor: string = '#FFFFFF';
 
+    public isCharging = false;
+    public chargeTimer = 0;
+    private readonly maxChargeTime = 90;
+
     constructor(x: number, y: number, initialColor: GameColor, soundManager: SoundManager) {
         this.pos = new Vec2(x, y);
         this.health = this.maxHealth;
@@ -122,6 +126,11 @@ export class Player {
             }
         }
 
+        if (this.currentColor !== GameColor.PURPLE && this.isCharging) {
+            this.isCharging = false;
+            this.chargeTimer = 0;
+        }
+
         this.handleColorSelection(input, createBullet);
 
         if (this.isRadialMenuOpen) {
@@ -138,6 +147,10 @@ export class Player {
     private updateAvailableColors(newColor: GameColor, isInitialCall = false) {
         if (!isInitialCall && this.currentColor !== newColor) {
             this.soundManager.play(SoundType.GunSwitch);
+            if (this.isCharging) {
+                this.isCharging = false;
+                this.chargeTimer = 0;
+            }
         }
 
         this.currentColor = newColor;
@@ -267,10 +280,10 @@ export class Player {
         if (this.seekingShardsLevel > 0 && bullet.color === GameColor.RED) {
             bullet.isSeeking = true;
         }
-        if (this.slowingTrailLevel > 0 && bullet.color === GameColor.GREEN) {
+        if (bullet.color === GameColor.GREEN) {
             bullet.isSlowing = true;
         }
-        if (this.fissionLevel > 0 && bullet.color === GameColor.ORANGE) {
+        if (bullet.color === GameColor.ORANGE) {
             bullet.isFission = true;
         }
         if (this.voidLevel > 0 && bullet.color === GameColor.PURPLE) {
@@ -279,32 +292,68 @@ export class Player {
     }
 
     private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void, fromRadialMenu = false) {
-        if ((fromRadialMenu || input.isShooting()) && this.shootTimer === 0 && !this.radialMenu.active) {
-            const colorDetails = COLOR_DETAILS[this.currentColor];
-            const aimDirection = input.mousePos.sub(this.pos);
+        const isTryingToShoot = fromRadialMenu || input.isShooting();
+        const releasedShoot = input.wasKeyReleased(input.keybindings.shoot);
 
-            for (let i = 0; i < colorDetails.pelletCount; i++) {
-                const spreadAngle = colorDetails.pelletCount > 1
-                    ? (i / (colorDetails.pelletCount - 1) - 0.5) * colorDetails.spread
-                    : (Math.random() - 0.5) * colorDetails.spread;
+        if (this.currentColor === GameColor.PURPLE) {
+            if (isTryingToShoot && this.shootTimer === 0 && !this.radialMenu.active) {
+                this.isCharging = true;
+                this.chargeTimer = Math.min(this.chargeTimer + 1, this.maxChargeTime);
+            }
 
-                const finalDirection = aimDirection.rotate(spreadAngle * this.accuracyModifier);
-                const bullet = new Bullet(this.pos, finalDirection, this.currentColor);
+            const shouldFire = (releasedShoot || fromRadialMenu) && this.isCharging;
 
-                bullet.vel = finalDirection.normalize().scale(colorDetails.baseSpeed);
-                bullet.damage = colorDetails.baseDamage;
-                bullet.radius = colorDetails.baseRadius;
+            if (shouldFire) {
+                const chargeRatio = this.chargeTimer / this.maxChargeTime;
+                const colorDetails = COLOR_DETAILS[this.currentColor];
+                const aimDirection = input.mousePos.sub(this.pos);
 
-                if (colorDetails.pelletCount > 1) {
-                    bullet.lifespan *= 0.7;
-                }
+                const bullet = new Bullet(this.pos, aimDirection, this.currentColor);
+
+                bullet.damage = lerp(colorDetails.baseDamage * 0.5, colorDetails.baseDamage * 1.5, chargeRatio);
+                bullet.radius = lerp(colorDetails.baseRadius * 0.7, colorDetails.baseRadius * 1.5, chargeRatio);
+                bullet.isGravityOrb = true;
+                bullet.vel = aimDirection.normalize().scale(lerp(colorDetails.baseSpeed * 1.2, colorDetails.baseSpeed * 0.8, chargeRatio));
 
                 this.applyBulletUpgrades(bullet);
                 createBullet(bullet);
-            }
 
-            this.soundManager.play(SoundType.PlayerShoot);
-            this.shootTimer = this.getShootCooldown();
+                this.soundManager.play(SoundType.PlayerShoot);
+                this.shootTimer = this.getShootCooldown();
+                this.isCharging = false;
+                this.chargeTimer = 0;
+            } else if (!isTryingToShoot && this.isCharging) {
+                this.isCharging = false;
+                this.chargeTimer = 0;
+            }
+        } else {
+            if (isTryingToShoot && this.shootTimer === 0 && !this.radialMenu.active) {
+                const colorDetails = COLOR_DETAILS[this.currentColor];
+                const aimDirection = input.mousePos.sub(this.pos);
+
+                for (let i = 0; i < colorDetails.pelletCount; i++) {
+                    const spreadAngle = colorDetails.pelletCount > 1
+                        ? (i / (colorDetails.pelletCount - 1) - 0.5) * colorDetails.spread
+                        : (Math.random() - 0.5) * colorDetails.spread;
+
+                    const finalDirection = aimDirection.rotate(spreadAngle * this.accuracyModifier);
+                    const bullet = new Bullet(this.pos, finalDirection, this.currentColor);
+
+                    bullet.vel = finalDirection.normalize().scale(colorDetails.baseSpeed);
+                    bullet.damage = colorDetails.baseDamage;
+                    bullet.radius = colorDetails.baseRadius;
+
+                    if (colorDetails.pelletCount > 1) {
+                        bullet.lifespan *= 0.7;
+                    }
+
+                    this.applyBulletUpgrades(bullet);
+                    createBullet(bullet);
+                }
+
+                this.soundManager.play(SoundType.PlayerShoot);
+                this.shootTimer = this.getShootCooldown();
+            }
         }
     }
 
@@ -415,6 +464,27 @@ export class Player {
         ctx.arc(this.pos.x, this.pos.y, this.radius, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+
+        if (this.isCharging) {
+            const chargeRatio = this.chargeTimer / this.maxChargeTime;
+            const radius = lerp(this.radius * 0.5, this.radius * 1.5, chargeRatio);
+            const alpha = lerp(0.2, 0.7, chargeRatio);
+
+            ctx.save();
+            const pulse = Math.abs(Math.sin(Date.now() / 150 + chargeRatio * 5));
+            const reticlePos = InputHandler.getInstance().mousePos;
+            const aimDir = reticlePos.sub(this.pos).normalize();
+            const chargePos = this.pos.add(aimDir.scale(this.radius + 10 + radius/2));
+
+            ctx.fillStyle = hexColor;
+            ctx.globalAlpha = alpha + pulse * 0.2;
+            ctx.shadowColor = hexColor;
+            ctx.shadowBlur = 20;
+            ctx.beginPath();
+            ctx.arc(chargePos.x, chargePos.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
 
         if (this.radialMenu.active) {
             this.radialMenu.draw(ctx);
