@@ -145,6 +145,18 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
+  try {
+    const areToastsEnabled = JSON.parse(localStorage.getItem('rgBangToastsEnabled') ?? 'true');
+    if (!areToastsEnabled) {
+      return {
+        id: 'disabled',
+        dismiss: () => {},
+        update: () => {},
+      };
+    }
+  } catch (e) {
+  }
+
   if (props.stackId) {
     const existingToast = memoryState.toasts.find(
       (t) => t.open && t.stackId === props.stackId

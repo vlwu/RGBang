@@ -26,8 +26,10 @@ interface SettingsModalProps {
     onKeybindingsChange: (newKeybindings: Keybindings) => void;
     volume: number;
     isMuted: boolean;
+    areToastsEnabled: boolean;
     onVolumeChange: (volume: number) => void;
     onMuteChange: (isMuted: boolean) => void;
+    onAreToastsEnabledChange: (enabled: boolean) => void;
 }
 
 type KeybindingAction = keyof Keybindings;
@@ -39,21 +41,25 @@ export function SettingsModal({
     onKeybindingsChange,
     volume,
     isMuted,
+    areToastsEnabled,
     onVolumeChange,
-    onMuteChange
+    onMuteChange,
+    onAreToastsEnabledChange
 }: SettingsModalProps) {
     const [localKeybindings, setLocalKeybindings] = useState(keybindings);
     const [editingKey, setEditingKey] = useState<KeybindingAction | null>(null);
     const [localVolume, setLocalVolume] = useState(volume);
     const [localIsMuted, setLocalIsMuted] = useState(isMuted);
+    const [localAreToastsEnabled, setLocalAreToastsEnabled] = useState(areToastsEnabled);
 
     useEffect(() => {
         if (isOpen) {
             setLocalKeybindings(keybindings);
             setLocalVolume(volume);
             setLocalIsMuted(isMuted);
+            setLocalAreToastsEnabled(areToastsEnabled);
         }
-    }, [isOpen, keybindings, volume, isMuted]);
+    }, [isOpen, keybindings, volume, isMuted, areToastsEnabled]);
 
     useEffect(() => {
         if (!isOpen) {
@@ -103,6 +109,7 @@ export function SettingsModal({
         onKeybindingsChange(localKeybindings);
         onVolumeChange(localVolume);
         onMuteChange(localIsMuted);
+        onAreToastsEnabledChange(localAreToastsEnabled);
         onClose();
     };
 
@@ -182,6 +189,16 @@ export function SettingsModal({
                                         <Volume2 className="mr-2 h-4 w-4" />
                                         Test
                                     </Button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-3 items-center gap-4">
+                                <Label htmlFor="toasts-checkbox" className="text-right">Notifications</Label>
+                                <div className="col-span-2 flex items-center">
+                                     <Checkbox
+                                        id="toasts-checkbox"
+                                        checked={localAreToastsEnabled}
+                                        onCheckedChange={(checked) => setLocalAreToastsEnabled(Boolean(checked))}
+                                    />
                                 </div>
                             </div>
                         </div>

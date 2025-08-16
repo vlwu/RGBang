@@ -159,6 +159,7 @@ export default function Home() {
     const { toast } = useToast();
     const [volume, setVolume] = useState(1.0);
     const [isMuted, setIsMuted] = useState(false);
+    const [areToastsEnabled, setAreToastsEnabled] = useState(true);
 
     const gameStoreState = useSyncExternalStore(gameStateStore.subscribe, gameStateStore.getSnapshot, gameStateStore.getServerSnapshot);
 
@@ -196,10 +197,13 @@ export default function Home() {
 
         const savedVolume = localStorage.getItem('rgBangVolume');
         const savedMute = localStorage.getItem('rgBangMuted');
+        const savedToastsEnabled = localStorage.getItem('rgBangToastsEnabled');
         const currentVolume = savedVolume ? parseFloat(savedVolume) : 1.0;
-        const currentMute = savedVolume ? JSON.parse(savedVolume) : false;
+        const currentMute = savedMute ? JSON.parse(savedMute) : false;
+        const currentToastsEnabled = savedToastsEnabled ? JSON.parse(savedToastsEnabled) : true;
         setVolume(currentVolume);
         setIsMuted(currentMute);
+        setAreToastsEnabled(currentToastsEnabled);
         soundManager.setMasterVolume(currentVolume);
         soundManager.setMuted(currentMute);
 
@@ -646,6 +650,11 @@ export default function Home() {
         localStorage.setItem('rgBangMuted', JSON.stringify(newMute));
     };
 
+    const handleAreToastsEnabledChange = (enabled: boolean) => {
+        setAreToastsEnabled(enabled);
+        localStorage.setItem('rgBangToastsEnabled', JSON.stringify(enabled));
+    };
+
     const handleContextMenu = (e: React.MouseEvent) => {
         if (uiState !== 'playing') {
             e.preventDefault();
@@ -687,8 +696,10 @@ export default function Home() {
                 onKeybindingsChange={setKeybindings}
                 volume={volume}
                 isMuted={isMuted}
+                areToastsEnabled={areToastsEnabled}
                 onVolumeChange={handleVolumeChange}
                 onMuteChange={handleMuteChange}
+                onAreToastsEnabledChange={handleAreToastsEnabledChange}
             />
             <InfoModal
                 isOpen={isInfoOpen}
