@@ -6,20 +6,35 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
+  DialogFooter
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Upgrade } from "../data/upgrades";
 import { GameColor, COLOR_DETAILS } from '../data/color';
 import { PlayerUpgradeData, UpgradeProgress } from '../data/upgrade-data';
-import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair, Award, HeartPulse, ShieldCheck, Sunrise, ShieldPlus, Copy, RefreshCcw, ArrowRightFromLine, Bomb, CircleDot, Reply, LocateFixed, Sprout, GitFork, Eraser } from "lucide-react";
+import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair, Award, HeartPulse, ShieldCheck, Sunrise, ShieldPlus, Copy, RefreshCcw, ArrowRightFromLine, Bomb, CircleDot, Reply, LocateFixed, Sprout, GitFork, Eraser, Dices } from "lucide-react";
 import { cn } from '@/lib/utils';
 import { soundManager, SoundType } from '../managers/sound-manager';
+import { Button } from '@/components/ui/button';
 
 interface UpgradeModalProps {
     isOpen: boolean;
     options: Upgrade[];
     onSelect: (upgrade: Upgrade) => void;
+    onChooseOneRandomly: () => void;
+    onChooseAllRandomly: () => void;
     upgradeData: PlayerUpgradeData;
     runUpgrades: Map<string, number>;
     upgradesRemainingToSelect: number;
@@ -168,8 +183,9 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
     )
 }
 
-export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrades, upgradesRemainingToSelect, totalUpgradesToSelect }: UpgradeModalProps) {
+export function UpgradeModal({ isOpen, options, onSelect, onChooseOneRandomly, onChooseAllRandomly, upgradeData, runUpgrades, upgradesRemainingToSelect, totalUpgradesToSelect }: UpgradeModalProps) {
     const [isSelectable, setIsSelectable] = useState(false);
+    const playHoverSound = () => soundManager.play(SoundType.ButtonHover);
 
     useEffect(() => {
         if (isOpen) {
@@ -185,7 +201,7 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
     return (
         <Dialog open={isOpen}>
             <DialogContent
-                className="sm:max-w-4xl h-[500px] flex flex-col bg-background/90 backdrop-blur-lg border-primary/20 text-foreground"
+                className="sm:max-w-4xl h-[550px] flex flex-col bg-background/90 backdrop-blur-lg border-primary/20 text-foreground"
                 hideCloseButton={true}
             >
                 <DialogHeader className="px-6 pt-6">
@@ -208,6 +224,39 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
                         />
                     ))}
                 </div>
+                <DialogFooter className="px-6 pb-6 pt-0 sm:justify-center">
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                onMouseEnter={playHoverSound}
+                                className="w-full sm:w-auto btn-liquid-glass btn-liquid-sandbox"
+                                disabled={!isSelectable}
+                            >
+                                <Dices className="mr-2" />
+                                Choose for Me
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Choose Randomly</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    How many upgrades should we pick for you?
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel onClick={playHoverSound}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={onChooseOneRandomly} onMouseEnter={playHoverSound}>
+                                    Just One
+                                </AlertDialogAction>
+                                {upgradesRemainingToSelect > 1 && (
+                                    <AlertDialogAction onClick={onChooseAllRandomly} onMouseEnter={playHoverSound}>
+                                        All {upgradesRemainingToSelect}
+                                    </AlertDialogAction>
+                                )}
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );
