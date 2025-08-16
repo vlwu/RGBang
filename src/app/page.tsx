@@ -470,7 +470,7 @@ export default function Home() {
             });
             lastFragmentCount.current = gameStoreState.fragmentCollectCount;
         }
-    }, [gameStoreState.fragmentCollectCount, toast]);
+    }, [gameStoreState.fragmentCollectCount, gameStoreState.lastFragmentCollected, toast]);
 
 
     const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
