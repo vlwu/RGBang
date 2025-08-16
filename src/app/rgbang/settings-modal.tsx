@@ -152,14 +152,14 @@ export function SettingsModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-background text-foreground flex flex-col max-h-[90vh]">
-                <DialogHeader>
+            <DialogContent className="sm:max-w-[425px] bg-background text-foreground">
+                <DialogHeader className="shrink-0">
                     <DialogTitle className="text-primary">Settings</DialogTitle>
                     <DialogDescription>
                         Customize your controls and audio settings.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-6 py-4 overflow-y-auto pr-3">
+                <div className="grid gap-6 py-4 overflow-y-auto pr-4 flex-1 min-h-0">
                     <div className="space-y-4">
                         <h4 className="font-semibold text-muted-foreground text-sm">Sound</h4>
                         <div className="grid grid-cols-4 items-center gap-4">
@@ -215,7 +215,7 @@ export function SettingsModal({
                         ))}
                     </div>
                 </div>
-                <DialogFooter className="pt-4 border-t border-border mt-auto">
+                <DialogFooter className="pt-4 border-t border-border mt-auto shrink-0">
                     <Button onClick={handleCancel} onMouseEnter={playHoverSound} className="font-bold btn-liquid-glass btn-liquid-neutral">Cancel</Button>
                     <Button onClick={handleSave} onMouseEnter={playHoverSound} className="font-bold btn-liquid-glass btn-liquid-confirm">Save Changes</Button>
                 </DialogFooter>
