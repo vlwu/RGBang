@@ -160,6 +160,8 @@ export class UpgradeManager {
         this.player.scoreMultiplier = 1;
         this.player.accuracyModifier = 1;
         this.player.flatHealthIncrease = 0;
+        this.player.dashDurationModifier = 1;
+        this.player.dashDamageLevel = 0;
 
         this.player.chainLightningLevel = 0;
         this.player.igniteLevel = 0;

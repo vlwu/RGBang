@@ -8,6 +8,7 @@ import { UpgradeManager } from '../managers/upgrade-manager';
 import { Upgrade } from '../data/upgrades';
 import { SoundManager, SoundType } from '../managers/sound-manager';
 import { FRAGMENT_CONFIG } from '../data/gameConfig';
+import { Enemy } from './enemy';
 
 export class Player {
     pos: Vec2;
@@ -27,6 +28,7 @@ export class Player {
     public movementSpeedMultiplier = 1;
     public bulletDamageMultiplier = 1;
     public dashCooldownModifier = 1;
+    public dashDurationModifier = 1;
     public shootCooldownModifier = 1;
     public accuracyModifier = 1;
     public scoreMultiplier = 1;
@@ -44,6 +46,7 @@ export class Player {
     public slowingTrailLevel = 0;
     public fissionLevel = 0;
     public voidLevel = 0;
+    public dashDamageLevel = 0;
 
     public lifestealPercent = 0;
     public adrenalineRushLevel = 0;
@@ -65,12 +68,13 @@ export class Player {
 
     public shootTimer = 0;
 
-    private isDashing = false;
+    public isDashing = false;
     private dashTimer = 0;
     private dashDuration = 12;
     private baseDashSpeed = 12;
     private baseDashCooldown = 180;
     public dashCooldownTimer = 0;
+    public enemiesHitThisDash: Set<Enemy> = new Set();
 
     private knockbackVelocity = new Vec2(0, 0);
     private knockbackDamping = 0.95;
@@ -152,13 +156,14 @@ export class Player {
     private handleMovement(input: InputHandler, particleSystem: ParticleSystem, canvasWidth: number, canvasHeight: number) {
         if (input.isKeyDown(input.keybindings.dash) && this.dashCooldownTimer === 0) {
             this.isDashing = true;
-            this.dashTimer = this.dashDuration;
+            this.dashTimer = this.dashDuration * this.dashDurationModifier;
             this.dashCooldownTimer = this.getDashCooldown();
             if (this.kineticShieldLevel > 0) {
                 this.kineticShieldHits = this.kineticShieldLevel;
             }
             this.soundManager.play(SoundType.PlayerDash);
             this.knockbackVelocity = new Vec2(0, 0);
+            this.enemiesHitThisDash.clear();
         }
 
         if (this.knockbackVelocity.magnitude() > 0.1) {
@@ -385,7 +390,7 @@ export class Player {
             ctx.save();
             ctx.shadowColor = 'white';
             ctx.shadowBlur = 20;
-            const dashProgress = this.dashTimer / this.dashDuration;
+            const dashProgress = this.dashTimer / (this.dashDuration * this.dashDurationModifier);
             ctx.fillStyle = `rgba(226, 232, 240, ${0.5 * dashProgress})`;
             ctx.beginPath();
             ctx.arc(this.pos.x, this.pos.y, this.radius + 5 * (1 - dashProgress), 0, Math.PI * 2);

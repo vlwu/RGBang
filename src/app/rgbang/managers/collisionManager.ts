@@ -147,14 +147,37 @@ export class CollisionManager {
         }
 
 
-        for (const enemy of this.entityManager.enemies) {
-            if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
-                if (this.gameMode === 'normal' || (this.sandboxManager?.isPlayerCollisionEnabled)) {
-                    this.player.takeDamage(enemy.damage);
-                    this.player.applyKnockback(enemy.pos, 10);
+        if (this.player.isDashing && this.player.dashDamageLevel > 0) {
+            for (const enemy of this.entityManager.enemies) {
+                if (enemy.isAlive && !this.player.enemiesHitThisDash.has(enemy) && circleCollision(this.player, enemy)) {
+                    this.player.enemiesHitThisDash.add(enemy);
+                    const damage = 15 * this.player.dashDamageLevel;
+                    const result = enemy.takeDamage(damage, this.player.currentColor, true);
+                    this.particles.add(enemy.pos, this.player.currentColor, 15);
+                    this.soundManager.play(SoundType.EnemyHit, 0.8);
+
+                    if (result.killed) {
+                        this.addScore(enemy.points * this.player.scoreMultiplier);
+                        this.entityManager.addFragment(new PrismFragment(enemy.pos.x, enemy.pos.y, enemy.color));
+                        if (this.player.fragmentDuplicationChance > 0 && Math.random() < this.player.fragmentDuplicationChance) {
+                             this.entityManager.addFragment(new PrismFragment(enemy.pos.x + 10, enemy.pos.y, enemy.color));
+                        }
+                        if (this.player.explosiveFinishLevel > 0 && Math.random() < this.player.explosiveFinishLevel * 0.08) {
+                            this.dealAreaDamage(enemy.pos, 40 + this.player.explosiveFinishLevel * 8, 8 + this.player.explosiveFinishLevel * 4, enemy.color);
+                        }
+                    }
                 }
-                enemy.takeDamage(enemy.health * 0.5, enemy.color, true);
-                this.particles.add(enemy.pos, enemy.color, 10);
+            }
+        } else {
+            for (const enemy of this.entityManager.enemies) {
+                if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
+                    if (this.gameMode === 'normal' || (this.sandboxManager?.isPlayerCollisionEnabled)) {
+                        this.player.takeDamage(enemy.damage);
+                        this.player.applyKnockback(enemy.pos, 10);
+                    }
+                    enemy.takeDamage(enemy.health * 0.5, enemy.color, true);
+                    this.particles.add(enemy.pos, enemy.color, 10);
+                }
             }
         }
 

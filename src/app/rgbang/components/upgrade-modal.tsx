@@ -31,6 +31,8 @@ export const iconMap: { [key: string]: React.ElementType } = {
     'chain-lightning': Zap,
     'max-health': Shield,
     'dash-cooldown': ChevronsRight,
+    'dash-length': ArrowRightFromLine,
+    'dash-damage': Sunrise,
     'bullet-damage': Bolt,
     'movement-speed': Wind,
     'ignite': Flame,
@@ -64,7 +66,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
     isSelectable: boolean,
     runLevel: number
 }) => {
-    const Icon = iconMap[upgrade.id] || iconMap['default'];
+    const Icon = iconMap[upgrade.id] || iconMap[upgrade.id.replace('max-out-','')] || iconMap['default'];
     const colorHex = upgrade.color ? COLOR_DETAILS[upgrade.color].hex : '#FFFFFF';
 
     const isFallback = upgrade.id.startsWith('fallback-');
@@ -176,7 +178,7 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
                             onSelect={onSelect}
                             progress={upgradeData.upgradeProgress.get(opt.id)}
                             isSelectable={isSelectable}
-                            runLevel={runUpgrades.get(opt.id) || 0}
+                            runLevel={runUpgrades.get(opt.id.replace('max-out-', '')) || 0}
                         />
                     ))}
                 </div>

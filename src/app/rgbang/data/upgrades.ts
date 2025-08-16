@@ -51,6 +51,32 @@ export const ALL_UPGRADES: Upgrade[] = [
             player.dashCooldownModifier *= 0.92;
         }
     },
+    {
+        id: 'dash-length',
+        name: 'Extended Dash',
+        description: 'Increases the distance and duration of your dash.',
+        getEffectDescription: (level) => `+${level * 10}% Dash Duration`,
+        type: UpgradeType.PLAYER_STAT,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => 1 + (0.1 * level),
+        apply: (player, level) => {
+            player.dashDurationModifier += 0.1;
+        }
+    },
+    {
+        id: 'dash-damage',
+        name: 'Kinetic Impact',
+        description: 'Dashing through enemies damages them.',
+        getEffectDescription: (level) => `Deals ${15 * level} damage on impact`,
+        type: UpgradeType.PLAYER_STAT,
+        color: null,
+        getMaxLevel: () => 5,
+        getValue: (level) => 15 * level,
+        apply: (player, level) => {
+            player.dashDamageLevel += 1;
+        }
+    },
      {
         id: 'movement-speed',
         name: 'Agility',
