@@ -41,13 +41,21 @@ export const useGameEvents = ({
     const [upgradesRemainingToSelect, setUpgradesRemainingToSelect] = useState(0);
     const [totalUpgradesToSelect, setTotalUpgradesToSelect] = useState(0);
 
-    const openUpgradeSelection = useCallback((isBossWave: boolean, upgradesCount?: number) => {
+    const openUpgradeSelection = useCallback((isBossWave: boolean, upgradesCount?: number, showToast = false) => {
         const count = upgradesCount ?? upgradesRemainingToSelect;
         const gameInstance = gameCanvasRef.current?.getGameInstance();
-    
+
         if (count > 0 && gameInstance && upgradeDataRef.current) {
+            if (showToast) {
+                toast({
+                    title: "Wave Cleared!",
+                    description: `You've earned ${count} upgrade choice${count > 1 ? 's' : ''}! Choose wisely.`,
+                    duration: 3000,
+                });
+            }
+
             const nextFragmentColorForOptions = isBossWave ? null : getRandomElement(PRIMARY_COLORS);
-    
+
             const options = gameInstance.player.upgradeManager.getUpgradeOptions(
                 nextFragmentColorForOptions,
                 upgradeDataRef.current,
@@ -66,7 +74,7 @@ export const useGameEvents = ({
             soundManager.play(SoundType.GameResume);
         }
     }, [upgradesRemainingToSelect, gameCanvasRef, upgradeDataRef, setUpgradeOptions, setIsUpgradeModalOpen, toast, setUiState]);
-    
+
     const handleNextWaveStart = useCallback(() => {
         const gameInstance = gameCanvasRef.current?.getGameInstance();
         if (gameInstance) {
@@ -79,7 +87,7 @@ export const useGameEvents = ({
                 });
                 setUpgradesRemainingToSelect(0);
             }
-    
+
             const nextWaveNum = gameStoreState.currentWave + 1;
             gameInstance.startWave(nextWaveNum);
             setUiState('playing');
@@ -102,7 +110,7 @@ export const useGameEvents = ({
                 });
             }, 1000);
         }
-    
+
         return () => {
             if (countdownInterval) clearInterval(countdownInterval);
         };
@@ -134,13 +142,7 @@ export const useGameEvents = ({
                 setUiState('upgrading');
                 soundManager.play(SoundType.GamePause);
 
-                toast({
-                    title: "Wave Cleared!",
-                    description: `You've earned ${totalUpgradesToOffer} upgrade choice${totalUpgradesToOffer > 1 ? 's' : ''}! Choose wisely.`,
-                    duration: 3000,
-                });
-
-                setTimeout(() => openUpgradeSelection(isBossWave, totalUpgradesToOffer), 100);
+                setTimeout(() => openUpgradeSelection(isBossWave, totalUpgradesToOffer, true), 100);
             } else {
                 setUpgradesRemainingToSelect(0);
                 setTotalUpgradesToSelect(0);
@@ -162,7 +164,7 @@ export const useGameEvents = ({
             }
         }
     }, [uiState, gameCanvasRef]);
-    
+
     const lastFragmentCount = useRef(0);
     useEffect(() => {
         const gameInstance = gameCanvasRef.current?.getGameInstance();
