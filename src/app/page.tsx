@@ -686,6 +686,7 @@ export default function Home() {
             <InfoModal
                 isOpen={isInfoOpen}
                 onClose={() => setIsInfoOpen(false)}
+                keybindings={keybindings}
             />
             <UpgradeModal
                 isOpen={isUpgradeModalOpen}

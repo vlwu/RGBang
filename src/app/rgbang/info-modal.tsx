@@ -9,10 +9,13 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Keybindings } from "./input-handler";
+import { getKeyDisplay } from "./utils";
 
 interface InfoModalProps {
     isOpen: boolean;
     onClose: () => void;
+    keybindings: Keybindings;
 }
 
 const KeyDisplay = ({ children }: { children: React.ReactNode }) => (
@@ -21,7 +24,7 @@ const KeyDisplay = ({ children }: { children: React.ReactNode }) => (
     </kbd>
 );
 
-export function InfoModal({ isOpen, onClose }: InfoModalProps) {
+export function InfoModal({ isOpen, onClose, keybindings }: InfoModalProps) {
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -36,11 +39,11 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
                     <div className="space-y-2">
                         <h3 className="font-semibold text-primary">Controls</h3>
                         <ul className="list-disc list-inside space-y-1">
-                            <li><KeyDisplay>W</KeyDisplay> <KeyDisplay>A</KeyDisplay> <KeyDisplay>S</KeyDisplay> <KeyDisplay>D</KeyDisplay> - Move your character</li>
+                            <li><KeyDisplay>{getKeyDisplay(keybindings.up)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.left)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.down)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.right)}</KeyDisplay> - Move your character</li>
                             <li><KeyDisplay>Mouse</KeyDisplay> - Aim</li>
-                            <li><KeyDisplay>Left Click</KeyDisplay> - Shoot</li>
-                            <li><KeyDisplay>Spacebar</KeyDisplay> - Dash (provides temporary invulnerability)</li>
-                            <li><KeyDisplay>Shift</KeyDisplay> - Toggle view of current upgrades during a run</li>
+                            <li><KeyDisplay>{getKeyDisplay(keybindings.shoot)}</KeyDisplay> - Shoot</li>
+                            <li><KeyDisplay>{getKeyDisplay(keybindings.dash)}</KeyDisplay> - Dash (provides temporary invulnerability)</li>
+                            <li><KeyDisplay>{getKeyDisplay(keybindings.viewUpgrades)}</KeyDisplay> - Toggle view of current upgrades during a run</li>
                         </ul>
                     </div>
 
@@ -49,8 +52,8 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
                          <p>To damage an enemy, you must match your bullet's color and shape to the enemy's.</p>
                         <ul className="list-disc list-inside space-y-1">
                             <li>There are 3 primary colors: <span className="text-[#ff4d4d] font-bold">Red (Circle)</span>, <span className="text-[#ffff66] font-bold">Yellow (Triangle)</span>, and <span className="text-[#4d94ff] font-bold">Blue (Square)</span>.</li>
-                             <li>Select a primary color with keys <KeyDisplay>1</KeyDisplay> <KeyDisplay>2</KeyDisplay> <KeyDisplay>3</KeyDisplay>, or cycle with the <KeyDisplay>Mouse Wheel</KeyDisplay>.</li>
-                            <li>Hold <KeyDisplay>Right Click</KeyDisplay> to open a radial menu for secondary colors (Orange, Green, Purple).</li>
+                             <li>Select a primary color with keys <KeyDisplay>{getKeyDisplay(keybindings.primary1)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.primary2)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.primary3)}</KeyDisplay>, or cycle with the <KeyDisplay>Mouse Wheel</KeyDisplay>.</li>
+                            <li>Hold <KeyDisplay>{getKeyDisplay(keybindings.comboRadial)}</KeyDisplay> to open a radial menu for secondary colors (Orange, Green, Purple).</li>
                             <li>Shooting an enemy with the wrong color 3 times will trigger a punishment, making it stronger!</li>
                         </ul>
                     </div>

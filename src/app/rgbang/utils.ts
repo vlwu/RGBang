@@ -169,7 +169,6 @@ export function drawShapeForColor(ctx: CanvasRenderingContext2D, pos: Vec2, radi
 export function getKeyDisplay(key: string): string {
     if (!key) return '';
     if (key === ' ') return 'SPACE';
-    if (key.toLowerCase() === 'shift') return 'SHIFT';
     if (key === 'tab') return 'TAB';
     if (key === 'mouse0') return 'LMB';
     if (key === 'mouse1') return 'MMB';
