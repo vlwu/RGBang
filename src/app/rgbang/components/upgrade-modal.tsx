@@ -80,7 +80,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
     return (
         <div
             className={cn(
-                "border-liquid-glass group/wrapper transition-all duration-300",
+                "border-liquid-glass group/wrapper transition-all duration-300 select-none",
                 isSelectable
                     ? "cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
                     : "opacity-60 cursor-not-allowed"
@@ -99,23 +99,23 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
                      isSelectable && "group-hover/wrapper:bg-secondary"
                 )}
             >
-                <CardHeader className="items-center pb-4">
-                     <div className="p-3 rounded-full mb-2 bg-accent/20" style={{ boxShadow: `0 0 15px ${colorHex}` }}>
-                        <Icon className="w-8 h-8" style={{ color: colorHex }}/>
+                <CardHeader className="items-center pt-4 px-4 pb-2">
+                     <div className="p-2 rounded-full mb-2 bg-accent/20" style={{ boxShadow: `0 0 12px ${colorHex}` }}>
+                        <Icon className="w-6 h-6" style={{ color: colorHex }}/>
                     </div>
-                    <CardTitle className="text-lg text-primary">{upgrade.name}</CardTitle>
+                    <CardTitle className="text-base font-bold text-primary">{upgrade.name}</CardTitle>
                 </CardHeader>
-                <CardContent className="flex-grow flex flex-col justify-between">
-                    <CardDescription className="mb-4">{upgrade.description}</CardDescription>
+                <CardContent className="flex-grow flex flex-col justify-between px-4 pb-4">
+                    <CardDescription className="mb-2 text-xs min-h-[3.75rem]">{upgrade.description}</CardDescription>
                     {!isFallback && (
                         <div>
-                            <div className="flex justify-center items-center mb-2">
+                            <div className="flex justify-center items-center mb-1">
                                 {Array.from({ length: maxLevel }).map((_, i) => (
-                                    <Star key={i} className={`w-5 h-5 ${i < displayLevel ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
+                                    <Star key={i} className={`w-4 h-4 ${i < displayLevel ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
                                 ))}
                             </div>
                              {displayLevel >= maxLevel && (
-                                <p className="text-sm font-bold text-yellow-400">MAX LEVEL</p>
+                                <p className="text-xs font-bold text-yellow-400">MAX LEVEL</p>
                             )}
                         </div>
                     )}
@@ -142,10 +142,10 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
     return (
         <Dialog open={isOpen}>
             <DialogContent
-                className="sm:max-w-4xl bg-background/90 backdrop-blur-lg border-primary/20 text-foreground"
+                className="sm:max-w-4xl h-[580px] flex flex-col bg-background/90 backdrop-blur-lg border-primary/20 text-foreground"
                 hideCloseButton={true}
             >
-                <DialogHeader>
+                <DialogHeader className="px-6 pt-6">
                     <DialogTitle className="text-3xl text-center font-headline text-primary tracking-wider">
                         Choose Your Power ({totalUpgradesToSelect - upgradesRemainingToSelect + 1}/{totalUpgradesToSelect})
                     </DialogTitle>
@@ -153,7 +153,7 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
                         Your journey evolves. Select an upgrade to continue.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-6 px-6 flex-grow">
                     {options.map(opt => (
                         <UpgradeCard
                             key={opt.id}
