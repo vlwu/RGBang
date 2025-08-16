@@ -10,10 +10,11 @@ import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
 import { SoundManager, SoundType } from './sound-manager';
-import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG } from './wave-data';
+import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG, EnemyType } from './wave-data';
 import { gameStateStore } from './gameStateStore';
 import { EntityManager } from './entityManager';
 import { WaveManager } from './waveManager';
+import { ALL_UPGRADES } from './upgrades';
 
 
 export class Game {
@@ -465,5 +466,140 @@ export class Game {
         this.player.draw(this.ctx);
 
         this.ui.draw(this.player, this.score, this.entityManager.boss, currentWaveToDisplay, this.entityManager.enemies, currentWaveCountdown, isBetweenWaves, this.gameMode === 'freeplay');
+    }
+
+    public sandbox_spawnEnemy(enemyType: EnemyType, colorOverride?: GameColor) {
+        if (this.gameMode !== 'freeplay' || !this.player) return;
+
+        const spawnPos = this.player.pos.add(new Vec2(
+            (Math.random() - 0.5) * 400 + 200 * Math.sign(Math.random() - 0.5),
+            (Math.random() - 0.5) * 400 + 200 * Math.sign(Math.random() - 0.5)
+        ));
+        const x = Math.max(0, Math.min(this.canvas.width, spawnPos.x));
+        const y = Math.max(0, Math.min(this.canvas.height, spawnPos.y));
+
+
+        let color: GameColor;
+        let radius: number;
+        let health: number;
+        let speed: number;
+        let points: number;
+        let damage: number;
+        let isChromaSentinel = false;
+
+        const waveNumber = this.waveManager.currentWave > 0 ? this.waveManager.currentWave : 10;
+        const healthMultiplier = 1 + waveNumber * 0.1;
+        const speedMultiplier = 1 + waveNumber * 0.02;
+        const pointsMultiplier = 1 + waveNumber * 0.05;
+
+        switch (enemyType) {
+            case EnemyType.RED_BLOB:
+                color = colorOverride || getRandomElement(PRIMARY_COLORS);
+                radius = 15;
+                health = Math.round(30 * healthMultiplier);
+                speed = 1.5 * speedMultiplier;
+                points = Math.round(10 * pointsMultiplier);
+                damage = 10;
+                break;
+            case EnemyType.BLUE_SHARD:
+                color = colorOverride || getRandomElement(PRIMARY_COLORS);
+                radius = 18;
+                health = Math.round(50 * healthMultiplier);
+                speed = 1.8 * speedMultiplier;
+                points = Math.round(20 * pointsMultiplier);
+                damage = 15;
+                break;
+            case EnemyType.CHROMA_SENTINEL:
+                color = colorOverride || getRandomElement(PRIMARY_COLORS);
+                radius = 20;
+                health = Math.round(80 * healthMultiplier);
+                speed = 1.2 * speedMultiplier;
+                points = Math.round(30 * pointsMultiplier);
+                damage = 20;
+                isChromaSentinel = true;
+                break;
+            default:
+                color = colorOverride || getRandomElement(PRIMARY_COLORS);
+                radius = 15;
+                health = Math.round(30 * healthMultiplier);
+                speed = 1.5 * speedMultiplier;
+                points = Math.round(10 * pointsMultiplier);
+                damage = 10;
+                break;
+        }
+
+        const newEnemy = new Enemy(x, y, color, radius, health, speed, points, this.soundManager, isChromaSentinel);
+        newEnemy.damage = damage;
+        this.entityManager.addEnemy(newEnemy);
+    }
+
+    public sandbox_spawnBoss() {
+        if (this.gameMode !== 'freeplay' || this.entityManager.boss) return;
+        const bossX = this.canvas.width / 2;
+        const bossY = 100;
+        const waveMultiplier = Math.floor((this.waveManager.currentWave || 10) / 5);
+        const scaledHealth = 800 + (waveMultiplier * 300);
+        const scaledDamage = 25 + (waveMultiplier * 5);
+        const scaledAttackInterval = Math.max(40, 100 - (waveMultiplier * 6));
+
+        const boss = new Boss(
+            bossX,
+            bossY,
+            (bullet) => this.entityManager.addBullet(bullet),
+            this.canvas.width,
+            this.canvas.height,
+            this.soundManager,
+            scaledHealth,
+            scaledDamage,
+            scaledAttackInterval
+        );
+        this.entityManager.setBoss(boss);
+    }
+
+    public sandbox_killAllEnemies() {
+        if (this.gameMode !== 'freeplay') return;
+        this.entityManager.enemies.forEach(e => e.isAlive = false);
+        if(this.entityManager.boss) {
+            this.entityManager.boss.health = 0;
+            this.entityManager.boss.isAlive = false;
+        }
+    }
+
+    public sandbox_clearAllBullets() {
+        if (this.gameMode !== 'freeplay') return;
+        this.entityManager.bullets.forEach(b => b.isActive = false);
+    }
+
+    public sandbox_addUpgrade(upgradeId: string) {
+        if (this.gameMode !== 'freeplay') return;
+        const upgrade = ALL_UPGRADES.find(u => u.id === upgradeId);
+        if (upgrade) {
+            const currentLevel = this.player.upgradeManager.getUpgradeLevel(upgradeId);
+            if (currentLevel < upgrade.getMaxLevel()) {
+                this.player.upgradeManager.apply(upgrade, 1);
+            }
+        }
+    }
+
+    public sandbox_removeUpgrade(upgradeId: string) {
+        if (this.gameMode !== 'freeplay') return;
+        const active = this.player.upgradeManager.activeUpgrades.get(upgradeId);
+        if (active) {
+            if (active.level > 1) {
+                active.level--;
+                this.player.upgradeManager.activeUpgrades.set(upgradeId, active);
+            } else {
+                this.player.upgradeManager.activeUpgrades.delete(upgradeId);
+            }
+            this.player.upgradeManager.recalculatePlayerStats();
+        }
+    }
+
+    public sandbox_maxUpgrade(upgradeId: string) {
+        if (this.gameMode !== 'freeplay') return;
+        const upgrade = ALL_UPGRADES.find(u => u.id === upgradeId);
+        if (upgrade) {
+            this.player.upgradeManager.applyMax(upgrade);
+        }
     }
 }

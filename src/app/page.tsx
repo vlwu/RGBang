@@ -7,6 +7,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History, X, TestTube } from 'lucide-react';
 import { SettingsModal } from './rgbang/settings-modal';
 import { InfoModal } from './rgbang/info-modal';
+import { SandboxModal } from './rgbang/sandbox-modal';
 import { GameColor, PRIMARY_COLORS, getRandomElement, COLOR_DETAILS } from './rgbang/color';
 import { UpgradeModal } from './rgbang/upgrade-modal';
 import type { Upgrade, UpgradeProgress } from './rgbang/upgrades';
@@ -27,7 +28,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
-import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG } from './rgbang/wave-data';
+import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG, EnemyType } from './rgbang/wave-data';
 import { gameEngine } from './rgbang/engine';
 import { gameStateStore } from './rgbang/gameStateStore';
 import { cn } from '@/lib/utils';
@@ -136,6 +137,7 @@ export default function Home() {
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
     const [isUpgradeOverviewOpen, setIsUpgradeOverviewOpen] = useState(false);
+    const [isSandboxModalOpen, setIsSandboxModalOpen] = useState(false);
     const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
 
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
@@ -295,7 +297,10 @@ export default function Home() {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 e.preventDefault();
-                if (isSettingsOpen || isInfoOpen) {
+                if (isSandboxModalOpen) {
+                    setIsSandboxModalOpen(false);
+                    soundManager.play(SoundType.ButtonClick);
+                } else if (isSettingsOpen || isInfoOpen) {
                     setIsSettingsOpen(false);
                     setIsInfoOpen(false);
                     soundManager.play(SoundType.ButtonClick);
@@ -320,13 +325,20 @@ export default function Home() {
                     setIsUpgradeOverviewOpen(prev => !prev);
                 }
             }
+            if (e.key === 'Tab') {
+                const gameInstance = gameCanvasRef.current?.getGameInstance();
+                if (gameInstance?.gameMode === 'freeplay' && (uiState === 'playing' || isSandboxModalOpen)) {
+                    e.preventDefault();
+                    setIsSandboxModalOpen(prev => !prev);
+                }
+            }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
         };
-    }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, handleNextWaveStart]);
+    }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isSandboxModalOpen, handleNextWaveStart]);
 
 
     const openUpgradeSelection = useCallback((isBossWave: boolean, upgradesCount?: number) => {
@@ -617,6 +629,26 @@ export default function Home() {
             e.preventDefault();
         }
     };
+    
+    const gameManager = {
+        spawnEnemy: (type: EnemyType, color?: GameColor) => gameCanvasRef.current?.getGameInstance()?.sandbox_spawnEnemy(type, color),
+        spawnBoss: () => gameCanvasRef.current?.getGameInstance()?.sandbox_spawnBoss(),
+        killAllEnemies: () => gameCanvasRef.current?.getGameInstance()?.sandbox_killAllEnemies(),
+        clearAllBullets: () => gameCanvasRef.current?.getGameInstance()?.sandbox_clearAllBullets(),
+        addUpgrade: (upgradeId: string) => {
+            gameCanvasRef.current?.getGameInstance()?.sandbox_addUpgrade(upgradeId)
+            setRunUpgrades(gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map())
+        },
+        removeUpgrade: (upgradeId: string) => {
+            gameCanvasRef.current?.getGameInstance()?.sandbox_removeUpgrade(upgradeId)
+            setRunUpgrades(gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map())
+        },
+        maxUpgrade: (upgradeId: string) => {
+            gameCanvasRef.current?.getGameInstance()?.sandbox_maxUpgrade(upgradeId)
+            setRunUpgrades(gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map())
+        },
+        getRunUpgrades: () => gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map(),
+    };
 
     return (
         <main
@@ -646,6 +678,14 @@ export default function Home() {
                 upgradesRemainingToSelect={upgradesRemainingToSelect}
                 totalUpgradesToSelect={totalUpgradesToSelect}
             />
+            {gameEngine.gameMode === 'freeplay' && (
+                <SandboxModal 
+                    isOpen={isSandboxModalOpen}
+                    onClose={() => setIsSandboxModalOpen(false)}
+                    gameManager={gameManager}
+                    runUpgrades={runUpgrades}
+                />
+            )}
 
 
             {uiState === 'menu' && (
@@ -735,7 +775,7 @@ export default function Home() {
                     <GameCanvas
                         width={canvasSize.width}
                         height={canvasSize.height}
-                        isGamePausedExternally={uiState === 'paused' || uiState === 'upgrading' || isUpgradeOverviewOpen || uiState === 'betweenWaves'}
+                        isGamePausedExternally={uiState === 'paused' || uiState === 'upgrading' || isUpgradeOverviewOpen || uiState === 'betweenWaves' || isSandboxModalOpen}
                         initialGameState={initialGameState}
                         ref={gameCanvasRef}
                         currentWaveCountdown={betweenWaveCountdown}
