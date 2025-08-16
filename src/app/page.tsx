@@ -1,36 +1,161 @@
 "use client";
 
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { SettingsModal } from './rgbang/components/settings-modal';
 import { InfoModal } from './rgbang/components/info-modal';
 import { UpgradeModal } from './rgbang/components/upgrade-modal';
 import { SandboxModal } from './rgbang/components/sandbox-modal';
 
-import { useGameManager } from './rgbang/hooks/useGameManager';
+import { useModalManager } from './rgbang/hooks/useModalManager';
+import { usePersistentData } from './rgbang/hooks/usePersistentData';
+import { useGameSession } from './rgbang/hooks/useGameSession';
+import { useGameEvents } from './rgbang/hooks/useGameEvents';
+
 import { MainMenu } from './rgbang/components/game-ui/MainMenu';
 import { ContinuePrompt } from './rgbang/components/game-ui/ContinuePrompt';
 import { GameOverScreen } from './rgbang/components/game-ui/GameOverScreen';
 import { GameContainer } from './rgbang/components/game-ui/GameContainer';
 import { soundManager, SoundType } from './rgbang/managers/sound-manager';
 import { gameStateStore } from './rgbang/core/gameStateStore';
+import { ALL_UPGRADES, Upgrade } from './rgbang/data/upgrades';
+import InputHandler from './rgbang/managers/input-handler';
+
+const GAME_WIDTH = 1280;
+const GAME_HEIGHT = 720;
 
 export default function Home() {
+    const [canvasSize, setCanvasSize] = useState({ width: GAME_WIDTH, height: GAME_HEIGHT });
+    const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
+    
     const {
-        uiState, setUiState, highScore, savedGame, upgradeData, nextWaveHint, betweenWaveCountdown,
-        upgradesRemainingToSelect, totalUpgradesToSelect, isSettingsOpen, setIsSettingsOpen,
-        isInfoOpen, setIsInfoOpen, isUpgradeModalOpen, isUpgradeOverviewOpen, setIsUpgradeOverviewOpen,
-        isSandboxModalOpen, setIsSandboxModalOpen, upgradeOptions, sandboxManager, keybindings,
-        setKeybindings, gameCanvasRef, canvasSize, initialGameState, volume, isMuted, areToastsEnabled,
-        gameStoreState, loadInitialData, handleUpgradeSelected, startNewRun, handlePlayClick, continueRun,
-        quitToMenu, resumeGame, handleResetData, playHoverSound, handleVolumeChange, handleMuteChange,
-        handleAreToastsEnabledChange, openUpgradeSelection
-    } = useGameManager();
+        isSettingsOpen, setIsSettingsOpen, isInfoOpen, setIsInfoOpen, isUpgradeModalOpen,
+        setIsUpgradeModalOpen, isUpgradeOverviewOpen, setIsUpgradeOverviewOpen,
+        isSandboxModalOpen, setIsSandboxModalOpen, openSettingsModal, openInfoModal
+    } = useModalManager();
+    
+    const {
+        highScore, setHighScore, savedGame, upgradeData, upgradeDataRef, keybindings, volume,
+        isMuted, areToastsEnabled, loadInitialData, handleKeybindingsChange,
+        handleVolumeChange, handleMuteChange, handleAreToastsEnabledChange, handleResetData,
+        updateUpgradeData, updateMaxedUpgradeData
+    } = usePersistentData();
+    
+    const {
+        uiState, setUiState, initialGameState, sandboxManager, gameCanvasRef,
+        startNewRun, continueRun, handlePlayClick, quitToMenu, resumeGame,
+    } = useGameSession({ savedGame, highScore, setHighScore, loadInitialData, upgradesRemainingToSelect: 0 });
 
+    const {
+        gameStoreState, nextWaveHint, betweenWaveCountdown, setBetweenWaveCountdown,
+        upgradesRemainingToSelect, setUpgradesRemainingToSelect, totalUpgradesToSelect,
+        openUpgradeSelection, handleNextWaveStart
+    } = useGameEvents({ uiState, setUiState, gameCanvasRef, setHighScore, highScore, setIsUpgradeModalOpen, setUpgradeOptions, upgradeDataRef });
+    
+    const handleUpgradeSelected = useCallback(async (upgrade: Upgrade) => {
+        soundManager.play(SoundType.UpgradeSelect);
+        const gameInstance = gameCanvasRef.current?.getGameInstance();
+        if (!gameInstance) return;
+    
+        if (upgrade.id.startsWith('max-out-')) {
+            const originalId = upgrade.id.replace('max-out-', '');
+            const originalUpgrade = ALL_UPGRADES.find(u => u.id === originalId);
+            if (originalUpgrade) {
+                gameInstance.player.upgradeManager.applyMax(originalUpgrade);
+                await updateMaxedUpgradeData(originalId, originalUpgrade.getMaxLevel());
+            }
+        } else if (upgrade.id.startsWith('fallback-')) {
+            upgrade.apply(gameInstance.player, 1, gameInstance.addScore.bind(gameInstance));
+        } else {
+            gameInstance.player.applyUpgrade(upgrade);
+            await updateUpgradeData(upgrade.id);
+        }
+    
+        if (gameInstance.gameMode === 'freeplay') {
+            setIsUpgradeModalOpen(false);
+            setUiState('playing');
+            setUpgradesRemainingToSelect(0);
+            return;
+        }
+    
+        setUpgradesRemainingToSelect(prev => {
+            const newCount = prev - 1;
+            if (newCount <= 0) {
+                setIsUpgradeModalOpen(false);
+                setBetweenWaveCountdown(15);
+                setUiState('betweenWaves');
+            } else {
+                const isBossWaveRecentlyCompleted = (gameStoreState.currentWave % 5 === 0);
+                openUpgradeSelection(isBossWaveRecentlyCompleted, newCount);
+            }
+            return newCount;
+        });
+    }, [gameStoreState.currentWave, openUpgradeSelection, gameCanvasRef, updateUpgradeData, updateMaxedUpgradeData, setUiState, setIsUpgradeModalOpen, setUpgradesRemainingToSelect, setBetweenWaveCountdown]);
+    
     const handleContextMenu = (e: React.MouseEvent) => {
         if (uiState !== 'menu' && uiState !== 'continuePrompt' && uiState !== 'gameOver') {
             e.preventDefault();
         }
     };
+    
+    const updateCanvasSize = useCallback(() => {
+        const windowWidth = window.innerWidth * 0.9;
+        const windowHeight = window.innerHeight * 0.9;
+        const aspectRatio = GAME_WIDTH / GAME_HEIGHT;
+
+        let newWidth = windowWidth;
+        let newHeight = newWidth / aspectRatio;
+
+        if (newHeight > windowHeight) {
+            newHeight = windowHeight;
+            newWidth = newHeight * aspectRatio;
+        }
+
+        setCanvasSize({ width: newWidth, height: newHeight });
+    }, []);
+
+    useEffect(() => {
+        updateCanvasSize();
+        window.addEventListener('resize', updateCanvasSize);
+        return () => window.removeEventListener('resize', updateCanvasSize);
+    }, [updateCanvasSize]);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                e.preventDefault();
+                if (isSandboxModalOpen) setIsSandboxModalOpen(false);
+                else if (isSettingsOpen) setIsSettingsOpen(false);
+                else if (isInfoOpen) setIsInfoOpen(false);
+                else if (isUpgradeModalOpen) {
+                    setIsUpgradeModalOpen(false);
+                    setBetweenWaveCountdown(15);
+                    setUiState('betweenWaves');
+                    soundManager.play(SoundType.GamePause);
+                }
+                else if (uiState === 'playing') setUiState('paused');
+                else if (uiState === 'paused') resumeGame();
+                else if (uiState === 'betweenWaves') handleNextWaveStart();
+            }
+            if (e.key.toLowerCase() === keybindings.viewUpgrades.toLowerCase()) {
+                if (e.repeat) return;
+                if (uiState === 'playing' || uiState === 'paused') {
+                    setIsUpgradeOverviewOpen(prev => !prev);
+                }
+            }
+            if (e.key === 'Tab') {
+                const gameInstance = gameCanvasRef.current?.getGameInstance();
+                if (gameInstance?.gameMode === 'freeplay' && (uiState === 'playing' || isSandboxModalOpen)) {
+                    e.preventDefault();
+                    setIsSandboxModalOpen(prev => !prev);
+                }
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isSandboxModalOpen, handleNextWaveStart, keybindings.viewUpgrades, resumeGame, setIsSettingsOpen, setIsInfoOpen, setIsUpgradeModalOpen, setIsSandboxModalOpen, setBetweenWaveCountdown, setUiState, setIsUpgradeOverviewOpen]);
+
+    const playHoverSound = () => soundManager.play(SoundType.ButtonHover);
 
     const renderUIState = () => {
         switch (uiState) {
@@ -39,8 +164,8 @@ export default function Home() {
                     highScore={highScore}
                     onPlay={handlePlayClick}
                     onSandbox={() => startNewRun('freeplay')}
-                    onSettings={() => { soundManager.play(SoundType.ButtonClick); setIsSettingsOpen(true); }}
-                    onInfo={() => { soundManager.play(SoundType.ButtonClick); setIsInfoOpen(true); }}
+                    onSettings={openSettingsModal}
+                    onInfo={openInfoModal}
                     onReset={handleResetData}
                     playHoverSound={playHoverSound}
                 />;
@@ -70,10 +195,10 @@ export default function Home() {
                     totalUpgradesToSelect={totalUpgradesToSelect}
                     gameCanvasRef={gameCanvasRef}
                     onResume={resumeGame}
-                    onSettings={() => { soundManager.play(SoundType.ButtonClick); setIsSettingsOpen(true); }}
+                    onSettings={openSettingsModal}
                     onQuit={quitToMenu}
                     onChooseUpgrades={() => openUpgradeSelection(gameStoreState.isBossWave)}
-                    onStartNextWave={handlePlayClick}
+                    onStartNextWave={handleNextWaveStart}
                     playHoverSound={playHoverSound}
                 />;
             case 'gameOver':
@@ -97,7 +222,7 @@ export default function Home() {
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
                 keybindings={keybindings}
-                onKeybindingsChange={setKeybindings}
+                onKeybindingsChange={handleKeybindingsChange}
                 volume={volume}
                 isMuted={isMuted}
                 areToastsEnabled={areToastsEnabled}

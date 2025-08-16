@@ -9,7 +9,7 @@ import { SavedGameState } from '../../core/save-state';
 import { UpgradesOverviewModal } from '../upgrades-overview-modal';
 import { PauseMenu } from './PauseMenu';
 import { BetweenWavesUI } from './BetweenWavesUI';
-import { GameCanvasHandle } from '../../hooks/useGameManager';
+import { GameCanvasHandle } from '../../hooks/useGameSession';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
