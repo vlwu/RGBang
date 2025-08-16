@@ -229,6 +229,20 @@ export default function Home() {
         };
     }, [loadInitialData, updateCanvasSize]);
 
+    // Autosave when a wave is completed
+    useEffect(() => {
+        const gameInstance = gameCanvasRef.current?.getGameInstance();
+        if (gameStoreState.isBetweenWaves && uiState === 'betweenWaves' && gameInstance) {
+            if (gameInstance.gameMode === 'normal') {
+                const stateToSave = gameInstance.getCurrentState();
+                if (stateToSave.score > 0) {
+                    saveGameState(stateToSave);
+                }
+            }
+        }
+    }, [gameStoreState.isBetweenWaves, uiState]);
+
+
     useEffect(() => {
         const handleBeforeUnload = () => {
             const gameInstance = gameCanvasRef.current?.getGameInstance();

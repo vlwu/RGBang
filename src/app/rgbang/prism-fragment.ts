@@ -2,30 +2,31 @@ import { Vec2, lerp } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 import { Player } from './player';
 import { ParticleSystem } from './particle';
+import { FRAGMENT_CONFIG } from './gameConfig';
 
 export class PrismFragment {
     pos: Vec2;
-    radius = 8;
+    radius = FRAGMENT_CONFIG.RADIUS;
     isAlive = true;
     color: GameColor | null;
     hexColor: string;
 
-    private attractRadius = 100;
-    private attractSpeed = 0.08;
+    private attractRadius = FRAGMENT_CONFIG.ATTRACT_RADIUS;
+    private attractSpeed = FRAGMENT_CONFIG.ATTRACT_SPEED;
     private canAttract = false;
-    private initialDelay = 30;
+    private initialDelay = FRAGMENT_CONFIG.INITIAL_DELAY_FRAMES;
 
     private angle = Math.random() * Math.PI * 2;
     private rotationSpeed = (Math.random() - 0.5) * 0.1;
 
     private lifespan: number;
-    private readonly maxLifespan = 300; // 5 seconds * 60 frames/second
+    private readonly maxLifespan = FRAGMENT_CONFIG.MAX_LIFESPAN_FRAMES;
 
     constructor(x: number, y: number, color: GameColor | null) {
         this.pos = new Vec2(x, y);
         this.color = color;
         this.hexColor = color ? COLOR_DETAILS[color].hex : '#FFFFFF';
-        this.lifespan = this.maxLifespan; // Initialize lifespan
+        this.lifespan = this.maxLifespan;
     }
 
     update(player: Player, particles: ParticleSystem) {
@@ -33,11 +34,11 @@ export class PrismFragment {
 
         this.initialDelay--;
         this.angle += this.rotationSpeed;
-        this.lifespan--; // Decrement lifespan
+        this.lifespan--;
 
-        if (this.lifespan <= 0) { // Check if lifespan expired
+        if (this.lifespan <= 0) {
             this.isAlive = false;
-            return; // No need to continue updating if not alive
+            return;
         }
 
         if (this.initialDelay <= 0) {
@@ -62,7 +63,7 @@ export class PrismFragment {
         ctx.save();
 
         const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
-        ctx.globalAlpha = Math.max(0, this.lifespan / this.maxLifespan); // Fade out towards end of life
+        ctx.globalAlpha = Math.max(0, this.lifespan / this.maxLifespan);
 
         ctx.shadowColor = this.hexColor;
         ctx.shadowBlur = 10 + pulse * 10;

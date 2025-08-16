@@ -1,6 +1,7 @@
 import { Vec2 } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 import { ObjectPool } from './utils';
+import { PARTICLE_CONFIG } from './gameConfig';
 
 interface IParticle {
     pos: Vec2;
@@ -302,7 +303,7 @@ class ExplosionRippleParticle implements IParticle {
     constructor(pos: Vec2, maxRadius: number) {
         this.pos = new Vec2(pos.x, pos.y);
         this.vel = new Vec2(0, 0);
-        this.maxLifespan = this.lifespan = 45;
+        this.maxLifespan = this.lifespan = PARTICLE_CONFIG.EXPLOSION_RIPPLE_LIFESPAN;
         this.radius = 0;
         this.maxRadius = maxRadius;
     }
@@ -310,7 +311,7 @@ class ExplosionRippleParticle implements IParticle {
     reset(pos: Vec2, maxRadius: number) {
         this.pos.x = pos.x;
         this.pos.y = pos.y;
-        this.maxLifespan = this.lifespan = 45;
+        this.maxLifespan = this.lifespan = PARTICLE_CONFIG.EXPLOSION_RIPPLE_LIFESPAN;
         this.radius = 0;
         this.maxRadius = maxRadius;
         this.isActive = true;
@@ -351,7 +352,7 @@ class ExplosionRippleParticle implements IParticle {
 
 export class ParticleSystem {
     particles: IParticle[] = [];
-    private readonly MAX_PARTICLES = 500;
+    private readonly MAX_PARTICLES = PARTICLE_CONFIG.MAX_PARTICLES;
 
     private particlePool: ObjectPool<Particle>;
     private dashParticlePool: ObjectPool<DashParticle>;

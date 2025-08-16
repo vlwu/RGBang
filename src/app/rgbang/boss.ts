@@ -2,6 +2,7 @@ import { Vec2, lerp, drawShapeForColor } from './utils';
 import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
 import { Bullet } from './bullet';
 import { SoundManager, SoundType } from './sound-manager';
+import { BOSS_CONFIG } from './gameConfig';
 
 enum BossState {
     IDLE,
@@ -11,7 +12,7 @@ enum BossState {
 
 export class Boss {
     pos: Vec2;
-    radius = 40;
+    radius = BOSS_CONFIG.RADIUS;
     health: number;
     maxHealth: number;
     color: GameColor;
@@ -27,14 +28,14 @@ export class Boss {
 
 
     private colorChangeTimer = 0;
-    private readonly colorChangeInterval = 240;
+    private readonly colorChangeInterval = BOSS_CONFIG.COLOR_CHANGE_INTERVAL;
 
     private stateTimer = 0;
-    private readonly idleTime = 45;
-    private readonly telegraphTime = 90;
+    private readonly idleTime = BOSS_CONFIG.IDLE_TIME_FRAMES;
+    private readonly telegraphTime = BOSS_CONFIG.TELEGRAPH_TIME_FRAMES;
 
     private targetPos: Vec2;
-    private moveSpeed = 0.1;
+    private moveSpeed = BOSS_CONFIG.MOVE_SPEED;
 
     private attackTimer = 0;
     private readonly attackInterval: number;
@@ -211,7 +212,7 @@ export class Boss {
 
         ctx.restore();
 
-        // Health Bar
+
         const barWidth = this.radius * 2.5;
         const barHeight = 12;
         const barX = this.pos.x - barWidth / 2;
@@ -234,7 +235,7 @@ export class Boss {
         ctx.lineWidth = 1.5;
         ctx.strokeRect(barX, barY, barWidth, barHeight);
 
-        // Health Text
+
         ctx.fillStyle = 'white';
         ctx.font = 'bold 10px "Space Grotesk"';
         ctx.textAlign = 'center';
@@ -242,7 +243,7 @@ export class Boss {
         ctx.shadowColor = 'black';
         ctx.shadowBlur = 4;
         ctx.fillText(`${Math.round(this.health)} / ${this.maxHealth}`, this.pos.x, barY + barHeight / 2 + 1);
-        
+
         ctx.restore();
     }
 }

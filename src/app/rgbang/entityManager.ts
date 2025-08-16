@@ -6,6 +6,7 @@ import { Player } from './player';
 import { GameColor } from './color';
 import { Vec2, ObjectPool } from './utils';
 import { ParticleSystem } from './particle';
+import { IActionCallbacks, IVortex } from './types';
 
 export class EntityManager {
     public enemies: Enemy[] = [];
@@ -75,8 +76,8 @@ export class EntityManager {
         player: Player,
         canvasWidth: number,
         canvasHeight: number,
-        vortexes: any[],
-        actionCallbacks: any
+        vortexes: IVortex[],
+        actionCallbacks: IActionCallbacks
     ): void {
         this.bullets.forEach(bullet => {
             if (bullet.isActive) bullet.update(this.enemies, canvasWidth, canvasHeight);

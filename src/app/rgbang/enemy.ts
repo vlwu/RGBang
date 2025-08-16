@@ -4,6 +4,8 @@ import { Player } from './player';
 import { ParticleSystem } from './particle';
 import { Bullet } from './bullet';
 import { SoundManager, SoundType } from './sound-manager';
+import { ENEMY_CONFIG } from './gameConfig';
+import { IActionCallbacks, IVortex } from './types';
 
 export enum PunishmentType {
     SPEED_BOOST = 'SPEED_BOOST',
@@ -16,11 +18,6 @@ enum EnemyState {
     CHASING,
     TELEGRAPHING_ATTACK,
     ATTACKING,
-}
-
-interface ActionCallbacks {
-    dealAreaDamage: (pos: Vec2, radius: number, damage: number, color: GameColor) => void;
-    createSlowField: (pos: Vec2, radius: number, lifespan: number) => void;
 }
 
 export class Enemy {
@@ -58,7 +55,7 @@ export class Enemy {
     private wrongHitCounter = 0;
     public activePunishment: PunishmentType | null = null;
     private punishmentTimer = 0;
-    private readonly punishmentDuration = 300;
+    private readonly punishmentDuration = ENEMY_CONFIG.PUNISHMENT_DURATION_FRAMES;
 
     public isReflecting = false;
 
@@ -71,9 +68,9 @@ export class Enemy {
 
     private isChromaSentinel = false;
     private colorShiftTimer = 0;
-    private readonly colorShiftInterval = 120;
+    private readonly colorShiftInterval = ENEMY_CONFIG.CHROMA_SENTINEL_SHIFT_INTERVAL;
     private colorShiftImmunityTimer = 0;
-    private readonly colorShiftImmunityDuration = 60;
+    private readonly colorShiftImmunityDuration = ENEMY_CONFIG.CHROMA_SENTINEL_IMMUNITY_DURATION;
 
     private state: EnemyState = EnemyState.CHASING;
     private stateTimer = 0;
@@ -99,7 +96,7 @@ export class Enemy {
         }
     }
 
-    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem, vortexes: {pos: Vec2, radius: number, strength: number}[], actionCallbacks: ActionCallbacks): Bullet | null {
+    update(player: Player, allEnemies: Enemy[], particles: ParticleSystem, vortexes: IVortex[], actionCallbacks: IActionCallbacks): Bullet | null {
         if (!this.isAlive) return null;
 
         if (this.activePunishment) {
@@ -141,13 +138,13 @@ export class Enemy {
         return this.runStateMachine(player, particles, actionCallbacks);
     }
 
-    private runStateMachine(player: Player, particles: ParticleSystem, actionCallbacks: ActionCallbacks): Bullet | null {
+    private runStateMachine(player: Player, particles: ParticleSystem, actionCallbacks: IActionCallbacks): Bullet | null {
         switch (this.state) {
             case EnemyState.CHASING:
                 this.move(player);
                 if (this.stateTimer <= 0) {
                     this.state = EnemyState.TELEGRAPHING_ATTACK;
-                    this.stateTimer = 90;
+                    this.stateTimer = ENEMY_CONFIG.TELEGRAPH_TIME_FRAMES;
                     this.attackTargetPos = new Vec2(player.pos.x, player.pos.y);
                 }
                 break;
@@ -155,7 +152,7 @@ export class Enemy {
             case EnemyState.TELEGRAPHING_ATTACK:
                 if (this.stateTimer <= 0) {
                     this.state = EnemyState.ATTACKING;
-                    this.stateTimer = 30;
+                    this.stateTimer = ENEMY_CONFIG.ATTACK_TIME_FRAMES;
                 }
                 break;
 
@@ -163,7 +160,7 @@ export class Enemy {
                 const newBullet = this.performAttack(player, particles, actionCallbacks);
                 if (this.stateTimer <= 0) {
                     this.state = EnemyState.CHASING;
-                    this.stateTimer = 180 + Math.random() * 120;
+                    this.stateTimer = ENEMY_CONFIG.BASE_CHASE_TIME_FRAMES + Math.random() * 120;
                     this.attackTargetPos = null;
                 }
                 return newBullet;
@@ -192,7 +189,7 @@ export class Enemy {
         this.pos.addInPlace(direction.scale(this.speed));
     }
 
-    private performAttack(player: Player, particles: ParticleSystem, actionCallbacks: ActionCallbacks): Bullet | null {
+    private performAttack(player: Player, particles: ParticleSystem, actionCallbacks: IActionCallbacks): Bullet | null {
         switch (this.color) {
             case GameColor.RED:
             case GameColor.ORANGE:
@@ -277,7 +274,7 @@ export class Enemy {
             ctx.shadowBlur = 15 + pulse * 10;
 
             if (this.color === GameColor.GREEN && this.attackTargetPos) {
-                const telegraphProgress = 1 - (this.stateTimer / 90);
+                const telegraphProgress = 1 - (this.stateTimer / ENEMY_CONFIG.TELEGRAPH_TIME_FRAMES);
                 const radius = 100 * telegraphProgress;
                 ctx.strokeStyle = `rgba(102, 255, 140, ${0.2 + telegraphProgress * 0.5})`;
                 ctx.fillStyle = `rgba(102, 255, 140, ${0.1 * telegraphProgress})`;

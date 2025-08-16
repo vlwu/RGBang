@@ -1,11 +1,12 @@
 import { Vec2, drawShapeForColor } from './utils';
 import { GameColor, COLOR_DETAILS } from './color';
 import { Enemy } from './enemy';
+import { BULLET_CONFIG } from './gameConfig';
 
 export class Bullet {
     pos: Vec2;
     vel: Vec2;
-    radius = 5;
+    radius = BULLET_CONFIG.DEFAULT_RADIUS;
     color: GameColor;
     hexColor: string;
     damage = 10;
@@ -27,9 +28,9 @@ export class Bullet {
 
     public hitEnemies: Set<Enemy> = new Set();
     public trailPoints: Vec2[] = [];
-    private trailLength = 15;
+    private trailLength = BULLET_CONFIG.TRAIL_LENGTH;
 
-    private seekForce = 0.3;
+    private seekForce = BULLET_CONFIG.SEEK_FORCE;
 
     constructor(pos: Vec2, direction: Vec2, color: GameColor, isFromBoss = false) {
         this.pos = new Vec2(pos.x, pos.y);
@@ -37,13 +38,13 @@ export class Bullet {
         this.color = color;
         this.hexColor = COLOR_DETAILS[color].hex;
         this.isFromBoss = isFromBoss;
-        if(isFromBoss) this.radius = 8;
-        this.lifespan = isFromBoss ? 420 : 300;
+        if(isFromBoss) this.radius = BULLET_CONFIG.BOSS_RADIUS;
+        this.lifespan = isFromBoss ? BULLET_CONFIG.BOSS_LIFESPAN_FRAMES : BULLET_CONFIG.DEFAULT_LIFESPAN_FRAMES;
     }
 
     reset() {
         this.isActive = true;
-        this.lifespan = 300;
+        this.lifespan = BULLET_CONFIG.DEFAULT_LIFESPAN_FRAMES;
         this.isRicochet = false;
 
         this.penetrationsLeft = 0;
