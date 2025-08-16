@@ -45,7 +45,7 @@ const DialogContent = React.forwardRef<
       {...props}
     >
         <div className="border-liquid-glass h-full">
-            <div className="border-liquid-glass-content p-6">
+            <div className="border-liquid-glass-content p-6 h-full flex flex-col">
                 {children}
             </div>
         </div>
