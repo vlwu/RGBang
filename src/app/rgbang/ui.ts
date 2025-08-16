@@ -218,15 +218,15 @@ export class UI {
     }
 
     private drawDashCooldownBar(player: Player) {
-        const boxSize = 50;
-        const spacing = 12;
-        const hotbarTotalWidth = (boxSize + spacing) * ALL_COLORS.length - spacing;
-        const barWidth = hotbarTotalWidth;
-        const barHeight = 12;
-        const borderRadius = 6;
+        const hotbarBoxSize = 50;
+        const hotbarSpacing = 15;
+        const barWidth = (hotbarBoxSize + hotbarSpacing) * PRIMARY_COLORS.length - hotbarSpacing;
+        const barHeight = 10;
+        const borderRadius = 5;
 
+        const hotbarY = this.canvas.height - hotbarBoxSize - 30;
         const x = (this.canvas.width - barWidth) / 2;
-        const y = this.canvas.height - boxSize - 20 - spacing - barHeight;
+        const y = hotbarY - 12 - barHeight;
 
         this.ctx.save();
 
@@ -288,12 +288,12 @@ export class UI {
     }
 
     private drawHotbar(player: Player) {
-        const boxSize = 60;
-        const spacing = 18;
+        const boxSize = 50;
+        const spacing = 15;
         const totalWidth = (boxSize + spacing) * PRIMARY_COLORS.length - spacing;
         const startX = (this.canvas.width - totalWidth) / 2;
-        const y = this.canvas.height - boxSize - 40;
-        const borderRadius = 15;
+        const y = this.canvas.height - boxSize - 30;
+        const borderRadius = 12;
 
         this.ctx.save();
 
@@ -332,13 +332,13 @@ export class UI {
             const shapePos = new Vec2(x + boxSize / 2, y + boxSize / 2);
 
             this.ctx.beginPath();
-            this.ctx.arc(shapePos.x, shapePos.y, boxSize * 0.35, 0, Math.PI * 2);
+            this.ctx.arc(shapePos.x, shapePos.y, boxSize * 0.4, 0, Math.PI * 2);
             this.ctx.fillStyle = detail.hex;
             this.ctx.shadowColor = detail.hex;
             this.ctx.shadowBlur = 15;
             this.ctx.fill();
 
-            drawShapeForColor(this.ctx, shapePos, boxSize * 0.6, color, 'rgba(0,0,0,0.8)');
+            drawShapeForColor(this.ctx, shapePos, boxSize * 0.7, color, 'rgba(0,0,0,0.8)');
 
             if (isHighlighted) {
                 const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
@@ -360,13 +360,13 @@ export class UI {
             this.ctx.globalAlpha = alpha * 0.9;
             this.ctx.shadowColor = 'black';
             this.ctx.shadowBlur = 5;
-            this.ctx.fillText(detail.key, x + boxSize / 2, y + boxSize + 20);
+            this.ctx.fillText(detail.key, x + boxSize / 2, y + boxSize + 15);
 
             this.ctx.restore();
         });
 
         if (currentIsSecondary) {
-            const iconSize = 35;
+            const iconSize = 30;
             const iconY = y - 30;
             const iconX = this.canvas.width / 2;
             this.ctx.save();
