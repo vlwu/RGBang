@@ -213,7 +213,8 @@ export default function Home() {
         upgradeDataRef.current = data;
 
         const savedKeybindings = localStorage.getItem('rgBangKeybindings');
-        const currentKeybindings = savedKeybindings ? JSON.parse(savedKeybindings) : defaultKeybindings;
+        const loadedBindings = savedKeybindings ? JSON.parse(savedKeybindings) : {};
+        const currentKeybindings = { ...defaultKeybindings, ...loadedBindings };
         setKeybindings(currentKeybindings);
         inputHandlerRef.current.setKeybindings(currentKeybindings);
         setUiState('menu');
