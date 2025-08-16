@@ -46,7 +46,7 @@ export default function Home() {
     } = useGameSession({ savedGame, highScore, setHighScore, loadInitialData, upgradesRemainingToSelect: 0 });
 
     const {
-        gameStoreState, nextWaveHint, betweenWaveCountdown, setBetweenWaveCountdown,
+        gameStoreState, nextWaveHint, betweenWaveCountdown,
         upgradesRemainingToSelect, setUpgradesRemainingToSelect, totalUpgradesToSelect,
         openUpgradeSelection, handleNextWaveStart
     } = useGameEvents({ uiState, setUiState, gameCanvasRef, setHighScore, highScore, setIsUpgradeModalOpen, setUpgradeOptions, upgradeDataRef });
@@ -86,7 +86,7 @@ export default function Home() {
             const newCount = prev - 1;
             if (newCount <= 0) {
                 setIsUpgradeModalOpen(false);
-                setBetweenWaveCountdown(15);
+                gameStateStore.updateState({ betweenWaveCountdown: 15 });
                 setUiState('betweenWaves');
             } else {
                 const isBossWaveRecentlyCompleted = (gameStoreState.currentWave % 5 === 0);
@@ -94,7 +94,7 @@ export default function Home() {
             }
             return newCount;
         });
-    }, [applySingleUpgrade, gameCanvasRef, setIsUpgradeModalOpen, setUiState, setUpgradesRemainingToSelect, setBetweenWaveCountdown, gameStoreState.currentWave, openUpgradeSelection]);
+    }, [applySingleUpgrade, gameCanvasRef, setIsUpgradeModalOpen, setUiState, setUpgradesRemainingToSelect, gameStoreState.currentWave, openUpgradeSelection]);
 
     const handleChooseOneRandomly = useCallback(() => {
         if (upgradeOptions.length > 0) {
@@ -134,9 +134,9 @@ export default function Home() {
         }
 
         setUpgradesRemainingToSelect(0);
-        setBetweenWaveCountdown(15);
+        gameStateStore.updateState({ betweenWaveCountdown: 15 });
         setUiState('betweenWaves');
-    }, [upgradesRemainingToSelect, upgradeOptions, gameStoreState.isBossWave, gameCanvasRef, applySingleUpgrade, setIsUpgradeModalOpen, setBetweenWaveCountdown, setUiState, setUpgradesRemainingToSelect, upgradeDataRef]);
+    }, [upgradesRemainingToSelect, upgradeOptions, gameStoreState.isBossWave, gameCanvasRef, applySingleUpgrade, setIsUpgradeModalOpen, setUiState, setUpgradesRemainingToSelect, upgradeDataRef]);
 
     const handleContextMenu = (e: React.MouseEvent) => {
         if (uiState !== 'menu' && uiState !== 'continuePrompt' && uiState !== 'gameOver') {
@@ -175,7 +175,7 @@ export default function Home() {
                 else if (isInfoOpen) setIsInfoOpen(false);
                 else if (isUpgradeModalOpen) {
                     setIsUpgradeModalOpen(false);
-                    setBetweenWaveCountdown(15);
+                    gameStateStore.updateState({ betweenWaveCountdown: 15 });
                     setUiState('betweenWaves');
                     soundManager.play(SoundType.GamePause);
                 }
@@ -200,7 +200,7 @@ export default function Home() {
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isSandboxModalOpen, handleNextWaveStart, keybindings.viewUpgrades, resumeGame, setIsSettingsOpen, setIsInfoOpen, setIsUpgradeModalOpen, setIsSandboxModalOpen, setBetweenWaveCountdown, setUiState, setIsUpgradeOverviewOpen]);
+    }, [uiState, isSettingsOpen, isInfoOpen, isUpgradeModalOpen, isSandboxModalOpen, handleNextWaveStart, keybindings.viewUpgrades, resumeGame, setIsSettingsOpen, setIsInfoOpen, setIsUpgradeModalOpen, setIsSandboxModalOpen, setUiState, setIsUpgradeOverviewOpen]);
 
     const playHoverSound = () => soundManager.play(SoundType.ButtonHover);
 
@@ -252,7 +252,12 @@ export default function Home() {
                 return <GameOverScreen
                     finalScore={gameStoreState.score}
                     highScore={highScore}
-                    onBackToMenu={() => { soundManager.play(SoundType.ButtonClick); gameStateStore.resetState(); loadInitialData(); }}
+                    onBackToMenu={() => { 
+                        soundManager.play(SoundType.ButtonClick); 
+                        gameStateStore.resetState(); 
+                        loadInitialData(); 
+                        setUiState('menu'); 
+                    }}
                     playHoverSound={playHoverSound}
                 />;
             default:
