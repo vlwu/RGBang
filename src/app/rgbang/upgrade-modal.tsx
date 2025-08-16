@@ -82,7 +82,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
             className={cn(
                 "border-liquid-glass group/wrapper transition-all duration-300",
                 isSelectable
-                    ? "cursor-pointer hover:-translate-y-2 hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
+                    ? "cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-primary/20"
                     : "opacity-60 cursor-not-allowed"
             )}
             onClick={() => {

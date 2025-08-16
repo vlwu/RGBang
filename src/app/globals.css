@@ -95,7 +95,6 @@
     }
     .btn-liquid-glass:hover {
         @apply shadow-lg shadow-primary/20;
-        transform: translateY(-2px);
     }
     .btn-liquid-primary {
         @apply text-background;
