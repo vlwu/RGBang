@@ -157,7 +157,7 @@ export function UpgradeModal({ isOpen, options, onSelect, upgradeData, runUpgrad
     return (
         <Dialog open={isOpen}>
             <DialogContent
-                className="sm:max-w-4xl h-[580px] flex flex-col bg-background/90 backdrop-blur-lg border-primary/20 text-foreground"
+                className="sm:max-w-4xl h-[500px] flex flex-col bg-background/90 backdrop-blur-lg border-primary/20 text-foreground"
                 hideCloseButton={true}
             >
                 <DialogHeader className="px-6 pt-6">
