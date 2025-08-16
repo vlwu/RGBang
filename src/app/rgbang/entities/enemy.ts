@@ -143,9 +143,14 @@ export class Enemy {
             case EnemyState.CHASING:
                 this.move(player);
                 if (this.stateTimer <= 0) {
-                    this.state = EnemyState.TELEGRAPHING_ATTACK;
-                    this.stateTimer = ENEMY_CONFIG.TELEGRAPH_TIME_FRAMES;
-                    this.attackTargetPos = new Vec2(player.pos.x, player.pos.y);
+                    const isDashingEnemy = this.color === GameColor.RED || this.color === GameColor.ORANGE;
+                    const inRangeForDash = isDashingEnemy && distance(this, player) < 300;
+
+                    if (!isDashingEnemy || inRangeForDash) {
+                        this.state = EnemyState.TELEGRAPHING_ATTACK;
+                        this.stateTimer = ENEMY_CONFIG.TELEGRAPH_TIME_FRAMES;
+                        this.attackTargetPos = new Vec2(player.pos.x, player.pos.y);
+                    }
                 }
                 break;
 
