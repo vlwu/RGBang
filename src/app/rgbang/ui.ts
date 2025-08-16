@@ -1,9 +1,10 @@
 import { Player } from './player';
 import { GameColor, COLOR_DETAILS, ALL_COLORS, PRIMARY_COLORS, isSecondaryColor } from './color';
 import { Boss } from './boss';
-import { roundRect, drawShapeForColor } from './utils';
+import { roundRect, drawShapeForColor, getKeyDisplay } from './utils';
 import { Vec2 } from './utils';
 import { Enemy } from './enemy';
+import InputHandler from './input-handler';
 
 export class UI {
     private canvas: HTMLCanvasElement;
@@ -40,7 +41,7 @@ export class UI {
     }
 
 
-    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemies: Enemy[], currentWaveCountdown: number, isBetweenWaves: boolean, isFreeplay: boolean = false) {
+    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemies: Enemy[], currentWaveCountdown: number, isBetweenWaves: boolean, isFreeplay: boolean = false, inputHandler?: InputHandler) {
         const liveEnemies = enemies.filter(e => e.isAlive);
 
         this.drawHealthBar(player);
@@ -62,17 +63,22 @@ export class UI {
             this.drawWaveCountdown(currentWaveCountdown);
         }
 
+        const controlsYStart = 60;
+        this.ctx.textAlign = 'left';
+
         if (isFreeplay) {
             this.drawText("SANDBOX MODE", 20, this.canvas.height - 40, 16, "rgba(255, 255, 255, 0.5)");
-
-            const controlsYStart = 60;
-            this.ctx.textAlign = 'left';
+            
             this.drawText("Sandbox Controls:", 20, controlsYStart, 16, "rgba(255, 255, 255, 0.7)");
             this.drawText("'O' - Spawn Enemy", 20, controlsYStart + 25, 14, "rgba(255, 255, 255, 0.6)");
             this.drawText("'P' - Open Upgrades", 20, controlsYStart + 45, 14, "rgba(255, 255, 255, 0.6)");
             this.drawText("'K' - Kill All Enemies", 20, controlsYStart + 65, 14, "rgba(255, 255, 255, 0.6)");
             this.drawText("'C' - Clear Bullets", 20, controlsYStart + 85, 14, "rgba(255, 255, 255, 0.6)");
             this.drawText("'Tab' - Control Panel", 20, controlsYStart + 105, 14, "rgba(255, 255, 255, 0.6)");
+        } else if (inputHandler) {
+            const keyDisplay = getKeyDisplay(inputHandler.keybindings.viewUpgrades);
+            const text = `'${keyDisplay}' - View Upgrades`;
+            this.drawText(text, 20, controlsYStart, 16, "rgba(255, 255, 255, 0.5)");
         }
     }
 

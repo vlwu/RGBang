@@ -275,7 +275,7 @@ export class Game {
         });
     }
 
-    public draw(currentWaveToDisplay: number, currentWaveCountdown: number, isBetweenWaves: boolean) {
+    public draw(currentWaveToDisplay: number, currentWaveCountdown: number, isBetweenWaves: boolean, inputHandler: InputHandler) {
         if (!this.ctx) return;
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         this.ctx.fillStyle = '#0A020F';
@@ -309,6 +309,6 @@ export class Game {
         this.entityManager.drawAll(this.ctx);
         this.player.draw(this.ctx);
 
-        this.ui.draw(this.player, this.score, this.entityManager.boss, currentWaveToDisplay, this.entityManager.enemies, currentWaveCountdown, isBetweenWaves, this.gameMode === 'freeplay');
+        this.ui.draw(this.player, this.score, this.entityManager.boss, currentWaveToDisplay, this.entityManager.enemies, currentWaveCountdown, isBetweenWaves, this.gameMode === 'freeplay', inputHandler);
     }
 }

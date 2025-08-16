@@ -76,7 +76,7 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
         gameEngine.update(inputHandler, isGamePausedRef.current);
 
         const { currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves } = drawParamsRef.current;
-        gameEngine.draw(currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves);
+        gameEngine.draw(currentWaveToDisplay, currentWaveCountdown, isGameBetweenWaves, inputHandler);
         inputHandler.resetEvents();
         animationFrameIdRef.current = requestAnimationFrame(gameLoop);
     }, [inputHandler]);

@@ -166,6 +166,18 @@ export function drawShapeForColor(ctx: CanvasRenderingContext2D, pos: Vec2, radi
     }
 }
 
+export function getKeyDisplay(key: string): string {
+    if (!key) return '';
+    if (key === ' ') return 'SPACE';
+    if (key.toLowerCase() === 'shift') return 'SHIFT';
+    if (key === 'tab') return 'TAB';
+    if (key === 'mouse0') return 'LMB';
+    if (key === 'mouse1') return 'MMB';
+    if (key === 'mouse2') return 'RMB';
+    if (key.startsWith('mouse')) return `MOUSE ${parseInt(key.slice(5), 10) + 1}`;
+    return key.toUpperCase();
+}
+
 export class ObjectPool<T extends { reset: (...args: any[]) => void; isActive: boolean }> {
     private pool: T[] = [];
     private createFn: () => T;
