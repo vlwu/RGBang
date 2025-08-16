@@ -130,6 +130,8 @@ interface SandboxGameManager {
     removeUpgrade: (upgradeId: string) => void;
     maxUpgrade: (upgradeId: string) => void;
     getRunUpgrades: () => Map<string, number>;
+    togglePlayerCollision: (enabled: boolean) => void;
+    getIsPlayerCollisionEnabled: () => boolean;
 }
 
 export default function Home() {
@@ -195,7 +197,7 @@ export default function Home() {
         const savedVolume = localStorage.getItem('rgBangVolume');
         const savedMute = localStorage.getItem('rgBangMuted');
         const currentVolume = savedVolume ? parseFloat(savedVolume) : 1.0;
-        const currentMute = savedMute ? JSON.parse(savedMute) : false;
+        const currentMute = savedVolume ? JSON.parse(savedVolume) : false;
         setVolume(currentVolume);
         setIsMuted(currentMute);
         soundManager.setMasterVolume(currentVolume);
@@ -547,7 +549,9 @@ export default function Home() {
                     addUpgrade: sm.addUpgrade.bind(sm),
                     removeUpgrade: sm.removeUpgrade.bind(sm),
                     maxUpgrade: sm.maxUpgrade.bind(sm),
-                    getRunUpgrades: () => gameStoreState.runUpgrades
+                    getRunUpgrades: () => gameStoreState.runUpgrades,
+                    togglePlayerCollision: sm.togglePlayerCollision.bind(sm),
+                    getIsPlayerCollisionEnabled: sm.getIsPlayerCollisionEnabled.bind(sm),
                 };
                 setSandboxManager(manager);
             }
@@ -659,7 +663,9 @@ export default function Home() {
                 addUpgrade: sm.addUpgrade.bind(sm),
                 removeUpgrade: sm.removeUpgrade.bind(sm),
                 maxUpgrade: sm.maxUpgrade.bind(sm),
-                getRunUpgrades: () => gameStoreState.runUpgrades
+                getRunUpgrades: () => gameStoreState.runUpgrades,
+                togglePlayerCollision: sm.togglePlayerCollision.bind(sm),
+                getIsPlayerCollisionEnabled: sm.getIsPlayerCollisionEnabled.bind(sm),
             };
             setSandboxManager(manager);
         } else {

@@ -23,6 +23,7 @@ export class SandboxManager {
     private waveManager: WaveManager;
     private soundManager: SoundManager;
     private canvas: HTMLCanvasElement;
+    public isPlayerCollisionEnabled: boolean = false;
 
     constructor(deps: SandboxManagerDependencies) {
         this.entityManager = deps.entityManager;
@@ -30,6 +31,14 @@ export class SandboxManager {
         this.waveManager = deps.waveManager;
         this.soundManager = deps.soundManager;
         this.canvas = deps.canvas;
+    }
+
+    public togglePlayerCollision(enabled: boolean): void {
+        this.isPlayerCollisionEnabled = enabled;
+    }
+
+    public getIsPlayerCollisionEnabled(): boolean {
+        return this.isPlayerCollisionEnabled;
     }
 
     public spawnEnemy(enemyType: EnemyType, colorOverride?: GameColor) {

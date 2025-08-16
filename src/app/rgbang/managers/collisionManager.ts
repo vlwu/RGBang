@@ -10,6 +10,7 @@ import { SoundManager, SoundType } from './sound-manager';
 import { EntityManager } from './entityManager';
 import { gameStateStore } from '../core/gameStateStore';
 import { WaveManager } from './waveManager';
+import { SandboxManager } from './sandboxManager';
 
 interface CollisionManagerDependencies {
     player: Player;
@@ -22,6 +23,7 @@ interface CollisionManagerDependencies {
     createBullet: (bullet: Bullet) => void;
     addScore: (amount: number) => void;
     waveManager: WaveManager;
+    sandboxManager: SandboxManager | null;
 }
 
 export class CollisionManager {
@@ -35,6 +37,7 @@ export class CollisionManager {
     private createBullet: (bullet: Bullet) => void;
     private addScore: (amount: number) => void;
     private waveManager: WaveManager;
+    private sandboxManager: SandboxManager | null;
 
     constructor(deps: CollisionManagerDependencies) {
         this.player = deps.player;
@@ -47,6 +50,7 @@ export class CollisionManager {
         this.createBullet = deps.createBullet;
         this.addScore = deps.addScore;
         this.waveManager = deps.waveManager;
+        this.sandboxManager = deps.sandboxManager;
     }
 
     public checkCollisions() {
@@ -56,7 +60,7 @@ export class CollisionManager {
 
             if (bullet.isFromBoss || bullet.isEnemyProjectile) {
                 if (this.player.isAlive && circleCollision(bullet, this.player)) {
-                    if (this.gameMode !== 'freeplay') {
+                    if (this.gameMode === 'normal' || (this.sandboxManager?.isPlayerCollisionEnabled)) {
                         this.player.takeDamage(bullet.damage);
                         if (bullet.slowsPlayer) {
                             this.player.applySlow(180);
@@ -145,7 +149,7 @@ export class CollisionManager {
 
         for (const enemy of this.entityManager.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
-                if (this.gameMode !== 'freeplay') {
+                if (this.gameMode === 'normal' || (this.sandboxManager?.isPlayerCollisionEnabled)) {
                     this.player.takeDamage(enemy.damage);
                     this.player.applyKnockback(enemy.pos, 10);
                 }
@@ -157,7 +161,7 @@ export class CollisionManager {
 
         const boss = this.entityManager.boss;
         if (boss && boss.isAlive && this.player.isAlive && circleCollision(this.player, boss)) {
-            if (this.gameMode !== 'freeplay') {
+            if (this.gameMode === 'normal' || (this.sandboxManager?.isPlayerCollisionEnabled)) {
                 this.player.takeDamage(boss.damage);
                 this.player.applyKnockback(boss.pos, 15);
             }

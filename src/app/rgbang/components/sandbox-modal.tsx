@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EnemyType } from '../data/wave-data';
 import { GameColor, PRIMARY_COLORS, getRandomElement } from '../data/color';
 import { ALL_UPGRADES, Upgrade } from '../data/upgrades';
@@ -33,6 +34,8 @@ interface SandboxModalProps {
         removeUpgrade: (upgradeId: string) => void;
         maxUpgrade: (upgradeId: string) => void;
         getRunUpgrades: () => Map<string, number>;
+        togglePlayerCollision: (enabled: boolean) => void;
+        getIsPlayerCollisionEnabled: () => boolean;
     };
     runUpgrades: Map<string, number>;
 }
@@ -72,6 +75,13 @@ const UpgradeControl = ({ upgrade, level, gameManager }: { upgrade: Upgrade, lev
 export function SandboxModal({ isOpen, onClose, gameManager, runUpgrades }: SandboxModalProps) {
     const [selectedEnemy, setSelectedEnemy] = useState<EnemyType>(EnemyType.RED_BLOB);
     const [selectedColor, setSelectedColor] = useState<GameColor | 'random'>('random');
+    const [isPlayerCollisionEnabled, setIsPlayerCollisionEnabled] = useState(gameManager.getIsPlayerCollisionEnabled());
+
+    useEffect(() => {
+        if (isOpen) {
+            setIsPlayerCollisionEnabled(gameManager.getIsPlayerCollisionEnabled());
+        }
+    }, [isOpen, gameManager]);
 
     const enemyTypes = useMemo(() => Object.values(EnemyType).filter(type => type !== EnemyType.MINI_BOSS_1 && type !== EnemyType.MAIN_BOSS_1), []);
 
@@ -83,7 +93,13 @@ export function SandboxModal({ isOpen, onClose, gameManager, runUpgrades }: Sand
         const color = selectedColor === 'random' ? getRandomElement(PRIMARY_COLORS) : selectedColor;
         gameManager.spawnEnemy(selectedEnemy, color);
     }
-    
+
+    const handleToggleCollision = (enabled: boolean) => {
+        playClick();
+        gameManager.togglePlayerCollision(enabled);
+        setIsPlayerCollisionEnabled(enabled);
+    }
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col bg-background/95 backdrop-blur-sm text-foreground">
@@ -107,6 +123,19 @@ export function SandboxModal({ isOpen, onClose, gameManager, runUpgrades }: Sand
                                 <CardContent className="space-y-4">
                                     <Button onClick={() => { playClick(); gameManager.killAllEnemies(); }} onMouseEnter={playHover} className="w-full">Kill All Enemies</Button>
                                     <Button onClick={() => { playClick(); gameManager.clearAllBullets(); }} onMouseEnter={playHover} className="w-full">Clear All Bullets</Button>
+                                    <div className="flex items-center space-x-2 pt-2">
+                                        <Checkbox
+                                            id="player-collision"
+                                            checked={isPlayerCollisionEnabled}
+                                            onCheckedChange={(checked) => handleToggleCollision(Boolean(checked))}
+                                        />
+                                        <label
+                                            htmlFor="player-collision"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                        >
+                                            Enable Player Collision
+                                        </label>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </TabsContent>

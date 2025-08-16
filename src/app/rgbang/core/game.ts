@@ -61,19 +61,6 @@ export class Game {
         this.entityManager = new EntityManager(this.particles, this.createVortex);
         this.waveManager = new WaveManager(canvas.width, canvas.height, this.soundManager, this.entityManager);
 
-        this.collisionManager = new CollisionManager({
-            player: this.player,
-            entityManager: this.entityManager,
-            waveManager: this.waveManager,
-            quadtree: this.quadtree,
-            particles: this.particles,
-            soundManager: this.soundManager,
-            gameMode: this.gameMode,
-            dealAreaDamage: this.dealAreaDamage.bind(this),
-            createBullet: this.createBullet.bind(this),
-            addScore: this.addScore.bind(this)
-        });
-
         if (this.gameMode === 'freeplay') {
             this.sandboxManager = new SandboxManager({
                 entityManager: this.entityManager,
@@ -85,6 +72,20 @@ export class Game {
         } else {
             this.sandboxManager = null;
         }
+
+        this.collisionManager = new CollisionManager({
+            player: this.player,
+            entityManager: this.entityManager,
+            waveManager: this.waveManager,
+            quadtree: this.quadtree,
+            particles: this.particles,
+            soundManager: this.soundManager,
+            gameMode: this.gameMode,
+            dealAreaDamage: this.dealAreaDamage.bind(this),
+            createBullet: this.createBullet.bind(this),
+            addScore: this.addScore.bind(this),
+            sandboxManager: this.sandboxManager
+        });
 
         this.score = initialState.score;
         this.player.health = initialState.playerHealth;
