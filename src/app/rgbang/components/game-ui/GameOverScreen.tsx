@@ -12,7 +12,7 @@ type GameOverScreenProps = {
 
 export function GameOverScreen({ finalScore, highScore, onBackToMenu, playHoverSound }: GameOverScreenProps) {
     return (
-        <div className="flex flex-col items-center text-center space-y-6 animate-fade-in">
+        <div className="flex flex-col items-center text-center space-y-6 animate-fade-in select-none">
             <h2 className="text-7xl font-bold font-headline text-glow">Game Over</h2>
             <p className="text-4xl font-semibold">
                 Final Score: <span className="font-bold text-accent">{Math.round(finalScore)}</span>

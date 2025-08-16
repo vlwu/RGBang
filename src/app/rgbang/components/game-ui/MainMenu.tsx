@@ -26,7 +26,7 @@ type MainMenuProps = {
 
 export function MainMenu({ highScore, onPlay, onSandbox, onSettings, onInfo, onReset, playHoverSound }: MainMenuProps) {
     return (
-        <div className="flex flex-col items-center text-center space-y-8 animate-fade-in">
+        <div className="flex flex-col items-center text-center space-y-8 animate-fade-in select-none">
             <h1 className="text-8xl font-bold tracking-tighter font-headline">
                 <span className="bg-gradient-to-r from-red-400 via-green-400 to-blue-500 bg-clip-text text-transparent">RGB</span>
                 <span>ang</span>

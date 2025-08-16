@@ -12,7 +12,7 @@ type PauseMenuProps = {
 
 export function PauseMenu({ onResume, onSettings, onQuit, playHoverSound }: PauseMenuProps) {
     return (
-        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20 select-none">
             <div className="absolute top-4 right-4">
                 <Button size="icon" variant="ghost" onClick={onResume} onMouseEnter={playHoverSound}>
                     <X />
