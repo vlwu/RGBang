@@ -70,6 +70,7 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
     const isFallback = upgrade.id.startsWith('fallback-');
     const displayLevel = isFallback ? 0 : runLevel;
     const maxLevel = upgrade.getMaxLevel();
+    const nextLevel = runLevel + 1;
 
     const handleMouseEnter = () => {
         if (isSelectable) {
@@ -106,7 +107,21 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
                     <CardTitle className="text-base font-bold text-primary">{upgrade.name}</CardTitle>
                 </CardHeader>
                 <CardContent className="flex-grow flex flex-col justify-between px-4 pb-4">
-                    <CardDescription className="mb-2 text-xs min-h-[3.75rem]">{upgrade.description}</CardDescription>
+                    <div>
+                        <CardDescription className="mb-2 text-xs min-h-[2.5rem]">{upgrade.description}</CardDescription>
+                        {!isFallback && upgrade.getEffectDescription && (
+                            <div className="text-xs text-left bg-black/20 p-2 rounded-md space-y-1 mb-2">
+                                {runLevel > 0 ? (
+                                    <p>Current: <span className="font-semibold text-accent">{upgrade.getEffectDescription(runLevel)}</span></p>
+                                ) : (
+                                    <p>Current: <span className="font-semibold text-muted-foreground">Not acquired</span></p>
+                                )}
+                                {nextLevel <= maxLevel && (
+                                    <p>Next Lvl: <span className="font-semibold text-primary">{upgrade.getEffectDescription(nextLevel)}</span></p>
+                                )}
+                            </div>
+                        )}
+                    </div>
                     {!isFallback && (
                         <div>
                             <div className="flex justify-center items-center mb-1">

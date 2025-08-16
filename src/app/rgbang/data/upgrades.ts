@@ -15,6 +15,7 @@ export interface Upgrade {
     id: string;
     name: string;
     description: string;
+    getEffectDescription?: (level: number) => string;
     type: UpgradeType;
     color: GameColor | null;
     apply: (player: Player, level: number, addScore?: (amount: number) => void) => void;
@@ -27,7 +28,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'max-health',
         name: 'Vitality Boost',
-        description: 'Increases maximum health by 20 per level.',
+        description: 'Increases your maximum health.',
+        getEffectDescription: (level) => `+${20 * level} Max HP`,
         type: UpgradeType.PLAYER_STAT,
         color: null,
         getMaxLevel: () => 5,
@@ -39,7 +41,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'dash-cooldown',
         name: 'Quick Dash',
-        description: 'Reduces dash cooldown by 8% per level.',
+        description: 'Reduces the cooldown of your dash ability.',
+        getEffectDescription: (level) => `${8 * level}% Cooldown Reduction`,
         type: UpgradeType.PLAYER_STAT,
         color: null,
         getMaxLevel: () => 5,
@@ -51,7 +54,8 @@ export const ALL_UPGRADES: Upgrade[] = [
      {
         id: 'movement-speed',
         name: 'Agility',
-        description: 'Increases movement speed by 5% per level.',
+        description: 'Increases your overall movement speed.',
+        getEffectDescription: (level) => `+${5 * level}% Movement Speed`,
         type: UpgradeType.PLAYER_STAT,
         color: null,
         getMaxLevel: () => 5,
@@ -63,7 +67,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'vampirism',
         name: 'Vampirism',
-        description: 'Heal for a small percentage of damage dealt.',
+        description: 'Heal for a percentage of the damage you deal.',
+        getEffectDescription: (level) => `${level * 2}% Lifesteal`,
         type: UpgradeType.PLAYER_STAT,
         color: null,
         getMaxLevel: () => 5,
@@ -76,6 +81,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         id: 'resilience',
         name: 'Resilience',
         description: 'Reduces all incoming damage by a flat amount.',
+        getEffectDescription: (level) => `-${level} Damage Taken`,
         type: UpgradeType.PLAYER_STAT,
         color: null,
         getMaxLevel: () => 5,
@@ -87,7 +93,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'adrenaline-rush',
         name: 'Adrenaline Rush',
-        description: 'After taking damage, gain a short burst of speed and fire rate.',
+        description: 'After taking damage, gain a burst of speed and fire rate.',
+        getEffectDescription: (level) => `+${level*12}% Speed/Fire Rate for ${2 + level}s`,
         type: UpgradeType.PLAYER_STAT,
         color: null,
         getMaxLevel: () => 5,
@@ -99,7 +106,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'kinetic-shielding',
         name: 'Kinetic Shielding',
-        description: 'Dashing grants a temporary shield that absorbs one hit.',
+        description: 'Dashing grants a temporary shield that absorbs hits.',
+        getEffectDescription: (level) => `Absorbs ${level} hit(s)`,
         type: UpgradeType.PLAYER_STAT,
         color: null,
         getMaxLevel: () => 5,
@@ -113,7 +121,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'bullet-damage',
         name: 'Power Shot',
-        description: 'Increases all bullet damage by 10% per level.',
+        description: 'Increases damage for all your projectiles.',
+        getEffectDescription: (level) => `+${10 * level}% Bullet Damage`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
@@ -125,7 +134,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'faster-reload',
         name: 'Quick Hands',
-        description: 'Increases fire rate by 10% per level.',
+        description: 'Increases fire rate for all weapons.',
+        getEffectDescription: (level) => `+${10 * level}% Fire Rate`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
@@ -137,7 +147,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'prism-exp-gain',
         name: 'Prism Magnetism',
-        description: 'Increases score gained from enemies by 20% per level.',
+        description: 'Increases score gained from defeating enemies.',
+        getEffectDescription: (level) => `+${20 * level}% Score Gain`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
@@ -149,7 +160,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'accuracy',
         name: 'Focus',
-        description: 'Improves bullet accuracy by 15% per level.',
+        description: 'Improves bullet accuracy by reducing spread.',
+        getEffectDescription: (level) => `+${15 * level}% Accuracy`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
@@ -161,7 +173,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'fragment-duplication',
         name: 'Fragment Duplication',
-        description: 'Enemies have a small chance to drop an extra fragment.',
+        description: 'Enemies have a chance to drop an extra fragment.',
+        getEffectDescription: (level) => `${level * 5}% Duplication Chance`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
@@ -173,7 +186,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'punishment-reversal',
         name: 'Punishment Reversal',
-        description: 'Wrong hits build a meter. When full, the next correct hit deals massive bonus damage.',
+        description: 'Wrong hits build a meter for a powerful counter-attack.',
+        getEffectDescription: (level) => `+${50 * level} Bonus Damage`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
@@ -185,7 +199,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'bullet-penetration',
         name: 'Bullet Penetration',
-        description: 'Your bullets have a chance to pierce through enemies.',
+        description: 'Your bullets can pierce through enemies.',
+        getEffectDescription: (level) => `Pierces ${level} enemy/ies`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
@@ -197,7 +212,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'explosive-finish',
         name: 'Explosive Finish',
-        description: 'Enemies have a chance to explode on death, damaging nearby foes.',
+        description: 'Enemies have a chance to explode on death.',
+        getEffectDescription: (level) => `${level*10}% chance for AoE`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
@@ -211,7 +227,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'ice-spiker',
         name: 'Ice Spiker',
-        description: 'Increases the duration of the freeze effect from Blue bullets.',
+        description: 'Increases the freeze duration of Blue bullets.',
+        getEffectDescription: (level) => `+${level * 0.25}s Freeze Duration`,
         type: UpgradeType.GUN,
         color: GameColor.BLUE,
         getMaxLevel: () => 5,
@@ -221,7 +238,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'chain-lightning',
         name: 'Chain Lightning',
-        description: 'Increases the number of chains, range, and damage of the lightning from Yellow bullets.',
+        description: 'Improves the chain lightning from Yellow bullets.',
+        getEffectDescription: (level) => `+${level} chains, +${5*level} dmg, +${20*level} range`,
         type: UpgradeType.GUN,
         color: GameColor.YELLOW,
         getMaxLevel: () => 5,
@@ -231,7 +249,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'ricochet-rounds',
         name: 'Ricochet Rounds',
-        description: 'Yellow bullets bounce off surfaces and enemies.',
+        description: 'Allows Yellow bullets to bounce off surfaces.',
+        getEffectDescription: (level) => `Bounces ${level} time(s)`,
         type: UpgradeType.GUN,
         color: GameColor.YELLOW,
         getMaxLevel: () => 5,
@@ -243,7 +262,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'ignite',
         name: 'Ignite',
-        description: 'Increases the damage and duration of the fire effect from Red bullets.',
+        description: 'Improves the damage over time of Red bullets.',
+        getEffectDescription: (level) => `+${level} damage, +${0.5 * level}s duration`,
         type: UpgradeType.GUN,
         color: GameColor.RED,
         getMaxLevel: () => 5,
@@ -254,6 +274,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         id: 'seeking-shards',
         name: 'Seeking Shards',
         description: 'Red bullets slightly home-in on nearby targets.',
+        getEffectDescription: (level) => `+${level * 10}% Homing Strength`,
         type: UpgradeType.GUN,
         color: GameColor.RED,
         getMaxLevel: () => 5,
@@ -265,7 +286,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'growth-catalyst',
         name: 'Growth Catalyst',
-        description: 'Green bullets leave a trail that slows enemies.',
+        description: 'Green bullets leave an area that slows enemies.',
+        getEffectDescription: (level) => `Slows enemies for ${2 + level * 0.5}s`,
         type: UpgradeType.GUN,
         color: GameColor.GREEN,
         getMaxLevel: () => 5,
@@ -277,7 +299,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'fission-catalyst',
         name: 'Fission Catalyst',
-        description: 'Orange bullets can split into their primary components on impact.',
+        description: 'Orange bullets can split into primary colors on impact.',
+        getEffectDescription: (level) => `${level * 15}% Split Chance`,
         type: UpgradeType.GUN,
         color: GameColor.ORANGE,
         getMaxLevel: () => 5,
@@ -289,7 +312,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'void-catalyst',
         name: 'Void Catalyst',
-        description: 'Purple bullets can strip an enemy\'s color, making them vulnerable to all primary colors.',
+        description: 'Purple bullets can strip an enemy\'s color.',
+        getEffectDescription: (level) => `Color strip for ${2 + level}s`,
         type: UpgradeType.GUN,
         color: GameColor.PURPLE,
         getMaxLevel: () => 5,
@@ -301,7 +325,8 @@ export const ALL_UPGRADES: Upgrade[] = [
     {
         id: 'gravity-well',
         name: 'Gravity Well',
-        description: 'Purple bullets create a vortex on hit, pulling in nearby enemies.',
+        description: 'Purple bullets create a vortex, pulling in enemies.',
+        getEffectDescription: (level) => `+${15 * level} radius, +${0.1 * level} strength`,
         type: UpgradeType.GUN,
         color: GameColor.PURPLE,
         getMaxLevel: () => 5,
