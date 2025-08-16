@@ -716,7 +716,7 @@ export default function Home() {
                             <Gamepad2 className="mr-2" />
                             Play
                         </Button>
-                        <Button size="lg" onClick={() => startNewRun('freeplay')} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-secondary">
+                        <Button size="lg" onClick={() => startNewRun('freeplay')} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-sandbox">
                             <TestTube className="mr-2" />
                             Sandbox
                         </Button>
