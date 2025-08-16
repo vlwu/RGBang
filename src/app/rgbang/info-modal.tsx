@@ -26,13 +26,13 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-[600px] bg-background text-foreground">
-                <DialogHeader className="shrink-0">
+                <DialogHeader>
                     <DialogTitle className="text-primary text-2xl">How to Play RGBang</DialogTitle>
                     <DialogDescription>
                         Master the colors and shapes to survive the onslaught!
                     </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-6 py-4 text-sm overflow-y-auto pr-4 flex-1 min-h-0">
+                <div className="grid gap-6 py-4 text-sm">
                     <div className="space-y-2">
                         <h3 className="font-semibold text-primary">Controls</h3>
                         <ul className="list-disc list-inside space-y-1">
@@ -66,7 +66,7 @@ export function InfoModal({ isOpen, onClose }: InfoModalProps) {
                         </ul>
                     </div>
                 </div>
-                <DialogFooter className="pt-4 border-t border-border mt-auto shrink-0">
+                <DialogFooter>
                     <Button onClick={onClose} className="btn-liquid-glass btn-liquid-confirm">Got it!</Button>
                 </DialogFooter>
             </DialogContent>
