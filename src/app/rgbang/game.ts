@@ -72,6 +72,10 @@ export class Game {
         }
 
         gameStateStore.resetState(this.getCurrentState());
+        gameStateStore.updateState({
+            bankedUpgrades: this.bankedUpgrades,
+            runUpgrades: this.player.upgradeManager.getActiveUpgradeMap()
+        });
     }
 
     public start() {
@@ -100,6 +104,16 @@ export class Game {
         if (this.gameMode === 'freeplay') return;
         this.score += amount;
         gameStateStore.updateState({ score: this.score });
+    }
+
+    public setBankedUpgrades(amount: number): void {
+        this.bankedUpgrades = amount;
+        gameStateStore.updateState({ bankedUpgrades: this.bankedUpgrades });
+    }
+
+    public addBankedUpgrades(amount: number): void {
+        this.bankedUpgrades += amount;
+        gameStateStore.updateState({ bankedUpgrades: this.bankedUpgrades });
     }
 
     public createBullet = (bullet: Bullet) => {

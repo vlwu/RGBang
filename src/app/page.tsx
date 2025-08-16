@@ -121,17 +121,14 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 GameCanvas.displayName = 'GameCanvas';
 
 export default function Home() {
-    const [uiState, setUiState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'continuePrompt' | 'betweenWaves'>('menu');
+    const [uiState, setUiState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'betweenWaves' | 'continuePrompt'>('menu');
     const [highScore, setHighScore] = useState(0);
     const [savedGame, setSavedGame] = useState<SavedGameState | null>(null);
     const [upgradeData, setUpgradeData] = useState<PlayerUpgradeData>({ unlockedUpgradeIds: new Set<string>(), upgradeProgress: new Map<string, UpgradeProgress>() });
-    const [runUpgrades, setRunUpgrades] = useState<Map<string, number>>(new Map<string, number>());
-    const [currentWave, setCurrentWave] = useState(0);
     const [nextWaveHint, setNextWaveHint] = useState("");
     const [betweenWaveCountdown, setBetweenWaveCountdown] = useState(0);
     const [upgradesRemainingToSelect, setUpgradesRemainingToSelect] = useState(0);
     const [totalUpgradesToSelect, setTotalUpgradesToSelect] = useState(0);
-    const [bankedUpgrades, setBankedUpgrades] = useState(0);
 
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -194,12 +191,8 @@ export default function Home() {
         const savedRun = await loadGameState();
         if (savedRun && savedRun.score > 0) {
             setSavedGame(savedRun);
-            setCurrentWave(savedRun.currentWave);
-            setBankedUpgrades(savedRun.bankedUpgrades || 0);
         } else {
             setSavedGame(null);
-            setCurrentWave(0);
-            setBankedUpgrades(0);
         }
 
         const data = await getPlayerUpgradeData();
@@ -231,7 +224,7 @@ export default function Home() {
                     const stateFromGame = gameInstance.getCurrentState();
                     const stateToSave: SavedGameState = {
                         ...stateFromGame,
-                        bankedUpgrades: bankedUpgrades + upgradesRemainingToSelect
+                        bankedUpgrades: gameStoreState.bankedUpgrades + upgradesRemainingToSelect
                     };
                     if (stateToSave.score > 0) {
                         saveGameState(stateToSave);
@@ -245,7 +238,7 @@ export default function Home() {
         return () => {
             window.removeEventListener('beforeunload', handleBeforeUnload);
         };
-    }, [uiState, bankedUpgrades, upgradesRemainingToSelect]);
+    }, [uiState, upgradesRemainingToSelect, gameStoreState.bankedUpgrades]);
 
     useEffect(() => {
         inputHandlerRef.current.setKeybindings(keybindings);
@@ -253,9 +246,10 @@ export default function Home() {
     }, [keybindings]);
 
     const handleNextWaveStart = useCallback(() => {
-        if (gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
+        const gameInstance = gameCanvasRef.current?.getGameInstance();
+        if (gameInstance) {
             if (upgradesRemainingToSelect > 0) {
-                setBankedUpgrades(prev => prev + upgradesRemainingToSelect);
+                gameInstance.addBankedUpgrades(upgradesRemainingToSelect);
                 toast({
                     title: "Upgrades Banked",
                     description: `You've saved ${upgradesRemainingToSelect} upgrade choice${upgradesRemainingToSelect > 1 ? 's' : ''} for later.`,
@@ -264,13 +258,12 @@ export default function Home() {
                 setUpgradesRemainingToSelect(0);
             }
 
-            const nextWaveNum = currentWave + 1;
-            setCurrentWave(nextWaveNum);
-            gameCanvasRef.current.getGameInstance()!.startWave(nextWaveNum);
+            const nextWaveNum = gameStoreState.currentWave + 1;
+            gameInstance.startWave(nextWaveNum);
             setUiState('playing');
             soundManager.play(SoundType.GameResume);
         }
-    }, [currentWave, upgradesRemainingToSelect, toast]);
+    }, [upgradesRemainingToSelect, toast, gameStoreState.currentWave]);
 
     useEffect(() => {
         let countdownInterval: NodeJS.Timeout | null = null;
@@ -343,8 +336,9 @@ export default function Home() {
 
     const openUpgradeSelection = useCallback((isBossWave: boolean, upgradesCount?: number) => {
         const count = upgradesCount ?? upgradesRemainingToSelect;
-        if (count > 0 && gameCanvasRef.current && gameCanvasRef.current.getGameInstance()) {
-            const gameInstance = gameCanvasRef.current.getGameInstance()!;
+        const gameInstance = gameCanvasRef.current?.getGameInstance();
+
+        if (count > 0 && gameInstance) {
             const nextFragmentColorForOptions = isBossWave ? null : getRandomElement(PRIMARY_COLORS);
 
             const options = gameInstance.player.upgradeManager.getUpgradeOptions(
@@ -377,13 +371,14 @@ export default function Home() {
             clearGameState();
         } else if (gameStoreState.isBetweenWaves && uiState !== 'betweenWaves' && uiState !== 'upgrading') {
             const { waveCompletedFragments, isBossWave } = gameStoreState;
-            setCurrentWave(gameStoreState.currentWave);
+            const gameInstance = gameCanvasRef.current?.getGameInstance();
+            if (!gameInstance) return;
 
             const waveConfigForNextHint = WAVE_CONFIGS.find(w => w.waveNumber === gameStoreState.currentWave + 1) || FALLBACK_WAVE_CONFIG;
             setNextWaveHint(waveConfigForNextHint.nextWaveHint);
 
-            const totalUpgradesToOffer = waveCompletedFragments + bankedUpgrades;
-            setBankedUpgrades(0);
+            const totalUpgradesToOffer = waveCompletedFragments + gameStoreState.bankedUpgrades;
+            gameInstance.setBankedUpgrades(0);
 
             if (totalUpgradesToOffer > 0) {
                 setUpgradesRemainingToSelect(totalUpgradesToOffer);
@@ -406,7 +401,7 @@ export default function Home() {
                 soundManager.play(SoundType.GamePause);
             }
         }
-    }, [gameStoreState.isGameOver, gameStoreState.isBetweenWaves, bankedUpgrades, openUpgradeSelection, toast, uiState]);
+    }, [gameStoreState.isGameOver, gameStoreState.isBetweenWaves, gameStoreState.bankedUpgrades, openUpgradeSelection, toast, uiState, gameStoreState.currentWave]);
 
     useEffect(() => {
         if (gameStoreState.requestOpenUpgradeModal && uiState === 'playing') {
@@ -459,7 +454,6 @@ export default function Home() {
             const originalUpgrade = ALL_UPGRADES.find(u => u.id === originalId);
             if (originalUpgrade) {
                 gameInstance.player.upgradeManager.applyMax(originalUpgrade);
-                setRunUpgrades(prev => new Map(prev).set(originalId, originalUpgrade.getMaxLevel()));
                 const data = await getPlayerUpgradeData();
                 data.unlockedUpgradeIds.add(originalId);
                 data.upgradeProgress.set(originalId, { level: originalUpgrade.getMaxLevel() });
@@ -471,10 +465,6 @@ export default function Home() {
             upgrade.apply(gameInstance.player, 1, addScoreCallback);
         } else {
             gameInstance.player.applyUpgrade(upgrade);
-            setRunUpgrades(prev => {
-                const currentLevel = prev.get(upgrade.id) || 0;
-                return new Map(prev).set(upgrade.id, currentLevel + 1);
-            });
             await unlockUpgrade(upgrade.id);
             const finalData = await levelUpUpgrade(upgrade.id);
             setUpgradeData(finalData);
@@ -506,16 +496,11 @@ export default function Home() {
         const freshUpgradeData: PlayerUpgradeData = { unlockedUpgradeIds: new Set<string>(), upgradeProgress: new Map<string, UpgradeProgress>() };
         setUpgradeData(freshUpgradeData);
         upgradeDataRef.current = freshUpgradeData;
-        setRunUpgrades(new Map<string, number>());
         setSavedGame(null);
-        setCurrentWave(0);
-        setBankedUpgrades(0);
     };
 
     const startNewRun = async () => {
         await clearGameState();
-        setRunUpgrades(new Map<string, number>());
-        setBankedUpgrades(0);
         const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
 
         const newInitialGameState = { ...DEFAULT_GAME_STATE, initialColor: lastColor, currentWave: 0 };
@@ -526,8 +511,6 @@ export default function Home() {
     const startSandboxMode = async () => {
         soundManager.play(SoundType.ButtonClick);
         await clearGameState();
-        setRunUpgrades(new Map<string, number>());
-        setBankedUpgrades(0);
         const newInitialGameState: SavedGameState = { ...DEFAULT_GAME_STATE, gameMode: 'freeplay' };
         setInitialGameState(newInitialGameState);
         setUiState('playing');
@@ -549,9 +532,6 @@ export default function Home() {
             const data = await getPlayerUpgradeData();
             setUpgradeData(data);
             upgradeDataRef.current = data;
-            setRunUpgrades(new Map(savedRun.activeUpgrades));
-            setCurrentWave(savedRun.currentWave);
-            setBankedUpgrades(savedRun.bankedUpgrades || 0);
 
             setInitialGameState(savedRun);
             setUiState('playing');
@@ -568,7 +548,7 @@ export default function Home() {
                 const currentState = gameInstance.getCurrentState();
                 const stateToSave: SavedGameState = {
                     ...currentState,
-                    bankedUpgrades: bankedUpgrades + upgradesRemainingToSelect
+                    bankedUpgrades: gameStoreState.bankedUpgrades + upgradesRemainingToSelect
                 };
 
                 if (stateToSave.score > 0) {
@@ -582,7 +562,6 @@ export default function Home() {
                     setHighScore(currentState.score);
                 }
                 localStorage.setItem('rgBangLastColor', currentState.initialColor);
-                setCurrentWave(currentState.currentWave);
             } else {
                 clearGameState();
             }
@@ -629,7 +608,7 @@ export default function Home() {
             e.preventDefault();
         }
     };
-    
+
     const gameManager = {
         spawnEnemy: (type: EnemyType, color?: GameColor) => gameCanvasRef.current?.getGameInstance()?.sandbox_spawnEnemy(type, color),
         spawnBoss: () => gameCanvasRef.current?.getGameInstance()?.sandbox_spawnBoss(),
@@ -637,15 +616,12 @@ export default function Home() {
         clearAllBullets: () => gameCanvasRef.current?.getGameInstance()?.sandbox_clearAllBullets(),
         addUpgrade: (upgradeId: string) => {
             gameCanvasRef.current?.getGameInstance()?.sandbox_addUpgrade(upgradeId)
-            setRunUpgrades(gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map())
         },
         removeUpgrade: (upgradeId: string) => {
             gameCanvasRef.current?.getGameInstance()?.sandbox_removeUpgrade(upgradeId)
-            setRunUpgrades(gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map())
         },
         maxUpgrade: (upgradeId: string) => {
             gameCanvasRef.current?.getGameInstance()?.sandbox_maxUpgrade(upgradeId)
-            setRunUpgrades(gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map())
         },
         getRunUpgrades: () => gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map(),
     };
@@ -674,16 +650,16 @@ export default function Home() {
                 options={upgradeOptions}
                 onSelect={handleUpgradeSelected}
                 upgradeData={upgradeData}
-                runUpgrades={runUpgrades}
+                runUpgrades={gameStoreState.runUpgrades}
                 upgradesRemainingToSelect={upgradesRemainingToSelect}
                 totalUpgradesToSelect={totalUpgradesToSelect}
             />
             {gameEngine.gameMode === 'freeplay' && (
-                <SandboxModal 
+                <SandboxModal
                     isOpen={isSandboxModalOpen}
                     onClose={() => setIsSandboxModalOpen(false)}
                     gameManager={gameManager}
-                    runUpgrades={runUpgrades}
+                    runUpgrades={gameStoreState.runUpgrades}
                 />
             )}
 
@@ -779,7 +755,7 @@ export default function Home() {
                         initialGameState={initialGameState}
                         ref={gameCanvasRef}
                         currentWaveCountdown={betweenWaveCountdown}
-                        currentWaveToDisplay={currentWave}
+                        currentWaveToDisplay={gameStoreState.currentWave}
                         isGameBetweenWaves={uiState === 'betweenWaves'}
                     />
                     {isUpgradeOverviewOpen && (
@@ -817,7 +793,7 @@ export default function Home() {
                     )}
                     {uiState === 'betweenWaves' && (
                         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20">
-                            <h2 className="text-6xl font-bold font-headline tracking-tighter mb-4 text-glow">WAVE {currentWave} CLEARED!</h2>
+                            <h2 className="text-6xl font-bold font-headline tracking-tighter mb-4 text-glow">WAVE {gameStoreState.currentWave} CLEARED!</h2>
                             <p className="text-3xl font-semibold text-foreground/80 mb-6">Next Wave in: <span className="text-accent">{betweenWaveCountdown}</span></p>
                             <p className="text-xl font-medium text-muted-foreground">{nextWaveHint}</p>
                             {upgradesRemainingToSelect > 0 && (

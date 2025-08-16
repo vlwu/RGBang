@@ -14,6 +14,8 @@ export interface UIState {
     lastFragmentCollected: GameColor | null | 'special';
     fragmentCollectCount: number;
     requestOpenUpgradeModal?: boolean;
+    runUpgrades: Map<string, number>;
+    bankedUpgrades: number;
 }
 
 const initialUIState: UIState = {
@@ -29,6 +31,8 @@ const initialUIState: UIState = {
     lastFragmentCollected: null,
     fragmentCollectCount: 0,
     requestOpenUpgradeModal: false,
+    runUpgrades: new Map(),
+    bankedUpgrades: 0,
 };
 
 let gameState: UIState = { ...initialUIState };
@@ -58,6 +62,8 @@ export const gameStateStore = {
             playerHealth: initialState?.playerHealth ?? 100,
             playerMaxHealth: 100 + (initialState?.activeUpgrades?.get('max-health') ?? 0) * 20,
             currentWave: initialState?.currentWave ?? 0,
+            runUpgrades: initialState?.activeUpgrades ?? new Map(),
+            bankedUpgrades: initialState?.bankedUpgrades ?? 0,
         };
         for (const listener of listeners) {
             listener();

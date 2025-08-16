@@ -2,6 +2,7 @@ import { Player } from './player';
 import { ALL_UPGRADES, Upgrade, UpgradeType } from './upgrades';
 import { GameColor, PRIMARY_COLORS, getRandomElement } from './color';
 import { PlayerUpgradeData } from './upgrade-data';
+import { gameStateStore } from './gameStateStore';
 
 export class UpgradeManager {
     private player: Player;
@@ -180,6 +181,8 @@ export class UpgradeManager {
         }
 
         this.player.health = Math.min(this.player.health, newMaxHealth);
+
+        gameStateStore.updateState({ runUpgrades: this.getActiveUpgradeMap() });
     }
 
     getUpgradeLevel(upgradeId: string): number {
