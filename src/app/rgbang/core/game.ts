@@ -230,6 +230,7 @@ export class Game {
                 this.particles.add(this.entityManager.boss.pos, this.entityManager.boss.color, 100);
                 this.entityManager.addFragment(new PrismFragment(this.entityManager.boss.pos.x, this.entityManager.boss.pos.y, null));
                 this.nextBossScoreThreshold = Math.round(this.nextBossScoreThreshold * 1.5);
+                this.entityManager.setBoss(null);
             }
         }
 
