@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -80,6 +80,9 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
         }
     };
 
+    const uniqueId = useId();
+    const fillPercentage = maxLevel > 0 ? (displayLevel / maxLevel) * 100 : 0;
+
     return (
         <div
             className={cn(
@@ -126,13 +129,36 @@ const UpgradeCard = ({ upgrade, onSelect, progress, isSelectable, runLevel }: {
                     </div>
                     {!isFallback && (
                         <div>
-                            <div className="flex justify-center items-center mb-1">
-                                {Array.from({ length: maxLevel }).map((_, i) => (
-                                    <Star key={i} className={`w-4 h-4 ${i < displayLevel ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} />
-                                ))}
+                            <div className="flex justify-center items-center mb-1 h-6">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <defs>
+                                        <linearGradient id={`starGradient-${uniqueId}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stopColor="#f87171" />
+                                            <stop offset="25%" stopColor="#fde047" />
+                                            <stop offset="50%" stopColor="#4ade80" />
+                                            <stop offset="75%" stopColor="#38bdf8" />
+                                            <stop offset="100%" stopColor="#a855f7" />
+                                        </linearGradient>
+                                        <mask id={`starMask-${uniqueId}`}>
+                                            <rect x="0" y="0" width={`${fillPercentage}%`} height="100%" fill="white" />
+                                        </mask>
+                                    </defs>
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                        fill="hsl(var(--muted-foreground))"
+                                        opacity="0.3"
+                                    />
+                                    <path
+                                        d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                                        fill={`url(#starGradient-${uniqueId})`}
+                                        mask={`url(#starMask-${uniqueId})`}
+                                    />
+                                </svg>
                             </div>
-                             {displayLevel >= maxLevel && (
+                            {displayLevel >= maxLevel ? (
                                 <p className="text-xs font-bold text-yellow-400">MAX LEVEL</p>
+                            ) : (
+                                <p className="text-xs text-muted-foreground">{`Level ${displayLevel}/${maxLevel}`}</p>
                             )}
                         </div>
                     )}
