@@ -48,8 +48,7 @@ export class UI {
         this.drawHotbar(player);
 
         if (boss && boss.isAlive) {
-            this.drawBossHealthBar(boss);
-            this.drawTopRightUI(score, 0, player.scoreMultiplier, 60);
+            this.drawTopRightUI(score, 0, player.scoreMultiplier, 20);
         } else {
             if (!isFreeplay) {
                 this.drawWaveInfo(currentWave, isBetweenWaves);
@@ -166,69 +165,6 @@ export class UI {
         this.ctx.shadowColor = 'black';
         this.ctx.shadowBlur = 5;
         this.ctx.fillText(`${Math.round(player.health)} / ${maxHealth}`, x + barWidth / 2, y + barHeight / 2 + 1);
-        this.ctx.restore();
-    }
-
-    private drawBossHealthBar(boss: Boss) {
-        const barWidth = this.canvas.width * 0.6;
-        const barHeight = 30;
-        const x = (this.canvas.width - barWidth) / 2;
-        const y = 20;
-        const borderRadius = 15;
-
-        this.ctx.save();
-
-
-        this.ctx.fillStyle = 'rgba(20, 20, 30, 0.6)';
-        this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
-        this.ctx.shadowBlur = 15;
-        this.ctx.beginPath();
-        roundRect(this.ctx, x, y, barWidth, barHeight, borderRadius);
-        this.ctx.fill();
-
-
-        const healthPercentage = boss.health / boss.maxHealth;
-        const healthWidth = barWidth * healthPercentage;
-        const bossColorHex = COLOR_DETAILS[boss.color].hex;
-        const bossColorRgb = this.hexToRgb(bossColorHex);
-
-        if (healthWidth > 0 && bossColorRgb) {
-            const amt = 40;
-            const r_light = Math.min(255, bossColorRgb.r + amt);
-            const g_light = Math.min(255, bossColorRgb.g + amt);
-            const b_light = Math.min(255, bossColorRgb.b + amt);
-            const lightColor = `rgb(${r_light}, ${g_light}, ${b_light})`;
-
-            const gradient = this.ctx.createLinearGradient(x, y, x, y + barHeight);
-            gradient.addColorStop(0, lightColor);
-            gradient.addColorStop(1, bossColorHex);
-            this.ctx.fillStyle = gradient;
-
-            this.ctx.shadowColor = bossColorHex;
-            this.ctx.shadowBlur = 20;
-
-            this.ctx.beginPath();
-            roundRect(this.ctx, x, y, healthWidth, barHeight, borderRadius);
-            this.ctx.fill();
-        }
-        this.ctx.shadowColor = 'transparent';
-
-
-        this.ctx.strokeStyle = '#fff';
-        this.ctx.lineWidth = 2;
-        this.ctx.beginPath();
-        roundRect(this.ctx, x, y, barWidth, barHeight, borderRadius);
-        this.ctx.stroke();
-
-
-        this.ctx.fillStyle = 'white';
-        this.ctx.font = 'bold 18px "Space Grotesk"';
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
-        this.ctx.shadowColor = 'black';
-        this.ctx.shadowBlur = 8;
-        this.ctx.fillText('SPECTRAL ANOMALY', x + barWidth / 2, y + barHeight / 2 + 1);
-
         this.ctx.restore();
     }
 
