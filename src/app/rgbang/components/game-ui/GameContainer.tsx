@@ -15,12 +15,14 @@ const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
 
 const GameCanvas = React.forwardRef<GameCanvasHandle, {
+    width: number;
+    height: number;
     initialGameState: SavedGameState,
     isGamePausedExternally: boolean;
     currentWaveCountdown: number;
     currentWaveToDisplay: number;
     isGameBetweenWaves: boolean;
-}> (({ initialGameState, isGamePausedExternally, currentWaveCountdown, currentWaveToDisplay, isGameBetweenWaves }, ref) => {
+}> (({ width, height, initialGameState, isGamePausedExternally, currentWaveCountdown, currentWaveToDisplay, isGameBetweenWaves }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationFrameIdRef = useRef<number | null>(null);
     const inputHandler = InputHandler.getInstance();
@@ -78,7 +80,7 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
         };
     }, [initialGameState, inputHandler, gameLoop]);
 
-    return <canvas ref={canvasRef} className="rounded-lg shadow-2xl shadow-black" />;
+    return <canvas ref={canvasRef} style={{ width: `${width}px`, height: `${height}px` }} className="rounded-lg shadow-2xl shadow-black" />;
 });
 GameCanvas.displayName = 'GameCanvas';
 
@@ -110,9 +112,11 @@ export function GameContainer({
     gameCanvasRef, onResume, onSettings, onQuit, onChooseUpgrades, onStartNextWave, playHoverSound
 }: GameContainerProps) {
     return (
-        <div className="relative border-liquid-glass" style={{ width: `${canvasSize.width}px`, height: `${canvasSize.height}px` }}>
+        <div className="relative border-liquid-glass">
             <GameCanvas
                 ref={gameCanvasRef}
+                width={canvasSize.width}
+                height={canvasSize.height}
                 initialGameState={initialGameState}
                 isGamePausedExternally={uiState === 'paused' || uiState === 'upgrading' || isUpgradeOverviewOpen || uiState === 'betweenWaves' || isSandboxModalOpen}
                 currentWaveCountdown={betweenWaveCountdown}
