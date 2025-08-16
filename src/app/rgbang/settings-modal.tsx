@@ -128,6 +128,7 @@ export function SettingsModal({
         down: "Move Down",
         left: "Move Left",
         right: "Move Right",
+        shoot: "Shoot",
         primary1: "Select Red",
         primary2: "Select Yellow",
         primary3: "Select Blue",

@@ -5,6 +5,7 @@ export interface Keybindings {
     down: string;
     left: string;
     right: string;
+    shoot: string;
     primary1: string;
     primary2: string;
     primary3: string;
@@ -18,6 +19,7 @@ export const defaultKeybindings: Keybindings = {
     down: 's',
     left: 'a',
     right: 'd',
+    shoot: 'mouse0',
     primary1: '1',
     primary2: '2',
     primary3: '3',
@@ -37,7 +39,7 @@ class InputHandler {
     private static instance: InputHandler;
 
     private constructor() {
-        // Constructor now only initializes properties. Event listeners are handled by setCanvas.
+
     }
 
     public static getInstance(): InputHandler {
@@ -52,27 +54,26 @@ class InputHandler {
     }
 
     public setCanvas(canvas: HTMLCanvasElement) {
-        // Remove all listeners from the previous canvas and window before setting up new ones
+
         if (this.canvas) {
             this.canvas.removeEventListener('mousemove', this.handleMouseMove);
             this.canvas.removeEventListener('mousedown', this.handleMouseDown);
             this.canvas.removeEventListener('mouseup', this.handleMouseUp);
             this.canvas.removeEventListener('contextmenu', this.preventContextMenu);
             this.canvas.removeEventListener('wheel', this.handleWheel);
-            // Crucially, remove keyboard listeners from the window here too
+
             window.removeEventListener('keydown', this.handleKeyDown);
             window.removeEventListener('keyup', this.handleKeyUp);
         }
 
-        this.canvas = canvas; // Set the new canvas reference
+        this.canvas = canvas;
 
-        // Add all listeners to the new canvas and window
         this.canvas.addEventListener('mousemove', this.handleMouseMove);
         this.canvas.addEventListener('mousedown', this.handleMouseDown);
         this.canvas.addEventListener('mouseup', this.handleMouseUp);
         this.canvas.addEventListener('contextmenu', this.preventContextMenu);
         this.canvas.addEventListener('wheel', this.handleWheel);
-        // Crucially, add keyboard listeners to the window here
+
         window.addEventListener('keydown', this.handleKeyDown);
         window.addEventListener('keyup', this.handleKeyUp);
     }
@@ -80,8 +81,6 @@ class InputHandler {
     private preventContextMenu = (e: MouseEvent) => {
         e.preventDefault();
     };
-
-    // The 'init' method, previously in the constructor, is now integrated into 'setCanvas' logic.
 
     private handleKeyDown = (e: KeyboardEvent) => {
         this.keys.add(e.key.toLowerCase());
@@ -131,7 +130,7 @@ class InputHandler {
 
 
     public isShooting(): boolean {
-        return this.keys.has('mouse0');
+        return this.keys.has(this.keybindings.shoot);
     }
 
     public wasKeyReleased(key: string): boolean {
@@ -140,7 +139,7 @@ class InputHandler {
 
     public destroy() {
         if (typeof window === 'undefined') return;
-        // Remove ALL listeners for a clean teardown
+
         window.removeEventListener('keydown', this.handleKeyDown);
         window.removeEventListener('keyup', this.handleKeyUp);
         if (this.canvas) {
@@ -150,10 +149,10 @@ class InputHandler {
             this.canvas.removeEventListener('contextmenu', this.preventContextMenu);
             this.canvas.removeEventListener('wheel', this.handleWheel);
         }
-        this.canvas = null; // Clear the canvas reference
-        this.keys.clear(); // Clear any lingering pressed keys
-        this.keysUp.clear(); // Clear any lingering released keys
-        this.wheelDeltaY = 0; // Reset wheel delta
+        this.canvas = null;
+        this.keys.clear();
+        this.keysUp.clear();
+        this.wheelDeltaY = 0;
     }
 }
 
