@@ -5,7 +5,7 @@ import { Boss } from './boss';
 import { UI } from './ui';
 import { ParticleSystem } from './particle';
 import { circleCollision, Vec2, distance, Quadtree, QuadtreeObject } from './utils';
-import { GameColor, COLOR_DETAILS } from './color';
+import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
 import InputHandler from './input-handler';
@@ -27,6 +27,7 @@ export class Game {
 
     private entityManager!: EntityManager;
     private waveManager!: WaveManager;
+    public gameMode: 'normal' | 'freeplay' = 'normal';
 
     private score = 0;
     private nextBossScoreThreshold = 150;
@@ -48,6 +49,7 @@ export class Game {
         this.canvas = canvas;
         this.ctx = canvas.getContext('2d')!;
         this.soundManager = soundManager;
+        this.gameMode = initialState.gameMode || 'normal';
 
         this.quadtree = new Quadtree({ x: 0, y: 0, width: canvas.width, height: canvas.height }, 4);
         this.player = new Player(canvas.width / 2, canvas.height / 2, initialState.initialColor, this.soundManager);
@@ -73,11 +75,7 @@ export class Game {
 
     public start() {
         this.isRunning = true;
-        if (this.waveManager.currentWave === 0) {
-            this.startWave(1);
-        } else {
-            this.startWave(this.waveManager.currentWave);
-        }
+        this.startWave(this.waveManager.currentWave || 1);
     }
 
     public stop() {
@@ -93,10 +91,12 @@ export class Game {
             initialColor: this.player.currentColor,
             currentWave: this.waveManager.currentWave,
             bankedUpgrades: this.bankedUpgrades,
+            gameMode: this.gameMode
         };
     }
 
     public addScore(amount: number) {
+        if (this.gameMode === 'freeplay') return;
         this.score += amount;
         gameStateStore.updateState({ score: this.score });
     }
@@ -106,6 +106,11 @@ export class Game {
     }
 
     public startWave(waveNumber: number) {
+        if (this.gameMode === 'freeplay') {
+            this.waveManager.currentWave = 1;
+            gameStateStore.updateState({ currentWave: 1, isBetweenWaves: false });
+            return;
+        }
         const upgradeCount = this.player.upgradeManager.getActiveUpgradeMap().size;
         this.waveManager.startWave(waveNumber, upgradeCount);
         this.vortexes = [];
@@ -113,8 +118,28 @@ export class Game {
         gameStateStore.updateState({ currentWave: this.waveManager.currentWave, isBetweenWaves: false });
     }
 
+    private handleFreeplayControls(inputHandler: InputHandler) {
+        if (inputHandler.wasKeyReleased('o')) {
+            const enemy = new Enemy(inputHandler.mousePos.x, inputHandler.mousePos.y, getRandomElement(PRIMARY_COLORS), 15, 30, 1.5, 10, this.soundManager);
+            this.entityManager.addEnemy(enemy);
+        }
+        if (inputHandler.wasKeyReleased('p')) {
+            gameStateStore.updateState({ requestOpenUpgradeModal: true });
+        }
+        if (inputHandler.wasKeyReleased('k')) {
+            this.entityManager.enemies.forEach(e => e.isAlive = false);
+        }
+        if (inputHandler.wasKeyReleased('c')) {
+            this.entityManager.bullets.forEach(b => b.isActive = false);
+        }
+    }
+
     public update(inputHandler: InputHandler, isGamePaused: boolean) {
         if (!this.isRunning) return;
+
+        if (this.gameMode === 'freeplay') {
+            this.handleFreeplayControls(inputHandler);
+        }
 
         this.player.update(inputHandler, this.createBullet, this.particles, this.canvas.width, this.canvas.height, isGamePaused, this.slowingFields);
         this.particles.update();
@@ -147,7 +172,9 @@ export class Game {
             };
 
             this.entityManager.updateAll(this.player, this.canvas.width, this.canvas.height, this.vortexes, actionCallbacks);
-            this.waveManager.update();
+            if (this.gameMode !== 'freeplay') {
+                this.waveManager.update();
+            }
             this.handleCollisions();
             this.entityManager.cleanup(this.canvas.width, this.canvas.height);
 
@@ -164,7 +191,7 @@ export class Game {
             playerMaxHealth: this.player.getMaxHealth()
         });
 
-        if (!this.player.isAlive) {
+        if (!this.player.isAlive && this.gameMode !== 'freeplay') {
             this.soundManager.play(SoundType.GameOver);
             this.stop();
             gameStateStore.updateState({ isGameOver: true, score: this.score });
@@ -244,9 +271,11 @@ export class Game {
 
             if (bullet.isFromBoss || bullet.isEnemyProjectile) {
                 if (this.player.isAlive && circleCollision(bullet, this.player)) {
-                    this.player.takeDamage(bullet.damage);
-                    if (bullet.slowsPlayer) {
-                        this.player.applySlow(180);
+                    if (this.gameMode !== 'freeplay') {
+                        this.player.takeDamage(bullet.damage);
+                        if (bullet.slowsPlayer) {
+                            this.player.applySlow(180);
+                        }
                     }
                     this.particles.add(bullet.pos, bullet.color, 10);
                     bullet.isActive = false;
@@ -330,8 +359,10 @@ export class Game {
 
         for (const enemy of this.entityManager.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
-                this.player.takeDamage(enemy.damage);
-                this.player.applyKnockback(enemy.pos, 10);
+                if (this.gameMode !== 'freeplay') {
+                    this.player.takeDamage(enemy.damage);
+                    this.player.applyKnockback(enemy.pos, 10);
+                }
                 enemy.takeDamage(enemy.health * 0.5, enemy.color, true);
                 this.particles.add(enemy.pos, enemy.color, 10);
             }
@@ -339,8 +370,10 @@ export class Game {
 
         const boss = this.entityManager.boss;
         if (boss && boss.isAlive && this.player.isAlive && circleCollision(this.player, boss)) {
-            this.player.takeDamage(boss.damage);
-            this.player.applyKnockback(boss.pos, 15);
+            if (this.gameMode !== 'freeplay') {
+                this.player.takeDamage(boss.damage);
+                this.player.applyKnockback(boss.pos, 15);
+            }
         }
 
         for (let i = this.entityManager.fragments.length - 1; i >= 0; i--) {
@@ -352,7 +385,9 @@ export class Game {
                     lastFragmentCollected: fragment.color || 'special',
                     fragmentCollectCount: currentState.fragmentCollectCount + 1,
                 });
-                this.waveManager.onFragmentCollected();
+                if (this.gameMode !== 'freeplay') {
+                    this.waveManager.onFragmentCollected();
+                }
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
                 this.player.triggerCollectionEffect(fragment.color);
                 fragment.isAlive = false;
@@ -429,6 +464,6 @@ export class Game {
         this.entityManager.drawAll(this.ctx);
         this.player.draw(this.ctx);
 
-        this.ui.draw(this.player, this.score, this.entityManager.boss, currentWaveToDisplay, this.entityManager.enemies, currentWaveCountdown, isBetweenWaves);
+        this.ui.draw(this.player, this.score, this.entityManager.boss, currentWaveToDisplay, this.entityManager.enemies, currentWaveCountdown, isBetweenWaves, this.gameMode === 'freeplay');
     }
 }

@@ -8,6 +8,7 @@ export interface SavedGameState {
     initialColor: GameColor;
     currentWave: number;
     bankedUpgrades: number;
+    gameMode?: 'normal' | 'freeplay';
 }
 
 const GAME_STATE_KEY = 'rgBangGameState';

@@ -13,6 +13,7 @@ export interface UIState {
     isBossWave: boolean;
     lastFragmentCollected: GameColor | null | 'special';
     fragmentCollectCount: number;
+    requestOpenUpgradeModal?: boolean;
 }
 
 const initialUIState: UIState = {
@@ -27,6 +28,7 @@ const initialUIState: UIState = {
     isBossWave: false,
     lastFragmentCollected: null,
     fragmentCollectCount: 0,
+    requestOpenUpgradeModal: false,
 };
 
 let gameState: UIState = { ...initialUIState };

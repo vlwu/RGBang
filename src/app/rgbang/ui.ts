@@ -40,7 +40,7 @@ export class UI {
     }
 
 
-    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemies: Enemy[], currentWaveCountdown: number, isBetweenWaves: boolean) {
+    draw(player: Player, score: number, boss: Boss | null, currentWave: number, enemies: Enemy[], currentWaveCountdown: number, isBetweenWaves: boolean, isFreeplay: boolean = false) {
         const liveEnemies = enemies.filter(e => e.isAlive);
 
         this.drawHealthBar(player);
@@ -51,14 +51,20 @@ export class UI {
             this.drawBossHealthBar(boss);
             this.drawTopRightUI(score, 0, player.scoreMultiplier, 60);
         } else {
-            this.drawWaveInfo(currentWave, isBetweenWaves);
+            if (!isFreeplay) {
+                this.drawWaveInfo(currentWave, isBetweenWaves);
+            }
             this.drawTopRightUI(score, liveEnemies.length, player.scoreMultiplier, 20);
         }
 
         this.drawOffscreenIndicators(liveEnemies);
 
-        if (isBetweenWaves) {
+        if (isBetweenWaves && !isFreeplay) {
             this.drawWaveCountdown(currentWaveCountdown);
+        }
+
+        if (isFreeplay) {
+            this.drawText("SANDBOX MODE", 20, this.canvas.height - 40, 16, "rgba(255, 255, 255, 0.5)");
         }
     }
 
@@ -333,7 +339,7 @@ export class UI {
             } else {
                 this.ctx.fillStyle = 'rgba(20, 20, 30, 0.7)';
             }
-            
+
             this.ctx.strokeStyle = 'rgba(150, 150, 180, 0.3)';
             this.ctx.lineWidth = 1.5;
             this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -384,7 +390,7 @@ export class UI {
         if (currentIsSecondary) {
             const iconSize = 30;
             const dashBarHeight = 10;
-            // Place it above the dash cooldown bar
+
             const iconY = y - 12 - dashBarHeight - (iconSize / 2) - 5;
             const iconX = this.canvas.width / 2;
             this.ctx.save();
