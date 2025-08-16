@@ -310,7 +310,19 @@ export class Enemy {
         else if (this.isReflecting) ctx.shadowColor = '#7DF9FF';
         else if (this.isChromaSentinel && this.colorShiftImmunityTimer > 0) ctx.shadowColor = 'white';
         else if (this.isVoided) ctx.shadowColor = '#d966ff';
-        else ctx.shadowBlur = 15;
+        else {
+            if (this.activePunishment === PunishmentType.SPEED_BOOST) {
+                const pulse = Math.abs(Math.sin(Date.now() / 100));
+                ctx.shadowColor = `rgba(255, 165, 0, ${0.7 + pulse * 0.3})`;
+                ctx.shadowBlur = 20 + pulse * 5;
+            } else if (this.activePunishment === PunishmentType.DAMAGE_BOOST) {
+                const pulse = Math.abs(Math.sin(Date.now() / 150));
+                ctx.shadowColor = `rgba(255, 0, 0, ${0.5 + pulse * 0.5})`;
+                ctx.shadowBlur = 15 + pulse * 10;
+            } else {
+                ctx.shadowBlur = 15;
+            }
+        }
 
 
         ctx.fillStyle = this.hexColor;
@@ -352,19 +364,6 @@ export class Enemy {
             const healthPercentage = this.health / this.maxHealth;
             ctx.fillStyle = this.isIgnited ? '#ffc266' : 'red';
             ctx.fillRect(barX, barY, barWidth * healthPercentage, barHeight);
-        }
-
-        if (this.activePunishment) {
-            ctx.font = 'bold 12px "Space Grotesk"';
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            const indicatorText = {
-                [PunishmentType.SPEED_BOOST]: "SPD",
-                [PunishmentType.DAMAGE_BOOST]: "DMG",
-                [PunishmentType.SPLIT]: "SPLIT",
-                [PunishmentType.REFLECT_BULLET]: "RFL",
-            }[this.activePunishment];
-            ctx.fillText(indicatorText, this.pos.x, this.pos.y - this.radius - 25);
         }
     }
 
