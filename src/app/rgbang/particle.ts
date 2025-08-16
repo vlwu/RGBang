@@ -47,8 +47,8 @@ class Particle implements IParticle {
 
     update() {
         if (!this.isActive) return;
-        this.pos = this.pos.add(this.vel);
-        this.vel = this.vel.scale(0.97);
+        this.pos.addInPlace(this.vel);
+        this.vel.scaleInPlace(0.97);
         this.lifespan--;
         if (this.lifespan <= 0) {
             this.isActive = false;
@@ -152,7 +152,7 @@ class FragmentParticle implements IParticle {
 
     update() {
         if (!this.isActive) return;
-        this.pos = this.pos.add(this.vel);
+        this.pos.addInPlace(this.vel);
         this.lifespan--;
         if (this.lifespan <= 0) {
             this.isActive = false;
@@ -207,8 +207,8 @@ class PickupParticle implements IParticle {
 
     update() {
         if (!this.isActive) return;
-        this.pos = this.pos.add(this.vel);
-        this.vel = this.vel.scale(0.95);
+        this.pos.addInPlace(this.vel);
+        this.vel.scaleInPlace(0.95);
         this.lifespan--;
         if (this.lifespan <= 0) {
             this.isActive = false;
@@ -262,7 +262,7 @@ class DashParticle implements IParticle {
 
     update() {
         if (!this.isActive) return;
-        this.pos = this.pos.add(this.vel);
+        this.pos.addInPlace(this.vel);
         this.lifespan--;
 
 

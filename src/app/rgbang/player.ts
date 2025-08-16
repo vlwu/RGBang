@@ -161,8 +161,8 @@ export class Player {
         }
 
         if (this.knockbackVelocity.magnitude() > 0.1) {
-            this.pos = this.pos.add(this.knockbackVelocity);
-            this.knockbackVelocity = this.knockbackVelocity.scale(this.knockbackDamping);
+            this.pos.addInPlace(this.knockbackVelocity);
+            this.knockbackVelocity.scaleInPlace(this.knockbackDamping);
         } else {
             this.knockbackVelocity = new Vec2(0, 0);
         }
@@ -185,7 +185,7 @@ export class Player {
         if (input.isKeyDown(input.keybindings.right)) moveDir.x += 1;
 
         if (moveDir.magnitude() > 0) {
-            this.pos = this.pos.add(moveDir.normalize().scale(currentSpeed));
+            this.pos.addInPlace(moveDir.normalize().scale(currentSpeed));
         }
 
         this.pos.x = Math.max(this.radius, Math.min(canvasWidth - this.radius, this.pos.x));
@@ -281,7 +281,7 @@ export class Player {
                 const spreadAngle = colorDetails.pelletCount > 1
                     ? (i / (colorDetails.pelletCount - 1) - 0.5) * colorDetails.spread
                     : (Math.random() - 0.5) * colorDetails.spread;
-                
+
                 const finalDirection = aimDirection.rotate(spreadAngle * this.accuracyModifier);
                 const bullet = new Bullet(this.pos, finalDirection, this.currentColor);
 

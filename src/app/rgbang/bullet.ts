@@ -86,12 +86,13 @@ export class Bullet {
 
             if (closestEnemy) {
                 const desiredDirection = closestEnemy.pos.sub(this.pos).normalize();
-                const steer = desiredDirection.sub(this.vel.normalize()).normalize().scale(this.seekForce);
-                this.vel = this.vel.add(steer).normalize().scale(this.vel.magnitude());
+                const steer = desiredDirection.subInPlace(this.vel.normalize()).normalizeInPlace().scaleInPlace(this.seekForce);
+                const currentSpeed = this.vel.magnitude();
+                this.vel.addInPlace(steer).normalizeInPlace().scaleInPlace(currentSpeed);
             }
         }
 
-        this.pos = this.pos.add(this.vel);
+        this.pos.addInPlace(this.vel);
 
         if (this.ricochetsLeft > 0 && canvasWidth && canvasHeight) {
             if (this.pos.x < this.radius || this.pos.x > canvasWidth - this.radius) {
@@ -167,7 +168,7 @@ export class Bullet {
         ctx.save();
         ctx.translate(this.pos.x, this.pos.y);
         ctx.rotate(Math.atan2(this.vel.y, this.vel.x));
-        
+
         ctx.fillStyle = this.hexColor;
         ctx.shadowColor = this.hexColor;
         ctx.shadowBlur = 10;
@@ -203,7 +204,7 @@ export class Bullet {
             ctx.lineCap = "round";
             ctx.stroke();
         }
-        
+
         const pulse = Math.abs(Math.sin(Date.now() / 100));
         ctx.fillStyle = this.hexColor;
         ctx.shadowColor = this.hexColor;

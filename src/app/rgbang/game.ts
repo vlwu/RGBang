@@ -426,8 +426,8 @@ export class Game {
 
         if (overlap > 0) {
             const resolveVec = dist > 0 ? distVec.normalize().scale(overlap / 2) : new Vec2(0.1, 0);
-            enemy1.pos = enemy1.pos.add(resolveVec);
-            enemy2.pos = enemy2.pos.sub(resolveVec);
+            enemy1.pos.addInPlace(resolveVec);
+            enemy2.pos.subInPlace(resolveVec);
         }
     }
 

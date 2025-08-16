@@ -117,7 +117,7 @@ export class Enemy {
             const dist = distVec.magnitude();
             if (dist < vortex.radius) {
                 const force = distVec.normalize().scale(vortex.strength * (1 - dist / vortex.radius));
-                this.pos = this.pos.add(force);
+                this.pos.addInPlace(force);
             }
         }
 
@@ -189,7 +189,7 @@ export class Enemy {
             }
         }
 
-        this.pos = this.pos.add(direction.scale(this.speed));
+        this.pos.addInPlace(direction.scale(this.speed));
     }
 
     private performAttack(player: Player, particles: ParticleSystem, actionCallbacks: ActionCallbacks): Bullet | null {
@@ -198,7 +198,7 @@ export class Enemy {
             case GameColor.ORANGE:
                 if (this.attackTargetPos) {
                     const direction = this.attackTargetPos.sub(this.pos).normalize();
-                    this.pos = this.pos.add(direction.scale(this.baseSpeed * 4));
+                    this.pos.addInPlace(direction.scale(this.baseSpeed * 4));
 
                     if (this.color === GameColor.ORANGE) {
                         particles.add(this.pos, GameColor.RED, 2);
@@ -287,7 +287,7 @@ export class Enemy {
                 ctx.fill();
                 ctx.stroke();
             }
-            
+
             if ((this.color === GameColor.RED || this.color === GameColor.ORANGE) && this.attackTargetPos) {
                 const attackDuration = 30;
                 const dashSpeed = this.baseSpeed * 4;
@@ -305,7 +305,7 @@ export class Enemy {
                 ctx.moveTo(this.pos.x, this.pos.y);
                 ctx.lineTo(actualDashEndPos.x, actualDashEndPos.y);
                 ctx.stroke();
-                
+
                 ctx.restore();
             }
 

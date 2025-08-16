@@ -34,6 +34,33 @@ export class Vec2 {
     clone(): Vec2 {
         return new Vec2(this.x, this.y);
     }
+
+    addInPlace(other: Vec2): this {
+        this.x += other.x;
+        this.y += other.y;
+        return this;
+    }
+
+    subInPlace(other: Vec2): this {
+        this.x -= other.x;
+        this.y -= other.y;
+        return this;
+    }
+
+    scaleInPlace(scalar: number): this {
+        this.x *= scalar;
+        this.y *= scalar;
+        return this;
+    }
+
+    normalizeInPlace(): this {
+        const mag = this.magnitude();
+        if (mag !== 0) {
+            this.x /= mag;
+            this.y /= mag;
+        }
+        return this;
+    }
 }
 
 export function distance(p1: { pos: Vec2 }, p2: { pos: Vec2 }): number {
