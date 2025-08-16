@@ -19,6 +19,7 @@ import { soundManager, SoundType } from './rgbang/managers/sound-manager';
 import { gameStateStore } from './rgbang/core/gameStateStore';
 import { ALL_UPGRADES, Upgrade } from './rgbang/data/upgrades';
 import { GameColor, PRIMARY_COLORS, getRandomElement } from './rgbang/data/color';
+import { cn } from '@/lib/utils';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -252,11 +253,11 @@ export default function Home() {
                 return <GameOverScreen
                     finalScore={gameStoreState.score}
                     highScore={highScore}
-                    onBackToMenu={() => { 
-                        soundManager.play(SoundType.ButtonClick); 
-                        gameStateStore.resetState(); 
-                        loadInitialData(); 
-                        setUiState('menu'); 
+                    onBackToMenu={() => {
+                        soundManager.play(SoundType.ButtonClick);
+                        gameStateStore.resetState();
+                        loadInitialData();
+                        setUiState('menu');
                     }}
                     playHoverSound={playHoverSound}
                 />;
@@ -267,7 +268,10 @@ export default function Home() {
 
     return (
         <main
-            className="flex flex-col items-center justify-center min-h-screen text-foreground p-4 relative bg-soft-gradient bg-200% animate-background-pan"
+            className={cn(
+                "flex flex-col items-center justify-center min-h-screen text-foreground p-4 relative bg-soft-gradient bg-200% animate-background-pan",
+                ['playing', 'paused', 'upgrading', 'betweenWaves'].includes(uiState) && "cursor-none"
+            )}
             onContextMenu={handleContextMenu}
         >
             <SettingsModal

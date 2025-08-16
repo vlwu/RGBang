@@ -68,7 +68,7 @@ export class UI {
 
         if (isFreeplay) {
             this.drawText("SANDBOX MODE", 20, this.canvas.height - 40, 16, "rgba(255, 255, 255, 0.5)");
-            
+
             this.drawText("Sandbox Controls:", 20, controlsYStart, 16, "rgba(255, 255, 255, 0.7)");
             this.drawText("'O' - Spawn Enemy", 20, controlsYStart + 25, 14, "rgba(255, 255, 255, 0.6)");
             this.drawText("'P' - Open Upgrades", 20, controlsYStart + 45, 14, "rgba(255, 255, 255, 0.6)");
@@ -80,6 +80,41 @@ export class UI {
             const text = `'${keyDisplay}' - View Upgrades`;
             this.drawText(text, 20, controlsYStart, 16, "rgba(255, 255, 255, 0.5)");
         }
+
+        if (inputHandler && !player.isRadialMenuOpen) {
+            this.drawCrosshair(inputHandler);
+        }
+    }
+
+    private drawCrosshair(inputHandler: InputHandler) {
+        const mousePos = inputHandler.mousePos;
+        const size = 15;
+        const gap = 5;
+        const color = 'rgba(255, 255, 255, 0.7)';
+
+        this.ctx.save();
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 2;
+        this.ctx.shadowColor = 'rgba(0,0,0,1)';
+        this.ctx.shadowBlur = 3;
+
+        // Lines
+        this.ctx.beginPath();
+        // Left
+        this.ctx.moveTo(mousePos.x - gap, mousePos.y);
+        this.ctx.lineTo(mousePos.x - size, mousePos.y);
+        // Right
+        this.ctx.moveTo(mousePos.x + gap, mousePos.y);
+        this.ctx.lineTo(mousePos.x + size, mousePos.y);
+        // Top
+        this.ctx.moveTo(mousePos.x, mousePos.y - gap);
+        this.ctx.lineTo(mousePos.x, mousePos.y - size);
+        // Bottom
+        this.ctx.moveTo(mousePos.x, mousePos.y + gap);
+        this.ctx.lineTo(mousePos.x, mousePos.y + size);
+        this.ctx.stroke();
+
+        this.ctx.restore();
     }
 
     private drawHealthBar(player: Player) {
