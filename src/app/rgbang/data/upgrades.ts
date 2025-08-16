@@ -145,17 +145,17 @@ export const ALL_UPGRADES: Upgrade[] = [
         }
     },
     {
-        id: 'prism-exp-gain',
-        name: 'Prism Magnetism',
-        description: 'Increases score gained from defeating enemies.',
-        getEffectDescription: (level) => `+${20 * level}% Score Gain`,
+        id: 'prism-attraction',
+        name: 'Prism Attraction',
+        description: 'Increases the pickup range for fragments.',
+        getEffectDescription: (level) => `+${20 * level}% Pickup Range`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,
-        getValue: (level) => 1 + (0.2 * level),
+        getValue: (level) => 1 + 0.2 * level,
         apply: (player, level) => {
-            player.scoreMultiplier *= 1.2;
-        }
+            player.prismAttractionRadius *= 1.2;
+        },
     },
     {
         id: 'accuracy',

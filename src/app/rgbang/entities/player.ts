@@ -7,6 +7,7 @@ import { ParticleSystem } from './particle';
 import { UpgradeManager } from '../managers/upgrade-manager';
 import { Upgrade } from '../data/upgrades';
 import { SoundManager, SoundType } from '../managers/sound-manager';
+import { FRAGMENT_CONFIG } from '../data/gameConfig';
 
 export class Player {
     pos: Vec2;
@@ -29,6 +30,7 @@ export class Player {
     public shootCooldownModifier = 1;
     public accuracyModifier = 1;
     public scoreMultiplier = 1;
+    public prismAttractionRadius = FRAGMENT_CONFIG.ATTRACT_RADIUS;
 
     public flatHealthIncrease = 0;
     public flatDamageReduction = 0;

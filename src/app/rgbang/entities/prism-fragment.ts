@@ -11,7 +11,6 @@ export class PrismFragment {
     color: GameColor | null;
     hexColor: string;
 
-    private attractRadius = FRAGMENT_CONFIG.ATTRACT_RADIUS;
     private attractSpeed = FRAGMENT_CONFIG.ATTRACT_SPEED;
     private canAttract = false;
     private initialDelay = FRAGMENT_CONFIG.INITIAL_DELAY_FRAMES;
@@ -48,7 +47,7 @@ export class PrismFragment {
         if (this.canAttract) {
             const distVec = player.pos.sub(this.pos);
             const dist = distVec.magnitude();
-            if (dist < this.attractRadius) {
+            if (dist < player.prismAttractionRadius) {
                 this.pos.x = lerp(this.pos.x, player.pos.x, this.attractSpeed);
                 this.pos.y = lerp(this.pos.y, player.pos.y, this.attractSpeed);
             }
