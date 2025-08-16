@@ -95,6 +95,7 @@
     }
     .btn-liquid-glass:hover {
         @apply shadow-lg shadow-primary/20;
+        transform: scale(1.03);
     }
     .btn-liquid-primary {
         @apply text-background;
