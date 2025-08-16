@@ -9,12 +9,12 @@ import {
   DialogDescription
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Upgrade } from "./upgrades";
-import { GameColor, COLOR_DETAILS } from './color';
-import { PlayerUpgradeData, UpgradeProgress } from './upgrade-data';
+import { Upgrade } from "../data/upgrades";
+import { GameColor, COLOR_DETAILS } from '../data/color';
+import { PlayerUpgradeData, UpgradeProgress } from '../data/upgrade-data';
 import { Zap, Shield, Gem, TrendingUp, PlusCircle, ChevronsRight, Bolt, Wind, Flame, Star, Gauge, Crosshair, Award, HeartPulse, ShieldCheck, Sunrise, ShieldPlus, Copy, RefreshCcw, ArrowRightFromLine, Bomb, CircleDot, Reply, LocateFixed, Sprout, GitFork, Eraser } from "lucide-react";
 import { cn } from '@/lib/utils';
-import { soundManager, SoundType } from './sound-manager';
+import { soundManager, SoundType } from '../managers/sound-manager';
 
 interface UpgradeModalProps {
     isOpen: boolean;

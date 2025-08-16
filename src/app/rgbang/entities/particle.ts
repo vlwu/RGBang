@@ -1,7 +1,7 @@
-import { Vec2 } from './utils';
-import { GameColor, COLOR_DETAILS } from './color';
-import { ObjectPool } from './utils';
-import { PARTICLE_CONFIG } from './gameConfig';
+import { Vec2 } from '../common/utils';
+import { GameColor, COLOR_DETAILS } from '../data/color';
+import { ObjectPool } from '../common/utils';
+import { PARTICLE_CONFIG } from '../data/gameConfig';
 
 interface IParticle {
     pos: Vec2;

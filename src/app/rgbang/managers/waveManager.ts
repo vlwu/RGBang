@@ -1,10 +1,10 @@
-import { Enemy } from './enemy';
-import { GameColor, PRIMARY_COLORS, getRandomElement } from './color';
-import { EnemyType, WaveConfig, EnemySpawnConfig, WAVE_CONFIGS, FALLBACK_WAVE_CONFIG, generateProceduralWave } from './wave-data';
+import { Enemy } from '../entities/enemy';
+import { GameColor, PRIMARY_COLORS, getRandomElement } from '../data/color';
+import { EnemyType, WaveConfig, EnemySpawnConfig, WAVE_CONFIGS, FALLBACK_WAVE_CONFIG, generateProceduralWave } from '../data/wave-data';
 import { SoundManager } from './sound-manager';
 import { EntityManager } from './entityManager';
-import { Boss } from './boss';
-import { gameStateStore } from './gameStateStore';
+import { Boss } from '../entities/boss';
+import { gameStateStore } from '../core/gameStateStore';
 
 class EnemySpawner {
     private spawnTimer = 0;

@@ -9,8 +9,8 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Keybindings } from "./input-handler";
-import { getKeyDisplay } from "./utils";
+import { Keybindings } from "../managers/input-handler";
+import { getKeyDisplay } from "../common/utils";
 
 interface InfoModalProps {
     isOpen: boolean;

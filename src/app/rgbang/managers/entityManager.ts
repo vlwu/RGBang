@@ -1,12 +1,12 @@
-import { Bullet } from './bullet';
-import { Enemy } from './enemy';
-import { Boss } from './boss';
-import { PrismFragment } from './prism-fragment';
-import { Player } from './player';
-import { GameColor } from './color';
-import { Vec2, ObjectPool } from './utils';
-import { ParticleSystem } from './particle';
-import { IActionCallbacks, IVortex } from './types';
+import { Bullet } from '../entities/bullet';
+import { Enemy } from '../entities/enemy';
+import { Boss } from '../entities/boss';
+import { PrismFragment } from '../entities/prism-fragment';
+import { Player } from '../entities/player';
+import { GameColor } from '../data/color';
+import { Vec2, ObjectPool } from '../common/utils';
+import { ParticleSystem } from '../entities/particle';
+import { IActionCallbacks, IVortex } from '../common/types';
 
 export class EntityManager {
     public enemies: Enemy[] = [];

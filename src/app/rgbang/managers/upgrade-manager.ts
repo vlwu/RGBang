@@ -1,8 +1,8 @@
-import { Player } from './player';
-import { ALL_UPGRADES, Upgrade, UpgradeType } from './upgrades';
-import { GameColor, PRIMARY_COLORS, getRandomElement } from './color';
-import { PlayerUpgradeData } from './upgrade-data';
-import { gameStateStore } from './gameStateStore';
+import { Player } from '../entities/player';
+import { ALL_UPGRADES, Upgrade, UpgradeType } from '../data/upgrades';
+import { GameColor, PRIMARY_COLORS, getRandomElement } from '../data/color';
+import { PlayerUpgradeData } from '../data/upgrade-data';
+import { gameStateStore } from '../core/gameStateStore';
 
 export class UpgradeManager {
     private player: Player;

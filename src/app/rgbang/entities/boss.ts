@@ -1,8 +1,8 @@
-import { Vec2, lerp, drawShapeForColor } from './utils';
-import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from './color';
+import { Vec2, lerp, drawShapeForColor } from '../common/utils';
+import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, getRandomElement } from '../data/color';
 import { Bullet } from './bullet';
-import { SoundManager, SoundType } from './sound-manager';
-import { BOSS_CONFIG } from './gameConfig';
+import { SoundManager, SoundType } from '../managers/sound-manager';
+import { BOSS_CONFIG } from '../data/gameConfig';
 
 enum BossState {
     IDLE,

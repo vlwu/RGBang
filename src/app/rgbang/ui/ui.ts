@@ -1,10 +1,10 @@
-import { Player } from './player';
-import { GameColor, COLOR_DETAILS, ALL_COLORS, PRIMARY_COLORS, isSecondaryColor } from './color';
-import { Boss } from './boss';
-import { roundRect, drawShapeForColor, getKeyDisplay } from './utils';
-import { Vec2 } from './utils';
-import { Enemy } from './enemy';
-import InputHandler from './input-handler';
+import { Player } from '../entities/player';
+import { GameColor, COLOR_DETAILS, ALL_COLORS, PRIMARY_COLORS, isSecondaryColor } from '../data/color';
+import { Boss } from '../entities/boss';
+import { roundRect, drawShapeForColor, getKeyDisplay } from '../common/utils';
+import { Vec2 } from '../common/utils';
+import { Enemy } from '../entities/enemy';
+import InputHandler from '../managers/input-handler';
 
 export class UI {
     private canvas: HTMLCanvasElement;

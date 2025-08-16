@@ -1,4 +1,4 @@
-import { GameColor } from './color';
+import { GameColor } from '../data/color';
 import { SavedGameState } from './save-state';
 
 export interface UIState {

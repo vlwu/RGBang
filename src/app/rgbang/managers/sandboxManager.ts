@@ -1,13 +1,13 @@
 import { EntityManager } from "./entityManager";
-import { Player } from "./player";
-import { Enemy } from "./enemy";
-import { Boss } from "./boss";
+import { Player } from "../entities/player";
+import { Enemy } from "../entities/enemy";
+import { Boss } from "../entities/boss";
 import { WaveManager } from "./waveManager";
 import { SoundManager } from "./sound-manager";
-import { EnemyType } from "./wave-data";
-import { GameColor, PRIMARY_COLORS, getRandomElement } from "./color";
-import { ALL_UPGRADES } from "./upgrades";
-import { Vec2 } from "./utils";
+import { EnemyType } from "../data/wave-data";
+import { GameColor, PRIMARY_COLORS, getRandomElement } from "../data/color";
+import { ALL_UPGRADES } from "../data/upgrades";
+import { Vec2 } from "../common/utils";
 
 interface SandboxManagerDependencies {
     entityManager: EntityManager;

@@ -1,4 +1,4 @@
-import { Vec2 } from './utils';
+import { Vec2 } from '../common/utils';
 
 export interface Keybindings {
     up: string;

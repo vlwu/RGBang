@@ -1,5 +1,5 @@
 import { Vec2 } from './utils';
-import { GameColor } from './color';
+import { GameColor } from '../data/color';
 
 export interface IVortex {
     pos: Vec2;

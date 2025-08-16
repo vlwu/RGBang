@@ -1,9 +1,9 @@
 "use client"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upgrade, UpgradeType } from "./upgrades";
-import { COLOR_DETAILS } from './color';
-import { UpgradeManager } from './upgrade-manager';
+import { Upgrade, UpgradeType } from "../data/upgrades";
+import { COLOR_DETAILS } from '../data/color';
+import { UpgradeManager } from '../managers/upgrade-manager';
 import { iconMap } from './upgrade-modal';
 import { Star, X } from 'lucide-react';
 import { Button } from "@/components/ui/button";

@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Keybindings } from "./input-handler";
-import { soundManager, SoundType } from './sound-manager';
+import { Keybindings } from "../managers/input-handler";
+import { soundManager, SoundType } from '../managers/sound-manager';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Volume2 } from 'lucide-react';

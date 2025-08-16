@@ -1,21 +1,21 @@
-import { Player } from './player';
-import { Bullet } from './bullet';
-import { Enemy, PunishmentType } from './enemy';
-import { Boss } from './boss';
-import { UI } from './ui';
-import { ParticleSystem } from './particle';
-import { Vec2, Quadtree, distance } from './utils';
-import { GameColor, PRIMARY_COLORS, getRandomElement } from './color';
-import { PrismFragment } from './prism-fragment';
+import { Player } from '../entities/player';
+import { Bullet } from '../entities/bullet';
+import { Enemy } from '../entities/enemy';
+import { Boss } from '../entities/boss';
+import { UI } from '../ui/ui';
+import { ParticleSystem } from '../entities/particle';
+import { Vec2, Quadtree, distance } from '../common/utils';
+import { GameColor } from '../data/color';
+import { PrismFragment } from '../entities/prism-fragment';
 import { SavedGameState } from './save-state';
-import InputHandler from './input-handler';
-import { SoundManager, SoundType } from './sound-manager';
+import InputHandler from '../managers/input-handler';
+import { SoundManager, SoundType } from '../managers/sound-manager';
 import { gameStateStore } from './gameStateStore';
-import { EntityManager } from './entityManager';
-import { WaveManager } from './waveManager';
-import { CollisionManager } from './collisionManager';
-import { SandboxManager } from './sandboxManager';
-import { EnemyType } from './wave-data';
+import { EntityManager } from '../managers/entityManager';
+import { WaveManager } from '../managers/waveManager';
+import { CollisionManager } from '../managers/collisionManager';
+import { SandboxManager } from '../managers/sandboxManager';
+import { EnemyType } from '../data/wave-data';
 
 export class Game {
     public canvas!: HTMLCanvasElement;

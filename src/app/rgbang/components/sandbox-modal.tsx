@@ -15,10 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EnemyType } from './wave-data';
-import { GameColor, PRIMARY_COLORS, getRandomElement } from './color';
-import { ALL_UPGRADES, Upgrade } from './upgrades';
-import { soundManager, SoundType } from './sound-manager';
+import { EnemyType } from '../data/wave-data';
+import { GameColor, PRIMARY_COLORS, getRandomElement } from '../data/color';
+import { ALL_UPGRADES, Upgrade } from '../data/upgrades';
+import { soundManager, SoundType } from '../managers/sound-manager';
 import { Minus, Plus } from 'lucide-react';
 
 interface SandboxModalProps {

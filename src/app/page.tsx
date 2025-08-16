@@ -1,22 +1,22 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback, useImperativeHandle, useSyncExternalStore } from 'react';
-import { Game } from './rgbang/game';
-import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/input-handler';
+import { Game } from './rgbang/core/game';
+import InputHandler, { Keybindings, defaultKeybindings } from './rgbang/managers/input-handler';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Award, Gamepad2, Info, LogOut, Pause, Play, Settings, Trash2, History, X, TestTube } from 'lucide-react';
-import { SettingsModal } from './rgbang/settings-modal';
-import { InfoModal } from './rgbang/info-modal';
-import { SandboxModal } from './rgbang/sandbox-modal';
-import { GameColor, PRIMARY_COLORS, getRandomElement, COLOR_DETAILS } from './rgbang/color';
-import { UpgradeModal } from './rgbang/upgrade-modal';
-import type { Upgrade, UpgradeProgress } from './rgbang/upgrades';
-import { ALL_UPGRADES } from './rgbang/upgrades';
-import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData, savePlayerUpgradeData } from './rgbang/upgrade-data';
-import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/save-state';
-import { UpgradesOverviewModal } from './rgbang/upgrades-overview-modal';
+import { SettingsModal } from './rgbang/components/settings-modal';
+import { InfoModal } from './rgbang/components/info-modal';
+import { SandboxModal } from './rgbang/components/sandbox-modal';
+import { GameColor, PRIMARY_COLORS, getRandomElement, COLOR_DETAILS } from './rgbang/data/color';
+import { UpgradeModal } from './rgbang/components/upgrade-modal';
+import type { Upgrade, UpgradeProgress } from './rgbang/data/upgrades';
+import { ALL_UPGRADES } from './rgbang/data/upgrades';
+import { getPlayerUpgradeData, unlockUpgrade, PlayerUpgradeData, levelUpUpgrade, resetAllUpgradeData, savePlayerUpgradeData } from './rgbang/data/upgrade-data';
+import { SavedGameState, saveGameState, loadGameState, clearGameState } from './rgbang/core/save-state';
+import { UpgradesOverviewModal } from './rgbang/components/upgrades-overview-modal';
 import { useToast } from '@/hooks/use-toast';
-import { soundManager, SoundType } from './rgbang/sound-manager';
+import { soundManager, SoundType } from './rgbang/managers/sound-manager';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -28,11 +28,11 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
-import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG, EnemyType } from './rgbang/wave-data';
-import { gameEngine } from './rgbang/engine';
-import { gameStateStore } from './rgbang/gameStateStore';
+import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG, EnemyType } from './rgbang/data/wave-data';
+import { gameEngine } from './rgbang/core/engine';
+import { gameStateStore } from './rgbang/core/gameStateStore';
 import { cn } from '@/lib/utils';
-import { SandboxManager } from './rgbang/sandboxManager';
+import { SandboxManager } from './rgbang/managers/sandboxManager';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;

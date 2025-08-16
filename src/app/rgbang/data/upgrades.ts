@@ -1,5 +1,5 @@
 import { GameColor } from './color';
-import { Player } from './player';
+import { Player } from '../entities/player';
 
 export enum UpgradeType {
     GUN,

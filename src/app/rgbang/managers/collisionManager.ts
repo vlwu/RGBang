@@ -1,14 +1,14 @@
-import { Player } from './player';
-import { Bullet } from './bullet';
-import { Enemy, PunishmentType } from './enemy';
-import { Boss } from './boss';
-import { ParticleSystem } from './particle';
-import { circleCollision, Vec2, distance, Quadtree, QuadtreeObject } from './utils';
-import { GameColor, COLOR_DETAILS } from './color';
-import { PrismFragment } from './prism-fragment';
+import { Player } from '../entities/player';
+import { Bullet } from '../entities/bullet';
+import { Enemy, PunishmentType } from '../entities/enemy';
+import { Boss } from '../entities/boss';
+import { ParticleSystem } from '../entities/particle';
+import { circleCollision, Vec2, distance, Quadtree, QuadtreeObject } from '../common/utils';
+import { GameColor, COLOR_DETAILS } from '../data/color';
+import { PrismFragment } from '../entities/prism-fragment';
 import { SoundManager, SoundType } from './sound-manager';
 import { EntityManager } from './entityManager';
-import { gameStateStore } from './gameStateStore';
+import { gameStateStore } from '../core/gameStateStore';
 
 interface CollisionManagerDependencies {
     player: Player;

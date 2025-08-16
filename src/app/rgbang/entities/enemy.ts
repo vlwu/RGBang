@@ -1,11 +1,11 @@
-import { Vec2, drawShapeForColor, distance } from './utils';
-import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, SECONDARY_COLORS, getRandomElement } from './color';
+import { Vec2, drawShapeForColor, distance } from '../common/utils';
+import { GameColor, COLOR_DETAILS, PRIMARY_COLORS, SECONDARY_COLORS, getRandomElement } from '../data/color';
 import { Player } from './player';
 import { ParticleSystem } from './particle';
 import { Bullet } from './bullet';
-import { SoundManager, SoundType } from './sound-manager';
-import { ENEMY_CONFIG } from './gameConfig';
-import { IActionCallbacks, IVortex } from './types';
+import { SoundManager, SoundType } from '../managers/sound-manager';
+import { ENEMY_CONFIG } from '../data/gameConfig';
+import { IActionCallbacks, IVortex } from '../common/types';
 
 export enum PunishmentType {
     SPEED_BOOST = 'SPEED_BOOST',

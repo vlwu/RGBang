@@ -1,13 +1,12 @@
-import { Vec2, drawShapeForColor } from './utils';
+import { Vec2, drawShapeForColor, circleCollision } from '../common/utils';
 import { Bullet } from './bullet';
-import InputHandler from './input-handler';
-import { GameColor, COLOR_DETAILS, ALL_COLORS, isSecondaryColor } from './color';
-import { RadialMenu } from './radial-menu';
+import InputHandler from '../managers/input-handler';
+import { GameColor, COLOR_DETAILS, ALL_COLORS, isSecondaryColor } from '../data/color';
+import { RadialMenu } from '../ui/radial-menu';
 import { ParticleSystem } from './particle';
-import { UpgradeManager } from './upgrade-manager';
-import { Upgrade } from './upgrades';
-import { SoundManager, SoundType } from './sound-manager';
-import { circleCollision } from './utils';
+import { UpgradeManager } from '../managers/upgrade-manager';
+import { Upgrade } from '../data/upgrades';
+import { SoundManager, SoundType } from '../managers/sound-manager';
 
 export class Player {
     pos: Vec2;

@@ -1,4 +1,4 @@
-import { GameColor } from './color';
+import { GameColor } from '../data/color';
 
 export interface SavedGameState {
     score: number;

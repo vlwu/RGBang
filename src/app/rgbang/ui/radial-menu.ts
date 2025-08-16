@@ -1,5 +1,5 @@
-import { Vec2, drawShapeForColor } from "./utils";
-import { GameColor, COLOR_DETAILS, SECONDARY_COLORS } from "./color";
+import { Vec2, drawShapeForColor } from "../common/utils";
+import { GameColor, COLOR_DETAILS, SECONDARY_COLORS } from "../data/color";
 
 export class RadialMenu {
     public active = false;

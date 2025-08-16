@@ -1,7 +1,7 @@
-import { Vec2, drawShapeForColor } from './utils';
-import { GameColor, COLOR_DETAILS } from './color';
+import { Vec2, drawShapeForColor } from '../common/utils';
+import { GameColor, COLOR_DETAILS } from '../data/color';
 import { Enemy } from './enemy';
-import { BULLET_CONFIG } from './gameConfig';
+import { BULLET_CONFIG } from '../data/gameConfig';
 
 export class Bullet {
     pos: Vec2;

@@ -1,8 +1,8 @@
-import { Vec2, lerp } from './utils';
-import { GameColor, COLOR_DETAILS } from './color';
+import { Vec2, lerp } from '../common/utils';
+import { GameColor, COLOR_DETAILS } from '../data/color';
 import { Player } from './player';
 import { ParticleSystem } from './particle';
-import { FRAGMENT_CONFIG } from './gameConfig';
+import { FRAGMENT_CONFIG } from '../data/gameConfig';
 
 export class PrismFragment {
     pos: Vec2;
