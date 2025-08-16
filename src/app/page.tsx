@@ -199,7 +199,7 @@ export default function Home() {
         const savedMute = localStorage.getItem('rgBangMuted');
         const savedToastsEnabled = localStorage.getItem('rgBangToastsEnabled');
         const currentVolume = savedVolume ? parseFloat(savedVolume) : 1.0;
-        const currentMute = savedMute ? JSON.parse(savedMute) : false;
+        const currentMute = JSON.parse(savedMute || 'false');
         const currentToastsEnabled = savedToastsEnabled ? JSON.parse(savedToastsEnabled) : true;
         setVolume(currentVolume);
         setIsMuted(currentMute);
