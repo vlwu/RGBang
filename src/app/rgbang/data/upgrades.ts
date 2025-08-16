@@ -213,7 +213,7 @@ export const ALL_UPGRADES: Upgrade[] = [
         id: 'explosive-finish',
         name: 'Explosive Finish',
         description: 'Enemies have a chance to explode on death.',
-        getEffectDescription: (level) => `${level*10}% chance for AoE`,
+        getEffectDescription: (level) => `${level*8}% chance for AoE`,
         type: UpgradeType.GENERAL,
         color: null,
         getMaxLevel: () => 5,

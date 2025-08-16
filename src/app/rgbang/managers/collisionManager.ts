@@ -127,8 +127,8 @@ export class CollisionManager {
                         if (this.player.fragmentDuplicationChance > 0 && Math.random() < this.player.fragmentDuplicationChance) {
                              this.entityManager.addFragment(new PrismFragment(enemy.pos.x + 10, enemy.pos.y, enemy.color));
                         }
-                        if (this.player.explosiveFinishLevel > 0 && Math.random() < this.player.explosiveFinishLevel * 0.1) {
-                            this.dealAreaDamage(enemy.pos, 50 + this.player.explosiveFinishLevel * 10, 10 + this.player.explosiveFinishLevel * 5, enemy.color);
+                        if (this.player.explosiveFinishLevel > 0 && Math.random() < this.player.explosiveFinishLevel * 0.08) {
+                            this.dealAreaDamage(enemy.pos, 40 + this.player.explosiveFinishLevel * 8, 8 + this.player.explosiveFinishLevel * 4, enemy.color);
                         }
                     }
 
