@@ -4,7 +4,7 @@ import { Enemy, PunishmentType } from './enemy';
 import { Boss } from './boss';
 import { UI } from './ui';
 import { ParticleSystem } from './particle';
-import { Vec2, Quadtree } from './utils';
+import { Vec2, Quadtree, distance } from './utils';
 import { GameColor, PRIMARY_COLORS, getRandomElement } from './color';
 import { PrismFragment } from './prism-fragment';
 import { SavedGameState } from './save-state';
@@ -15,6 +15,7 @@ import { EntityManager } from './entityManager';
 import { WaveManager } from './waveManager';
 import { CollisionManager } from './collisionManager';
 import { SandboxManager } from './sandboxManager';
+import { EnemyType } from './wave-data';
 
 export class Game {
     public canvas!: HTMLCanvasElement;
@@ -165,7 +166,7 @@ export class Game {
     private handleFreeplayControls(inputHandler: InputHandler) {
         if (this.sandboxManager) {
             if (inputHandler.wasKeyReleased('o')) {
-                this.sandboxManager.spawnEnemy('RED_BLOB');
+                this.sandboxManager.spawnEnemy(EnemyType.RED_BLOB);
             }
             if (inputHandler.wasKeyReleased('p')) {
                 gameStateStore.updateState({ requestOpenUpgradeModal: true });
