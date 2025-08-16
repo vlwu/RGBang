@@ -37,9 +37,19 @@ export class EntityManager {
             }
             this.ricochetBulletsOnScreen++;
         }
-        const pooledBullet = this.bulletPool.get(bullet.pos, bullet.vel.normalize(), bullet.color, bullet.isFromBoss);
+        const pooledBullet = this.bulletPool.get();
 
+        pooledBullet.pos.x = bullet.pos.x;
+        pooledBullet.pos.y = bullet.pos.y;
+        pooledBullet.vel.x = bullet.vel.x;
+        pooledBullet.vel.y = bullet.vel.y;
+        pooledBullet.radius = bullet.radius;
+        pooledBullet.color = bullet.color;
+        pooledBullet.hexColor = bullet.hexColor;
         pooledBullet.damage = bullet.damage;
+        pooledBullet.isFromBoss = bullet.isFromBoss;
+        pooledBullet.lifespan = bullet.lifespan;
+        pooledBullet.isRicochet = bullet.isRicochet;
         pooledBullet.penetrationsLeft = bullet.penetrationsLeft;
         pooledBullet.ricochetsLeft = bullet.ricochetsLeft;
         pooledBullet.isSeeking = bullet.isSeeking;
@@ -47,8 +57,6 @@ export class EntityManager {
         pooledBullet.isFission = bullet.isFission;
         pooledBullet.isVoid = bullet.isVoid;
         pooledBullet.isGravityOrb = bullet.isGravityOrb;
-        pooledBullet.lifespan = bullet.lifespan;
-        pooledBullet.isRicochet = bullet.isRicochet;
         pooledBullet.isEnemyProjectile = bullet.isEnemyProjectile;
         pooledBullet.slowsPlayer = bullet.slowsPlayer;
 

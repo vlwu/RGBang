@@ -27,6 +27,7 @@ export class Bullet {
 
     public hitEnemies: Set<Enemy> = new Set();
     public trailPoints: Vec2[] = [];
+    private trailLength = 15;
 
     private seekForce = 0.3;
 
@@ -40,17 +41,9 @@ export class Bullet {
         this.lifespan = isFromBoss ? 420 : 300;
     }
 
-    reset(pos: Vec2, direction: Vec2, color: GameColor, isFromBoss = false) {
-        this.pos.x = pos.x;
-        this.pos.y = pos.y;
-        this.vel = direction.normalize().scale(isFromBoss || this.isEnemyProjectile ? 4 : 10);
-        this.color = color;
-        this.hexColor = COLOR_DETAILS[color].hex;
-        this.isFromBoss = isFromBoss;
-        this.radius = isFromBoss || this.isEnemyProjectile ? 8 : 5;
-        this.damage = isFromBoss ? 10 : 10;
+    reset() {
         this.isActive = true;
-        this.lifespan = isFromBoss || this.isEnemyProjectile ? 420 : 300;
+        this.lifespan = 300;
         this.isRicochet = false;
 
         this.penetrationsLeft = 0;
@@ -73,11 +66,9 @@ export class Bullet {
             return;
         }
 
-        if (this.isSlowing) {
-            this.trailPoints.push(this.pos.add(new Vec2(0,0)));
-            if (this.trailPoints.length > 10) {
-                this.trailPoints.shift();
-            }
+        this.trailPoints.push(this.pos.clone());
+        if (this.trailPoints.length > this.trailLength) {
+            this.trailPoints.shift();
         }
 
         if (this.isSeeking && enemies && enemies.length > 0) {
@@ -118,18 +109,24 @@ export class Bullet {
 
     draw(ctx: CanvasRenderingContext2D) {
         ctx.save();
-        if (this.isSlowing && this.trailPoints.length > 1) {
-            ctx.beginPath();
-            ctx.moveTo(this.trailPoints[0].x, this.trailPoints[0].y);
-            for (let i = 1; i < this.trailPoints.length; i++) {
-                ctx.lineTo(this.trailPoints[i].x, this.trailPoints[i].y);
-            }
-            ctx.strokeStyle = "rgba(102, 255, 140, 0.3)";
-            ctx.lineWidth = 10;
-            ctx.lineCap = "round";
-            ctx.stroke();
+        switch (this.color) {
+            case GameColor.YELLOW:
+                this.drawLightningBolt(ctx);
+                break;
+            case GameColor.BLUE:
+                this.drawIceShard(ctx);
+                break;
+            case GameColor.RED:
+                this.drawFireball(ctx);
+                break;
+            default:
+                this.drawDefaultBullet(ctx);
+                break;
         }
+        ctx.restore();
+    }
 
+    private drawDefaultBullet(ctx: CanvasRenderingContext2D) {
         if (this.isGravityOrb) {
             const pulse = Math.abs(Math.sin(Date.now() / 150));
             ctx.shadowColor = this.hexColor;
@@ -140,7 +137,6 @@ export class Bullet {
             ctx.fill();
         }
 
-
         ctx.fillStyle = this.hexColor;
         ctx.shadowColor = this.hexColor;
         ctx.shadowBlur = 10;
@@ -149,7 +145,76 @@ export class Bullet {
         ctx.fill();
 
         drawShapeForColor(ctx, this.pos, this.radius, this.color, 'white');
+    }
+
+    private drawLightningBolt(ctx: CanvasRenderingContext2D) {
+        ctx.shadowColor = this.hexColor;
+        ctx.shadowBlur = 15;
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = this.radius * 0.8;
+        ctx.beginPath();
+        ctx.moveTo(this.pos.x, this.pos.y);
+        const tailPos = this.pos.sub(this.vel.normalize().scale(this.radius * 3));
+        ctx.lineTo(tailPos.x, tailPos.y);
+        ctx.stroke();
+
+        ctx.strokeStyle = this.hexColor;
+        ctx.lineWidth = this.radius * 0.5;
+        ctx.stroke();
+    }
+
+    private drawIceShard(ctx: CanvasRenderingContext2D) {
+        ctx.save();
+        ctx.translate(this.pos.x, this.pos.y);
+        ctx.rotate(Math.atan2(this.vel.y, this.vel.x));
+        
+        ctx.fillStyle = this.hexColor;
+        ctx.shadowColor = this.hexColor;
+        ctx.shadowBlur = 10;
+
+        const size = this.radius * 2;
+        ctx.beginPath();
+        ctx.moveTo(size / 2, 0);
+        ctx.lineTo(-size / 2, -size / 3);
+        ctx.lineTo(-size / 3, 0);
+        ctx.lineTo(-size / 2, size / 3);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
 
         ctx.restore();
+    }
+
+    private drawFireball(ctx: CanvasRenderingContext2D) {
+        if (this.trailPoints.length > 1) {
+            ctx.beginPath();
+            for (let i = 0; i < this.trailPoints.length; i++) {
+                const p = this.trailPoints[i];
+                ctx.lineTo(p.x, p.y);
+            }
+            const gradient = ctx.createLinearGradient(this.trailPoints[0].x, this.trailPoints[0].y, this.pos.x, this.pos.y);
+            gradient.addColorStop(0, 'rgba(255, 100, 50, 0)');
+            gradient.addColorStop(1, 'rgba(255, 200, 50, 0.5)');
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = this.radius * (1 + Math.random() * 0.5);
+            ctx.lineCap = "round";
+            ctx.stroke();
+        }
+        
+        const pulse = Math.abs(Math.sin(Date.now() / 100));
+        ctx.fillStyle = this.hexColor;
+        ctx.shadowColor = this.hexColor;
+        ctx.shadowBlur = 15;
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.radius + pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = 'white';
+        ctx.beginPath();
+        ctx.arc(this.pos.x, this.pos.y, this.radius * 0.5, 0, Math.PI * 2);
+        ctx.fill();
     }
 }

@@ -30,6 +30,10 @@ export class Vec2 {
         const sin = Math.sin(angle);
         return new Vec2(this.x * cos - this.y * sin, this.x * sin + this.y * cos);
     }
+
+    clone(): Vec2 {
+        return new Vec2(this.x, this.y);
+    }
 }
 
 export function distance(p1: { pos: Vec2 }, p2: { pos: Vec2 }): number {

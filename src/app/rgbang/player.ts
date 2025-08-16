@@ -62,8 +62,6 @@ export class Player {
     private isSlowed = false;
     private slowTimer = 0;
 
-    private baseBulletSpread = 0.15;
-    private shootCooldown = 10;
     public shootTimer = 0;
 
     private isDashing = false;
@@ -199,12 +197,7 @@ export class Player {
             const selectedColor = this.radialMenu.getSelectedColor();
             if(selectedColor) {
                 this.updateAvailableColors(selectedColor);
-                const direction = input.mousePos.sub(this.pos);
-                const bullet = new Bullet(this.pos, direction, this.currentColor);
-                this.applyBulletUpgrades(bullet);
-                createBullet(bullet);
-                this.soundManager.play(SoundType.PlayerShoot);
-                this.shootTimer = this.getShootCooldown();
+                this.handleShooting(input, createBullet, true);
             }
             this.radialMenu.close();
             this.isRadialMenuOpen = false;
@@ -279,15 +272,31 @@ export class Player {
         }
     }
 
-    private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void) {
-        if (input.isShooting() && this.shootTimer === 0 && !this.radialMenu.active) {
-            const direction = input.mousePos.sub(this.pos);
-            const spreadAngle = (Math.random() - 0.5) * this.getBulletSpread();
-            const finalDirection = direction.rotate(spreadAngle);
+    private handleShooting(input: InputHandler, createBullet: (bullet: Bullet) => void, fromRadialMenu = false) {
+        if ((fromRadialMenu || input.isShooting()) && this.shootTimer === 0 && !this.radialMenu.active) {
+            const colorDetails = COLOR_DETAILS[this.currentColor];
+            const aimDirection = input.mousePos.sub(this.pos);
 
-            const bullet = new Bullet(this.pos, finalDirection, this.currentColor);
-            this.applyBulletUpgrades(bullet);
-            createBullet(bullet);
+            for (let i = 0; i < colorDetails.pelletCount; i++) {
+                const spreadAngle = colorDetails.pelletCount > 1
+                    ? (i / (colorDetails.pelletCount - 1) - 0.5) * colorDetails.spread
+                    : (Math.random() - 0.5) * colorDetails.spread;
+                
+                const finalDirection = aimDirection.rotate(spreadAngle * this.accuracyModifier);
+                const bullet = new Bullet(this.pos, finalDirection, this.currentColor);
+
+                bullet.vel = finalDirection.normalize().scale(colorDetails.baseSpeed);
+                bullet.damage = colorDetails.baseDamage;
+                bullet.radius = colorDetails.baseRadius;
+
+                if (colorDetails.pelletCount > 1) {
+                    bullet.lifespan *= 0.7;
+                }
+
+                this.applyBulletUpgrades(bullet);
+                createBullet(bullet);
+            }
+
             this.soundManager.play(SoundType.PlayerShoot);
             this.shootTimer = this.getShootCooldown();
         }
@@ -484,11 +493,12 @@ export class Player {
     }
 
     public getShootCooldown(): number {
+        const baseCooldown = COLOR_DETAILS[this.currentColor].baseCooldown;
         const adrenalineBonus = this.adrenalineTimer > 0 ? 1 - this.adrenalineRushLevel * 0.12 : 1;
-        return Math.round(this.shootCooldown * this.shootCooldownModifier * adrenalineBonus);
+        return Math.round(baseCooldown * this.shootCooldownModifier * adrenalineBonus);
     }
 
     public getBulletSpread(): number {
-        return this.baseBulletSpread * this.accuracyModifier;
+        return 1.0;
     }
 }

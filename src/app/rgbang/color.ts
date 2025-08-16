@@ -1,4 +1,3 @@
-
 export enum GameColor {
     RED = 'RED',
     YELLOW = 'YELLOW',
@@ -19,14 +18,20 @@ export const COLOR_DETAILS: Record<GameColor, {
     hex: string,
     key: string,
     shape: Shape,
-    components?: [GameColor, GameColor]
+    components?: [GameColor, GameColor],
+    baseCooldown: number,
+    baseSpeed: number,
+    baseRadius: number,
+    baseDamage: number,
+    pelletCount: number,
+    spread: number, // in radians
 }> = {
-    [GameColor.RED]: { name: 'Red', hex: '#ff4d4d', key: '1', shape: 'circle' },
-    [GameColor.YELLOW]: { name: 'Yellow', hex: '#ffff66', key: '2', shape: 'triangle' },
-    [GameColor.BLUE]: { name: 'Blue', hex: '#4d94ff', key: '3', shape: 'square' },
-    [GameColor.ORANGE]: { name: 'Orange', hex: '#ffc266', key: 'Q', shape: 'mixed', components: [GameColor.RED, GameColor.YELLOW] },
-    [GameColor.PURPLE]: { name: 'Purple', hex: '#d966ff', key: 'Q', shape: 'mixed', components: [GameColor.RED, GameColor.BLUE] },
-    [GameColor.GREEN]: { name: 'Green', hex: '#66ff8c', key: 'Q', shape: 'mixed', components: [GameColor.YELLOW, GameColor.BLUE] },
+    [GameColor.RED]:    { name: 'Red',    hex: '#ff4d4d', key: '1', shape: 'circle',   components: undefined, baseCooldown: 12, baseSpeed: 10,  baseRadius: 6, baseDamage: 12, pelletCount: 1, spread: 0.1 },
+    [GameColor.YELLOW]: { name: 'Yellow', hex: '#ffff66', key: '2', shape: 'triangle', components: undefined, baseCooldown: 8,  baseSpeed: 14,  baseRadius: 4, baseDamage: 8,  pelletCount: 1, spread: 0.15 },
+    [GameColor.BLUE]:   { name: 'Blue',   hex: '#4d94ff', key: '3', shape: 'square',   components: undefined, baseCooldown: 20, baseSpeed: 7,   baseRadius: 8, baseDamage: 20, pelletCount: 1, spread: 0.05 },
+    [GameColor.ORANGE]: { name: 'Orange', hex: '#ffc266', key: 'Q', shape: 'mixed', components: [GameColor.RED, GameColor.YELLOW], baseCooldown: 25, baseSpeed: 12, baseRadius: 4, baseDamage: 7, pelletCount: 6, spread: 0.4 },
+    [GameColor.PURPLE]: { name: 'Purple', hex: '#d966ff', key: 'Q', shape: 'mixed', components: [GameColor.RED, GameColor.BLUE],   baseCooldown: 30, baseSpeed: 5,   baseRadius: 10, baseDamage: 25, pelletCount: 1, spread: 0 },
+    [GameColor.GREEN]:  { name: 'Green',  hex: '#66ff8c', key: 'Q', shape: 'mixed', components: [GameColor.YELLOW, GameColor.BLUE], baseCooldown: 6, baseSpeed: 11, baseRadius: 3, baseDamage: 6, pelletCount: 2, spread: 0.2 },
 };
 
 export function mixColors(color1: GameColor, color2: GameColor): GameColor | null {
