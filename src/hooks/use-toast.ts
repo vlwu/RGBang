@@ -16,6 +16,8 @@ type ToasterToast = ToastProps & {
   title?: React.ReactNode
   description?: React.ReactNode
   action?: ToastActionElement
+  stackId?: string
+  count?: number
 }
 
 const actionTypes = {
@@ -143,6 +145,34 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
+  if (props.stackId) {
+    const existingToast = memoryState.toasts.find(
+      (t) => t.open && t.stackId === props.stackId
+    );
+
+    if (existingToast) {
+      dispatch({
+        type: "UPDATE_TOAST",
+        toast: {
+          ...existingToast,
+          ...props,
+          id: existingToast.id,
+          count: (existingToast.count || 1) + 1,
+        },
+      });
+
+      return {
+        id: existingToast.id,
+        dismiss: () => dispatch({ type: "DISMISS_TOAST", toastId: existingToast.id }),
+        update: (props: ToasterToast) =>
+          dispatch({
+            type: "UPDATE_TOAST",
+            toast: { ...props, id: existingToast.id },
+          }),
+      };
+    }
+  }
+
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -158,6 +188,7 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
+      count: 1,
       onOpenChange: (open) => {
         if (!open) dismiss()
       },

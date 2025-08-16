@@ -466,6 +466,7 @@ export default function Home() {
                 duration: 1500,
                 className: "toast-glow",
                 style: { '--toast-glow-color': colorHex } as React.CSSProperties,
+                stackId: 'fragment-collected',
             });
             lastFragmentCount.current = gameStoreState.fragmentCollectCount;
         }
