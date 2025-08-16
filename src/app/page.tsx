@@ -32,6 +32,7 @@ import { WAVE_CONFIGS, FALLBACK_WAVE_CONFIG, EnemyType } from './rgbang/wave-dat
 import { gameEngine } from './rgbang/engine';
 import { gameStateStore } from './rgbang/gameStateStore';
 import { cn } from '@/lib/utils';
+import { SandboxManager } from './rgbang/sandboxManager';
 
 const GAME_WIDTH = 1280;
 const GAME_HEIGHT = 720;
@@ -120,6 +121,17 @@ const GameCanvas = React.forwardRef<GameCanvasHandle, {
 
 GameCanvas.displayName = 'GameCanvas';
 
+interface SandboxGameManager {
+    spawnEnemy: (type: EnemyType, color?: GameColor) => void;
+    spawnBoss: () => void;
+    killAllEnemies: () => void;
+    clearAllBullets: () => void;
+    addUpgrade: (upgradeId: string) => void;
+    removeUpgrade: (upgradeId: string) => void;
+    maxUpgrade: (upgradeId: string) => void;
+    getRunUpgrades: () => Map<string, number>;
+}
+
 export default function Home() {
     const [uiState, setUiState] = useState<'menu' | 'playing' | 'paused' | 'gameOver' | 'upgrading' | 'betweenWaves' | 'continuePrompt'>('menu');
     const [highScore, setHighScore] = useState(0);
@@ -136,6 +148,7 @@ export default function Home() {
     const [isUpgradeOverviewOpen, setIsUpgradeOverviewOpen] = useState(false);
     const [isSandboxModalOpen, setIsSandboxModalOpen] = useState(false);
     const [upgradeOptions, setUpgradeOptions] = useState<Upgrade[]>([]);
+    const [sandboxManager, setSandboxManager] = useState<SandboxGameManager | null>(null);
 
     const [keybindings, setKeybindings] = useState<Keybindings>(defaultKeybindings);
     const gameCanvasRef = useRef<GameCanvasHandle | null>(null);
@@ -499,29 +512,39 @@ export default function Home() {
         setSavedGame(null);
     };
 
-    const startNewRun = async () => {
-        await clearGameState();
-        const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
-
-        const newInitialGameState = { ...DEFAULT_GAME_STATE, initialColor: lastColor, currentWave: 0 };
-        setInitialGameState(newInitialGameState);
-        setUiState('playing');
-    };
-
-    const startSandboxMode = async () => {
+    const startNewRun = async (gameMode: 'normal' | 'freeplay' = 'normal') => {
         soundManager.play(SoundType.ButtonClick);
         await clearGameState();
-        const newInitialGameState: SavedGameState = { ...DEFAULT_GAME_STATE, gameMode: 'freeplay' };
+        const lastColor = localStorage.getItem('rgBangLastColor') as GameColor || GameColor.RED;
+        const newInitialGameState: SavedGameState = { ...DEFAULT_GAME_STATE, initialColor: lastColor, currentWave: 0, gameMode };
         setInitialGameState(newInitialGameState);
         setUiState('playing');
-    }
+
+        if (gameMode === 'freeplay') {
+            const game = gameCanvasRef.current?.getGameInstance();
+            const sm = game?.getSandboxManager();
+            if (sm) {
+                const manager: SandboxGameManager = {
+                    spawnEnemy: sm.spawnEnemy.bind(sm),
+                    spawnBoss: sm.spawnBoss.bind(sm),
+                    killAllEnemies: sm.killAllEnemies.bind(sm),
+                    clearAllBullets: sm.clearAllBullets.bind(sm),
+                    addUpgrade: sm.addUpgrade.bind(sm),
+                    removeUpgrade: sm.removeUpgrade.bind(sm),
+                    maxUpgrade: sm.maxUpgrade.bind(sm),
+                    getRunUpgrades: () => gameStoreState.runUpgrades
+                };
+                setSandboxManager(manager);
+            }
+        }
+    };
 
     const handlePlayClick = () => {
         soundManager.play(SoundType.ButtonClick);
         if (savedGame) {
             setUiState('continuePrompt');
         } else {
-            startNewRun();
+            startNewRun('normal');
         }
     };
 
@@ -536,7 +559,7 @@ export default function Home() {
             setInitialGameState(savedRun);
             setUiState('playing');
         } else {
-            startNewRun();
+            startNewRun('normal');
         }
     };
 
@@ -609,22 +632,26 @@ export default function Home() {
         }
     };
 
-    const gameManager = {
-        spawnEnemy: (type: EnemyType, color?: GameColor) => gameCanvasRef.current?.getGameInstance()?.sandbox_spawnEnemy(type, color),
-        spawnBoss: () => gameCanvasRef.current?.getGameInstance()?.sandbox_spawnBoss(),
-        killAllEnemies: () => gameCanvasRef.current?.getGameInstance()?.sandbox_killAllEnemies(),
-        clearAllBullets: () => gameCanvasRef.current?.getGameInstance()?.sandbox_clearAllBullets(),
-        addUpgrade: (upgradeId: string) => {
-            gameCanvasRef.current?.getGameInstance()?.sandbox_addUpgrade(upgradeId)
-        },
-        removeUpgrade: (upgradeId: string) => {
-            gameCanvasRef.current?.getGameInstance()?.sandbox_removeUpgrade(upgradeId)
-        },
-        maxUpgrade: (upgradeId: string) => {
-            gameCanvasRef.current?.getGameInstance()?.sandbox_maxUpgrade(upgradeId)
-        },
-        getRunUpgrades: () => gameCanvasRef.current?.getGameInstance()?.player.upgradeManager.getActiveUpgradeMap() ?? new Map(),
-    };
+    useEffect(() => {
+        const game = gameCanvasRef.current?.getGameInstance();
+        const sm = game?.getSandboxManager();
+        if (game?.gameMode === 'freeplay' && sm) {
+            const manager: SandboxGameManager = {
+                spawnEnemy: sm.spawnEnemy.bind(sm),
+                spawnBoss: sm.spawnBoss.bind(sm),
+                killAllEnemies: sm.killAllEnemies.bind(sm),
+                clearAllBullets: sm.clearAllBullets.bind(sm),
+                addUpgrade: sm.addUpgrade.bind(sm),
+                removeUpgrade: sm.removeUpgrade.bind(sm),
+                maxUpgrade: sm.maxUpgrade.bind(sm),
+                getRunUpgrades: () => gameStoreState.runUpgrades
+            };
+            setSandboxManager(manager);
+        } else {
+            setSandboxManager(null);
+        }
+    }, [uiState, gameStoreState.runUpgrades]);
+
 
     return (
         <main
@@ -654,11 +681,11 @@ export default function Home() {
                 upgradesRemainingToSelect={upgradesRemainingToSelect}
                 totalUpgradesToSelect={totalUpgradesToSelect}
             />
-            {gameEngine.gameMode === 'freeplay' && (
+            {sandboxManager && (
                 <SandboxModal
                     isOpen={isSandboxModalOpen}
                     onClose={() => setIsSandboxModalOpen(false)}
-                    gameManager={gameManager}
+                    gameManager={sandboxManager}
                     runUpgrades={gameStoreState.runUpgrades}
                 />
             )}
@@ -675,7 +702,7 @@ export default function Home() {
                             <Gamepad2 className="mr-2" />
                             Play
                         </Button>
-                        <Button size="lg" onClick={startSandboxMode} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-secondary">
+                        <Button size="lg" onClick={() => startNewRun('freeplay')} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-secondary">
                             <TestTube className="mr-2" />
                             Sandbox
                         </Button>
@@ -734,7 +761,7 @@ export default function Home() {
                             <History className="mr-2" />
                             Continue Run
                         </Button>
-                        <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); startNewRun(); }} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-destructive">
+                        <Button size="lg" onClick={() => { soundManager.play(SoundType.ButtonClick); startNewRun('normal'); }} onMouseEnter={playHoverSound} className="btn-liquid-glass btn-liquid-destructive">
                             <Gamepad2 className="mr-2" />
                             Start Fresh
                         </Button>
