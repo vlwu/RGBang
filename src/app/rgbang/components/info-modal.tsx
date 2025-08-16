@@ -11,6 +11,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Keybindings } from "../managers/input-handler";
 import { getKeyDisplay } from "../common/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Award, Gamepad2, Shield, Zap } from "lucide-react";
 
 interface InfoModalProps {
     isOpen: boolean;
@@ -24,55 +26,72 @@ const KeyDisplay = ({ children }: { children: React.ReactNode }) => (
     </kbd>
 );
 
-export function InfoModal({ isOpen, onClose, keybindings }: InfoModalProps) {
+const Section = ({ title, children }: { title: string, children: React.ReactNode }) => (
+    <div className="space-y-2">
+        <h3 className="font-semibold text-primary text-lg tracking-wide">{title}</h3>
+        <div className="text-muted-foreground space-y-2">{children}</div>
+    </div>
+);
 
+export function InfoModal({ isOpen, onClose, keybindings }: InfoModalProps) {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px] bg-background text-foreground flex flex-col max-h-[90vh] overflow-hidden">
-                <DialogHeader className="flex-shrink-0">
-                    <DialogTitle className="text-primary text-2xl">How to Play RGBang</DialogTitle>
+            <DialogContent className="sm:max-w-2xl w-[90vw] bg-background text-foreground flex flex-col max-h-[90vh] p-0">
+                <DialogHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-background z-10">
+                    <DialogTitle className="text-primary text-2xl font-headline">How to Play RGBang</DialogTitle>
                     <DialogDescription>
-                        Master the colors and shapes to survive the onslaught!
+                        Master the colors and shapes to survive the chromatic onslaught!
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-y-auto min-h-0">
-                    <div className="grid gap-6 py-4 text-sm pr-6">
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-primary">Controls</h3>
-                            <ul className="list-disc list-inside space-y-1">
-                                <li><KeyDisplay>{getKeyDisplay(keybindings.up)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.left)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.down)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.right)}</KeyDisplay> - Move your character</li>
-                                <li><KeyDisplay>Mouse</KeyDisplay> - Aim</li>
-                                <li><KeyDisplay>{getKeyDisplay(keybindings.shoot)}</KeyDisplay> - Shoot</li>
-                                <li><KeyDisplay>{getKeyDisplay(keybindings.dash)}</KeyDisplay> - Dash (provides temporary invulnerability)</li>
-                                <li><KeyDisplay>{getKeyDisplay(keybindings.viewUpgrades)}</KeyDisplay> - Toggle view of current upgrades during a run</li>
-                            </ul>
-                        </div>
 
-                         <div className="space-y-2">
-                            <h3 className="font-semibold text-primary">Color & Shape System</h3>
-                             <p>To damage an enemy, you must match your bullet's color and shape to the enemy's.</p>
-                            <ul className="list-disc list-inside space-y-1">
+                <ScrollArea className="flex-grow min-h-0">
+                    <div className="grid gap-8 px-6 py-4 text-sm">
+                        <Section title="Core Objective">
+                            <p>Survive for as long as you can against procedurally generated waves of enemies. Defeat them by matching your bullet's color and shape to theirs. Collect fragments they drop to earn powerful, persistent upgrades and achieve a new high score.</p>
+                        </Section>
+
+                        <Section title="Controls">
+                            <ul className="list-disc list-inside space-y-2">
+                                <li><KeyDisplay>{getKeyDisplay(keybindings.up)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.left)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.down)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.right)}</KeyDisplay> - Move your character.</li>
+                                <li><KeyDisplay>Mouse</KeyDisplay> - Aim your weapon.</li>
+                                <li><KeyDisplay>{getKeyDisplay(keybindings.shoot)}</KeyDisplay> - Fire your currently selected color.</li>
+                                <li><KeyDisplay>{getKeyDisplay(keybindings.dash)}</KeyDisplay> - Perform a quick dash, granting temporary invulnerability.</li>
+                                <li><KeyDisplay>{getKeyDisplay(keybindings.viewUpgrades)}</KeyDisplay> - During a run, toggle a panel to view your active upgrades.</li>
+                            </ul>
+                        </Section>
+
+                        <Section title="The Color & Shape System">
+                             <p>To damage an enemy, you must hit it with the correct color. Each color is paired with a unique shape for better visual distinction.</p>
+                            <ul className="list-disc list-inside space-y-2">
                                 <li>There are 3 primary colors: <span className="text-[#ff4d4d] font-bold">Red (Circle)</span>, <span className="text-[#ffff66] font-bold">Yellow (Triangle)</span>, and <span className="text-[#4d94ff] font-bold">Blue (Square)</span>.</li>
-                                 <li>Select a primary color with keys <KeyDisplay>{getKeyDisplay(keybindings.primary1)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.primary2)}</KeyDisplay> <KeyDisplay>{getKeyDisplay(keybindings.primary3)}</KeyDisplay>, or cycle with the <KeyDisplay>Mouse Wheel</KeyDisplay>.</li>
-                                <li>Hold <KeyDisplay>{getKeyDisplay(keybindings.comboRadial)}</KeyDisplay> to open a radial menu for secondary colors (Orange, Green, Purple).</li>
-                                <li>Shooting an enemy with the wrong color 3 times will trigger a punishment, making it stronger!</li>
+                                 <li>Select a primary color with keys <KeyDisplay>{getKeyDisplay(keybindings.primary1)}</KeyDisplay>, <KeyDisplay>{getKeyDisplay(keybindings.primary2)}</KeyDisplay>, <KeyDisplay>{getKeyDisplay(keybindings.primary3)}</KeyDisplay>, or cycle through all available colors with the <KeyDisplay>Mouse Wheel</KeyDisplay>.</li>
+                                <li>Hold <KeyDisplay>{getKeyDisplay(keybindings.comboRadial)}</KeyDisplay> to open a radial menu for powerful secondary colors: Orange, Green, and Purple.</li>
+                                <li><span className="font-bold text-destructive">Punishment System:</span> Hitting an enemy with the wrong color 3 times will trigger a punishment, making it more dangerous! It might gain speed, reflect bullets, split into two, or deal more damage.</li>
                             </ul>
-                        </div>
+                        </Section>
 
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-primary">Gameplay & Upgrades</h3>
-                            <ul className="list-disc list-inside space-y-1">
-                                <li>Survive procedurally generated waves of enemies that become progressively harder.</li>
-                                <li>Defeating enemies drops colored fragments. Collecting these earns you upgrade choices at the end of a wave.</li>
-                                <li>Powerful bosses and mini-bosses will appear on certain waves.</li>
-                                <li>Defeat bosses to get special fragments which may offer more powerful upgrade choices!</li>
-                                <li>Survive as long as you can and set a new high score! Your unlocked upgrades are persistent.</li>
+                        <Section title="Upgrades & Progression">
+                             <p>Collecting fragments from defeated enemies is key to your survival and power.</p>
+                            <ul className="list-disc list-inside space-y-2">
+                                <li>At the end of each wave, you can spend your collected fragments to choose from a selection of upgrades.</li>
+                                <li>Upgrades are persistent! Unlocked abilities and stat boosts carry over to future runs, allowing you to get stronger over time.</li>
+                                <li><span className="font-bold text-accent">Upgrade Types:</span> Look for upgrades that boost your Player Stats (<Shield className="inline-block h-4 w-4" />), enhance your Gun's properties (<Zap className="inline-block h-4 w-4" />), or provide General utility (<Award className="inline-block h-4 w-4" />).</li>
+                                <li>Powerful bosses appear every 5 waves. They drop special fragments that offer a chance to instantly <span className="font-bold text-yellow-400">MAX OUT</span> an upgrade to its highest level!</li>
                             </ul>
-                        </div>
+                        </Section>
+
+                        <Section title="Game Modes">
+                            <ul className="list-disc list-inside space-y-2">
+                                <li><span className="font-bold text-primary">Normal Mode:</span> The standard game mode. Survive waves, collect upgrades, and set a high score.</li>
+                                <li><span className="font-bold text-yellow-400">Sandbox Mode:</span> A practice arena where you have full control. Spawn any enemy, give yourself any upgrade, and test out mechanics without pressure. Access it from the main menu.</li>
+                            </ul>
+                        </Section>
+
                     </div>
-                </div>
-                <DialogFooter className="flex-shrink-0 pt-4 border-t border-border">
-                    <Button onClick={onClose} className="btn-liquid-glass btn-liquid-confirm">Got it!</Button>
+                </ScrollArea>
+
+                <DialogFooter className="p-6 pt-4 border-t border-border sticky bottom-0 bg-background z-10">
+                    <Button onClick={onClose} className="w-full sm:w-auto btn-liquid-glass btn-liquid-confirm">Got it!</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

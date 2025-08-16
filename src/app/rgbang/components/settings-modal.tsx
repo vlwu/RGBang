@@ -15,7 +15,9 @@ import { Keybindings } from "../managers/input-handler";
 import { soundManager, SoundType } from '../managers/sound-manager';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Volume2 } from 'lucide-react';
+import { Volume2, X } from 'lucide-react';
+import { getKeyDisplay } from '../common/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface SettingsModalProps {
     isOpen: boolean;
@@ -60,7 +62,6 @@ export function SettingsModal({
     }, [isOpen]);
 
     useEffect(() => {
-
         soundManager.setMasterVolume(localVolume);
         soundManager.setMuted(localIsMuted);
     }, [localVolume, localIsMuted]);
@@ -111,7 +112,6 @@ export function SettingsModal({
 
     const handleOpenChange = (open: boolean) => {
         if (!open) {
-
             soundManager.setMasterVolume(volume);
             soundManager.setMuted(isMuted);
             onClose();
@@ -137,47 +137,36 @@ export function SettingsModal({
         viewUpgrades: "View Upgrades",
     };
 
-    const getKeyDisplay = (key: string) => {
-        if (!key) return '';
-        if (key === ' ') return 'SPACE';
-        if (key === 'tab') return 'TAB';
-        if (key === 'mouse0') return 'LMB';
-        if (key === 'mouse1') return 'MMB';
-        if (key === 'mouse2') return 'RMB';
-
-        if (key.startsWith('mouse')) return `MOUSE ${parseInt(key.slice(5)) + 1}`;
-        return key.toUpperCase();
-    }
-
     const playHoverSound = () => soundManager.play(SoundType.ButtonHover);
 
     return (
         <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-            <DialogContent className="sm:max-w-[425px] bg-background text-foreground flex flex-col max-h-[90vh] overflow-hidden">
-                <DialogHeader className="flex-shrink-0">
-                    <DialogTitle className="text-primary">Settings</DialogTitle>
+            <DialogContent className="sm:max-w-md w-[90vw] bg-background text-foreground flex flex-col max-h-[90vh] p-0">
+                <DialogHeader className="p-6 pb-4 border-b border-border sticky top-0 bg-background z-10">
+                    <DialogTitle className="text-primary text-2xl font-headline">Settings</DialogTitle>
                     <DialogDescription>
                         Customize your controls and audio settings.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex-1 overflow-y-auto min-h-0">
-                    <div className="space-y-6 py-4 pr-6">
+
+                <ScrollArea className="flex-grow min-h-0">
+                    <div className="space-y-8 px-6 py-4">
                         <div className="space-y-4">
-                            <h4 className="font-semibold text-muted-foreground text-sm">Sound</h4>
-                            <div className="grid grid-cols-4 items-center gap-4">
+                            <h4 className="font-semibold text-muted-foreground text-sm tracking-wider">AUDIO</h4>
+                            <div className="grid grid-cols-3 items-center gap-4">
                                 <Label className="text-right">Volume</Label>
                                 <Slider
                                     value={[localVolume]}
                                     onValueChange={(value) => setLocalVolume(value[0])}
                                     max={1}
                                     step={0.05}
-                                    className="col-span-3"
+                                    className="col-span-2"
                                     disabled={localIsMuted}
                                 />
                             </div>
-                            <div className="grid grid-cols-4 items-center gap-4">
+                            <div className="grid grid-cols-3 items-center gap-4">
                                 <Label htmlFor="mute-checkbox" className="text-right">Mute</Label>
-                                <div className="col-span-3 flex items-center space-x-2">
+                                <div className="col-span-2 flex items-center justify-between">
                                     <Checkbox
                                         id="mute-checkbox"
                                         checked={localIsMuted}
@@ -189,7 +178,6 @@ export function SettingsModal({
                                         onClick={handleTestSound}
                                         disabled={localIsMuted}
                                         onMouseEnter={playHoverSound}
-                                        className="ml-auto"
                                     >
                                         <Volume2 className="mr-2 h-4 w-4" />
                                         Test
@@ -199,15 +187,16 @@ export function SettingsModal({
                         </div>
 
                         <div className="space-y-4">
-                            <h4 className="font-semibold text-muted-foreground text-sm">Controls</h4>
+                            <h4 className="font-semibold text-muted-foreground text-sm tracking-wider">CONTROLS</h4>
                             {Object.entries(keybindDisplayMap).map(([action, label]) => (
-                                <div key={action} className="grid grid-cols-4 items-center gap-4">
+                                <div key={action} className="grid grid-cols-3 items-center gap-4">
                                     <Label htmlFor={action} className="text-right">
                                         {label}
                                     </Label>
                                     <Button
+                                        id={action}
                                         variant="outline"
-                                        className="col-span-3"
+                                        className="col-span-2 justify-center"
                                         onClick={() => { soundManager.play(SoundType.ButtonClick); setEditingKey(action as KeybindingAction); }}
                                         onMouseEnter={playHoverSound}
                                     >
@@ -217,8 +206,9 @@ export function SettingsModal({
                             ))}
                         </div>
                     </div>
-                </div>
-                <DialogFooter className="flex-shrink-0 pt-4 border-t border-border">
+                </ScrollArea>
+
+                <DialogFooter className="p-6 pt-4 border-t border-border sticky bottom-0 bg-background z-10">
                     <Button onClick={handleCancel} onMouseEnter={playHoverSound} className="font-bold btn-liquid-glass btn-liquid-neutral">Cancel</Button>
                     <Button onClick={handleSave} onMouseEnter={playHoverSound} className="font-bold btn-liquid-glass btn-liquid-confirm">Save Changes</Button>
                 </DialogFooter>
