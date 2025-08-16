@@ -1,5 +1,5 @@
 import { Player } from './player';
-import { GameColor, COLOR_DETAILS, ALL_COLORS } from './color';
+import { GameColor, COLOR_DETAILS, ALL_COLORS, PRIMARY_COLORS, isSecondaryColor } from './color';
 import { Boss } from './boss';
 import { roundRect, drawShapeForColor } from './utils';
 import { Vec2 } from './utils';
@@ -288,68 +288,105 @@ export class UI {
     }
 
     private drawHotbar(player: Player) {
-        const boxSize = 50;
-        const spacing = 12;
-        const totalWidth = (boxSize + spacing) * ALL_COLORS.length - spacing;
+        const boxSize = 60;
+        const spacing = 18;
+        const totalWidth = (boxSize + spacing) * PRIMARY_COLORS.length - spacing;
         const startX = (this.canvas.width - totalWidth) / 2;
-        const y = this.canvas.height - boxSize - 20;
-        const borderRadius = 10;
+        const y = this.canvas.height - boxSize - 40;
+        const borderRadius = 15;
 
         this.ctx.save();
 
+        const currentIsSecondary = isSecondaryColor(player.currentColor);
+        const components = currentIsSecondary ? COLOR_DETAILS[player.currentColor].components : null;
 
-        this.ctx.fillStyle = 'rgba(20, 20, 30, 0.7)';
-        this.ctx.strokeStyle = 'rgba(150, 150, 180, 0.3)';
-        this.ctx.lineWidth = 1.5;
-        this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
-        this.ctx.shadowBlur = 15;
-        this.ctx.beginPath();
-        roundRect(this.ctx, startX, y, totalWidth, boxSize, borderRadius);
-        this.ctx.fill();
-        this.ctx.stroke();
-        this.ctx.shadowColor = 'transparent';
-
-        ALL_COLORS.forEach((color, index) => {
+        PRIMARY_COLORS.forEach((color, index) => {
             const x = startX + (boxSize + spacing) * index;
             const detail = COLOR_DETAILS[color];
             const isAvailable = player.availableColors.has(color);
 
-            this.ctx.save();
-
-            if (!isAvailable) {
-                this.ctx.filter = 'saturate(0.1) brightness(0.7)';
+            let isHighlighted = false;
+            if (currentIsSecondary && components) {
+                isHighlighted = components.includes(color);
+            } else {
+                isHighlighted = player.currentColor === color;
             }
 
+            this.ctx.save();
 
-            this.ctx.fillStyle = detail.hex;
-            this.ctx.globalAlpha = 0.8;
+            const alpha = isAvailable ? 1.0 : 0.4;
+            this.ctx.globalAlpha = alpha;
+
+            this.ctx.fillStyle = 'rgba(20, 20, 30, 0.7)';
+            this.ctx.strokeStyle = 'rgba(150, 150, 180, 0.3)';
+            this.ctx.lineWidth = 1.5;
+            this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
+            this.ctx.shadowBlur = 10;
+
             this.ctx.beginPath();
             roundRect(this.ctx, x, y, boxSize, boxSize, borderRadius);
             this.ctx.fill();
-
+            this.ctx.stroke();
+            this.ctx.shadowColor = 'transparent';
 
             const shapePos = new Vec2(x + boxSize / 2, y + boxSize / 2);
-            drawShapeForColor(this.ctx, shapePos, boxSize * 0.4, color, isAvailable ? 'black' : 'rgba(0,0,0,0.5)');
 
+            this.ctx.beginPath();
+            this.ctx.arc(shapePos.x, shapePos.y, boxSize * 0.35, 0, Math.PI * 2);
+            this.ctx.fillStyle = detail.hex;
+            this.ctx.shadowColor = detail.hex;
+            this.ctx.shadowBlur = 15;
+            this.ctx.fill();
 
-            if (player.currentColor === color) {
-                const pulse = (Math.sin(Date.now() / 150) + 1) / 2;
-                this.ctx.strokeStyle = '#7DF9FF';
+            drawShapeForColor(this.ctx, shapePos, boxSize * 0.6, color, 'rgba(0,0,0,0.8)');
+
+            if (isHighlighted) {
+                const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+                let highlightColor = player.currentColor === color ? '#FFFFFF' : COLOR_DETAILS[player.currentColor].hex;
+
+                this.ctx.strokeStyle = highlightColor;
                 this.ctx.lineWidth = 3;
-                this.ctx.shadowColor = '#7DF9FF';
-                this.ctx.shadowBlur = 10 + pulse * 10;
+                this.ctx.shadowColor = highlightColor;
+                this.ctx.shadowBlur = 15 + pulse * 10;
+                this.ctx.globalAlpha = alpha * (0.8 + pulse * 0.2);
                 this.ctx.beginPath();
                 roundRect(this.ctx, x, y, boxSize, boxSize, borderRadius);
                 this.ctx.stroke();
-            } else if (isAvailable) {
-                 this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-                 this.ctx.lineWidth = 1;
-                 this.ctx.beginPath();
-                 roundRect(this.ctx, x, y, boxSize, boxSize, borderRadius);
-                 this.ctx.stroke();
             }
+
+            this.ctx.fillStyle = 'white';
+            this.ctx.font = 'bold 16px "Space Grotesk"';
+            this.ctx.textAlign = 'center';
+            this.ctx.globalAlpha = alpha * 0.9;
+            this.ctx.shadowColor = 'black';
+            this.ctx.shadowBlur = 5;
+            this.ctx.fillText(detail.key, x + boxSize / 2, y + boxSize + 20);
+
             this.ctx.restore();
         });
+
+        if (currentIsSecondary) {
+            const iconSize = 35;
+            const iconY = y - 30;
+            const iconX = this.canvas.width / 2;
+            this.ctx.save();
+            const detail = COLOR_DETAILS[player.currentColor];
+            const shapePos = new Vec2(iconX, iconY);
+
+            const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
+            this.ctx.globalAlpha = 0.9 + pulse * 0.1;
+
+            this.ctx.beginPath();
+            this.ctx.arc(shapePos.x, shapePos.y, iconSize * 0.7, 0, Math.PI * 2);
+            this.ctx.fillStyle = detail.hex;
+            this.ctx.shadowColor = detail.hex;
+            this.ctx.shadowBlur = 15 + pulse * 10;
+            this.ctx.fill();
+
+            drawShapeForColor(this.ctx, shapePos, iconSize, player.currentColor, 'black');
+
+            this.ctx.restore();
+        }
 
         this.ctx.restore();
     }
