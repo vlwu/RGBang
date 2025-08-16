@@ -10,7 +10,7 @@ import { gameStateStore } from '../core/gameStateStore';
 import { EnemyType } from '../data/wave-data';
 import { Upgrade, ALL_UPGRADES } from '../data/upgrades';
 
-const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0, bankedUpgrades: 0, gameMode: 'normal' };
+const DEFAULT_GAME_STATE: SavedGameState = { score: 0, playerHealth: 100, activeUpgrades: new Map(), nextBossScoreThreshold: 150, initialColor: GameColor.RED, currentWave: 0, bankedUpgrades: 0, gameMode: 'normal', isBetweenWaves: false, betweenWaveCountdown: 0 };
 
 export interface GameCanvasHandle {
     getGameInstance: () => Game | null;
@@ -57,12 +57,17 @@ export const useGameSession = ({ savedGame, highScore, setHighScore, loadInitial
         const savedRun = await loadGameState();
         if (savedRun) {
             setInitialGameState(savedRun);
-            setUiState('playing');
+            if (savedRun.isBetweenWaves && savedRun.betweenWaveCountdown) {
+                setUiState('betweenWaves');
+                gameStateStore.updateState({ betweenWaveCountdown: savedRun.betweenWaveCountdown });
+            } else {
+                setUiState('playing');
+            }
         } else {
             startNewRun('normal');
         }
     };
-    
+
     const handlePlayClick = () => {
         soundManager.play(SoundType.ButtonClick);
         if (savedGame) {
@@ -71,7 +76,7 @@ export const useGameSession = ({ savedGame, highScore, setHighScore, loadInitial
             startNewRun('normal');
         }
     };
-    
+
     const quitToMenu = () => {
         soundManager.play(SoundType.GameQuit);
         const gameInstance = gameCanvasRef.current?.getGameInstance();
@@ -82,13 +87,18 @@ export const useGameSession = ({ savedGame, highScore, setHighScore, loadInitial
                     ...currentState,
                     bankedUpgrades: gameStateStore.getSnapshot().bankedUpgrades + upgradesRemainingToSelect
                 };
-    
+
+                if (uiState === 'betweenWaves') {
+                    stateToSave.isBetweenWaves = true;
+                    stateToSave.betweenWaveCountdown = gameStateStore.getSnapshot().betweenWaveCountdown;
+                }
+
                 if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
                 } else {
                     clearGameState();
                 }
-    
+
                 if (currentState.score > highScore) {
                     localStorage.setItem('rgBangHighScore', currentState.score.toString());
                     setHighScore(currentState.score);
@@ -101,12 +111,12 @@ export const useGameSession = ({ savedGame, highScore, setHighScore, loadInitial
         setUiState('menu');
         loadInitialData();
     };
-    
+
     const resumeGame = () => {
         soundManager.play(SoundType.GameResume);
         setUiState('playing');
     };
-    
+
     useEffect(() => {
         const game = gameCanvasRef.current?.getGameInstance();
         const sm = game?.getSandboxManager();
@@ -129,7 +139,7 @@ export const useGameSession = ({ savedGame, highScore, setHighScore, loadInitial
         }
     }, [uiState, gameCanvasRef.current?.getGameInstance()?.getSandboxManager()]);
 
-    // Autosave on unload
+
     useEffect(() => {
         const handleBeforeUnload = () => {
             const gameInstance = gameCanvasRef.current?.getGameInstance();
@@ -140,6 +150,12 @@ export const useGameSession = ({ savedGame, highScore, setHighScore, loadInitial
                         ...stateFromGame,
                         bankedUpgrades: gameStateStore.getSnapshot().bankedUpgrades + upgradesRemainingToSelect
                     };
+
+                    if (uiState === 'betweenWaves') {
+                        stateToSave.isBetweenWaves = true;
+                        stateToSave.betweenWaveCountdown = gameStateStore.getSnapshot().betweenWaveCountdown;
+                    }
+                    
                     if (stateToSave.score > 0) {
                         saveGameState(stateToSave);
                     }

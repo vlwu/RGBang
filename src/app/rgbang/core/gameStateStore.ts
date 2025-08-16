@@ -16,6 +16,7 @@ export interface UIState {
     requestOpenUpgradeModal?: boolean;
     runUpgrades: Map<string, number>;
     bankedUpgrades: number;
+    betweenWaveCountdown: number;
 }
 
 const initialUIState: UIState = {
@@ -33,6 +34,7 @@ const initialUIState: UIState = {
     requestOpenUpgradeModal: false,
     runUpgrades: new Map(),
     bankedUpgrades: 0,
+    betweenWaveCountdown: 0,
 };
 
 let gameState: UIState = { ...initialUIState };

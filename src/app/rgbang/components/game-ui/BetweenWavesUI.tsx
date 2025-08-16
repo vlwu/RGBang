@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Play } from "lucide-react";
+import { LogOut, Play } from "lucide-react";
 
 type BetweenWavesUIProps = {
     currentWave: number;
@@ -12,9 +12,10 @@ type BetweenWavesUIProps = {
     onChooseUpgrades: () => void;
     onStartNextWave: () => void;
     playHoverSound: () => void;
+    onQuit: () => void;
 };
 
-export function BetweenWavesUI({ currentWave, countdown, nextWaveHint, upgradesRemainingToSelect, totalUpgradesToSelect, onChooseUpgrades, onStartNextWave, playHoverSound }: BetweenWavesUIProps) {
+export function BetweenWavesUI({ currentWave, countdown, nextWaveHint, upgradesRemainingToSelect, totalUpgradesToSelect, onChooseUpgrades, onStartNextWave, playHoverSound, onQuit }: BetweenWavesUIProps) {
     return (
         <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex flex-col items-center justify-center rounded-lg animate-fade-in border-2 border-primary/20 select-none">
             <h2 className="text-6xl font-bold font-headline tracking-tighter mb-4 text-glow">WAVE {currentWave} CLEARED!</h2>
@@ -38,6 +39,16 @@ export function BetweenWavesUI({ currentWave, countdown, nextWaveHint, upgradesR
             >
                 <Play className="mr-2" />
                 Start Next Wave Now
+            </Button>
+            <Button
+                size="lg"
+                variant="ghost"
+                onClick={onQuit}
+                onMouseEnter={playHoverSound}
+                className="font-bold text-lg mt-2 text-muted-foreground"
+            >
+                <LogOut className="mr-2" />
+                Save and Quit
             </Button>
         </div>
     );

@@ -37,23 +37,15 @@ export const useGameEvents = ({
     const gameStoreState = useSyncExternalStore(gameStateStore.subscribe, gameStateStore.getSnapshot, gameStateStore.getServerSnapshot);
     const { toast } = useToast();
     const [nextWaveHint, setNextWaveHint] = useState("");
-    const [betweenWaveCountdown, setBetweenWaveCountdown] = useState(0);
     const [upgradesRemainingToSelect, setUpgradesRemainingToSelect] = useState(0);
     const [totalUpgradesToSelect, setTotalUpgradesToSelect] = useState(0);
+    const { betweenWaveCountdown } = gameStoreState;
 
-    const openUpgradeSelection = useCallback((isBossWave: boolean, upgradesCount?: number, showToast = false) => {
+    const openUpgradeSelection = useCallback((isBossWave: boolean, upgradesCount?: number) => {
         const count = upgradesCount ?? upgradesRemainingToSelect;
         const gameInstance = gameCanvasRef.current?.getGameInstance();
 
         if (count > 0 && gameInstance && upgradeDataRef.current) {
-            if (showToast) {
-                toast({
-                    title: "Wave Cleared!",
-                    description: `You've earned ${count} upgrade choice${count > 1 ? 's' : ''}! Choose wisely.`,
-                    duration: 3000,
-                });
-            }
-
             const nextFragmentColorForOptions = isBossWave ? null : getRandomElement(PRIMARY_COLORS);
 
             const options = gameInstance.player.upgradeManager.getUpgradeOptions(
@@ -69,7 +61,7 @@ export const useGameEvents = ({
                 description: "You have no fragments to convert into upgrades at this time. Proceeding to next wave.",
             });
             setIsUpgradeModalOpen(false);
-            setBetweenWaveCountdown(BETWEEN_WAVES_DURATION);
+            gameStateStore.updateState({ betweenWaveCountdown: BETWEEN_WAVES_DURATION });
             setUiState('betweenWaves');
             soundManager.play(SoundType.GameResume);
         }
@@ -99,15 +91,15 @@ export const useGameEvents = ({
         let countdownInterval: NodeJS.Timeout | null = null;
         if (uiState === 'betweenWaves' && betweenWaveCountdown > 0) {
             countdownInterval = setInterval(() => {
-                setBetweenWaveCountdown(prev => {
-                    if (prev <= 1) {
-                        clearInterval(countdownInterval!);
-                        countdownInterval = null;
-                        handleNextWaveStart();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
+                const currentCountdown = gameStateStore.getSnapshot().betweenWaveCountdown;
+                if (currentCountdown <= 1) {
+                    clearInterval(countdownInterval!);
+                    countdownInterval = null;
+                    handleNextWaveStart();
+                    gameStateStore.updateState({ betweenWaveCountdown: 0 });
+                } else {
+                    gameStateStore.updateState({ betweenWaveCountdown: currentCountdown - 1 });
+                }
             }, 1000);
         }
 
@@ -142,11 +134,17 @@ export const useGameEvents = ({
                 setUiState('upgrading');
                 soundManager.play(SoundType.GamePause);
 
-                setTimeout(() => openUpgradeSelection(isBossWave, totalUpgradesToOffer, true), 100);
+                toast({
+                    title: "Wave Cleared!",
+                    description: `You've earned ${totalUpgradesToOffer} upgrade choice${totalUpgradesToOffer > 1 ? 's' : ''}! Choose wisely.`,
+                    duration: 3000,
+                });
+
+                setTimeout(() => openUpgradeSelection(isBossWave, totalUpgradesToOffer), 100);
             } else {
                 setUpgradesRemainingToSelect(0);
                 setTotalUpgradesToSelect(0);
-                setBetweenWaveCountdown(BETWEEN_WAVES_DURATION);
+                gameStateStore.updateState({ betweenWaveCountdown: BETWEEN_WAVES_DURATION });
                 setUiState('betweenWaves');
                 soundManager.play(SoundType.GamePause);
             }
@@ -158,12 +156,14 @@ export const useGameEvents = ({
         if (uiState === 'betweenWaves' && gameInstance) {
             if (gameInstance.gameMode === 'normal') {
                 const stateToSave = gameInstance.getCurrentState();
+                stateToSave.isBetweenWaves = true;
+                stateToSave.betweenWaveCountdown = gameStateStore.getSnapshot().betweenWaveCountdown;
                 if (stateToSave.score > 0) {
                     saveGameState(stateToSave);
                 }
             }
         }
-    }, [uiState, gameCanvasRef]);
+    }, [uiState, gameCanvasRef, gameStoreState.betweenWaveCountdown]);
 
     const lastFragmentCount = useRef(0);
     useEffect(() => {
@@ -192,7 +192,6 @@ export const useGameEvents = ({
         gameStoreState,
         nextWaveHint,
         betweenWaveCountdown,
-        setBetweenWaveCountdown,
         upgradesRemainingToSelect,
         setUpgradesRemainingToSelect,
         totalUpgradesToSelect,

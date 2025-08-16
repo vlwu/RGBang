@@ -9,6 +9,8 @@ export interface SavedGameState {
     currentWave: number;
     bankedUpgrades: number;
     gameMode?: 'normal' | 'freeplay';
+    isBetweenWaves?: boolean;
+    betweenWaveCountdown?: number;
 }
 
 const GAME_STATE_KEY = 'rgBangGameState';

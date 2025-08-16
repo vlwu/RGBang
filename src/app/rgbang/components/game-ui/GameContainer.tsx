@@ -145,6 +145,7 @@ export function GameContainer({
                     onChooseUpgrades={onChooseUpgrades}
                     onStartNextWave={onStartNextWave}
                     playHoverSound={playHoverSound}
+                    onQuit={onQuit}
                 />
             )}
         </div>
