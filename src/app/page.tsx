@@ -312,6 +312,7 @@ export default function Home() {
                 }
             }
             if (e.key.toLowerCase() === keybindingsRef.current.viewUpgrades.toLowerCase()) {
+                if (e.repeat) return;
                 if (uiState === 'playing' || uiState === 'paused') {
                     setIsUpgradeOverviewOpen(prev => !prev);
                 }
