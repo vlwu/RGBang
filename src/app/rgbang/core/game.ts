@@ -64,6 +64,7 @@ export class Game {
         this.collisionManager = new CollisionManager({
             player: this.player,
             entityManager: this.entityManager,
+            waveManager: this.waveManager,
             quadtree: this.quadtree,
             particles: this.particles,
             soundManager: this.soundManager,

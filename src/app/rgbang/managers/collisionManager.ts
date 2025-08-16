@@ -9,6 +9,7 @@ import { PrismFragment } from '../entities/prism-fragment';
 import { SoundManager, SoundType } from './sound-manager';
 import { EntityManager } from './entityManager';
 import { gameStateStore } from '../core/gameStateStore';
+import { WaveManager } from './waveManager';
 
 interface CollisionManagerDependencies {
     player: Player;
@@ -20,6 +21,7 @@ interface CollisionManagerDependencies {
     dealAreaDamage: (pos: Vec2, radius: number, damage: number, color: GameColor) => void;
     createBullet: (bullet: Bullet) => void;
     addScore: (amount: number) => void;
+    waveManager: WaveManager;
 }
 
 export class CollisionManager {
@@ -32,6 +34,7 @@ export class CollisionManager {
     private dealAreaDamage: (pos: Vec2, radius: number, damage: number, color: GameColor) => void;
     private createBullet: (bullet: Bullet) => void;
     private addScore: (amount: number) => void;
+    private waveManager: WaveManager;
 
     constructor(deps: CollisionManagerDependencies) {
         this.player = deps.player;
@@ -43,10 +46,11 @@ export class CollisionManager {
         this.dealAreaDamage = deps.dealAreaDamage;
         this.createBullet = deps.createBullet;
         this.addScore = deps.addScore;
+        this.waveManager = deps.waveManager;
     }
 
     public checkCollisions() {
-        // Player Bullets vs Enemies/Boss
+
         for (const bullet of this.entityManager.bullets) {
             if (!bullet.isActive) continue;
 
@@ -138,7 +142,7 @@ export class CollisionManager {
             }
         }
 
-        // Enemies vs Player
+
         for (const enemy of this.entityManager.enemies) {
             if (enemy.isAlive && this.player.isAlive && circleCollision(this.player, enemy)) {
                 if (this.gameMode !== 'freeplay') {
@@ -150,7 +154,7 @@ export class CollisionManager {
             }
         }
 
-        // Boss vs Player
+
         const boss = this.entityManager.boss;
         if (boss && boss.isAlive && this.player.isAlive && circleCollision(this.player, boss)) {
             if (this.gameMode !== 'freeplay') {
@@ -159,7 +163,7 @@ export class CollisionManager {
             }
         }
 
-        // Fragments vs Player
+
         for (let i = this.entityManager.fragments.length - 1; i >= 0; i--) {
             const fragment = this.entityManager.fragments[i];
             if (fragment.isAlive && this.player.isAlive && circleCollision(this.player, fragment)) {
@@ -170,9 +174,7 @@ export class CollisionManager {
                     fragmentCollectCount: currentState.fragmentCollectCount + 1,
                 });
                 if (this.gameMode !== 'freeplay') {
-                    // This is a bit of a dependency leak, but acceptable for now.
-                    // A better solution would be an event bus.
-                    (this.entityManager as any)?.waveManager?.onFragmentCollected();
+                    this.waveManager.onFragmentCollected();
                 }
                 this.particles.addPickupEffect(fragment.pos, fragment.color);
                 this.player.triggerCollectionEffect(fragment.color);
@@ -180,7 +182,7 @@ export class CollisionManager {
             }
         }
 
-        // Enemy vs Enemy
+
         for (const enemy1 of this.entityManager.enemies) {
             if (!enemy1.isAlive) continue;
 
@@ -217,8 +219,8 @@ export class CollisionManager {
             });
         }
         if (this.player.gravityWellLevel > 0 && bullet.color === GameColor.PURPLE) {
-            // This is also a dependency leak. We should pass createVortex as a callback.
-            // For now, let's keep it simple. This will be addressed in a future step.
+
+
             const game = (this.entityManager as any).game;
             if (game) {
                 game.createVortex(enemy.pos, 60 + this.player.gravityWellLevel * 15, 0.3 + this.player.gravityWellLevel * 0.1, 120);
