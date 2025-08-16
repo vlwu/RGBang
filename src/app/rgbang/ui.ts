@@ -317,7 +317,23 @@ export class UI {
             const alpha = isAvailable ? 1.0 : 0.4;
             this.ctx.globalAlpha = alpha;
 
-            this.ctx.fillStyle = 'rgba(20, 20, 30, 0.7)';
+            if (isHighlighted) {
+                const highlightColor = player.currentColor === color ? '#FFFFFF' : COLOR_DETAILS[player.currentColor].hex;
+                const rgb = this.hexToRgb(highlightColor);
+                if (rgb) {
+                    const centerX = x + boxSize / 2;
+                    const centerY = y + boxSize / 2;
+                    const gradient = this.ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, boxSize * 0.8);
+                    gradient.addColorStop(0, `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.5)`);
+                    gradient.addColorStop(1, `rgba(20, 20, 30, 0.7)`);
+                    this.ctx.fillStyle = gradient;
+                } else {
+                    this.ctx.fillStyle = 'rgba(40, 40, 60, 0.8)';
+                }
+            } else {
+                this.ctx.fillStyle = 'rgba(20, 20, 30, 0.7)';
+            }
+            
             this.ctx.strokeStyle = 'rgba(150, 150, 180, 0.3)';
             this.ctx.lineWidth = 1.5;
             this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
@@ -342,7 +358,7 @@ export class UI {
 
             if (isHighlighted) {
                 const pulse = (Math.sin(Date.now() / 200) + 1) / 2;
-                let highlightColor = player.currentColor === color ? '#FFFFFF' : COLOR_DETAILS[player.currentColor].hex;
+                const highlightColor = player.currentColor === color ? '#FFFFFF' : COLOR_DETAILS[player.currentColor].hex;
 
                 this.ctx.strokeStyle = highlightColor;
                 this.ctx.lineWidth = 3;
@@ -367,7 +383,9 @@ export class UI {
 
         if (currentIsSecondary) {
             const iconSize = 30;
-            const iconY = y - 30;
+            const dashBarHeight = 10;
+            // Place it above the dash cooldown bar
+            const iconY = y - 12 - dashBarHeight - (iconSize / 2) - 5;
             const iconX = this.canvas.width / 2;
             this.ctx.save();
             const detail = COLOR_DETAILS[player.currentColor];
